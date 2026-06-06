@@ -13,6 +13,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
 
 app:
   jwt:
@@ -24,3 +29,10 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dktu0nbjx}
+  api-key: ${CLOUDINARY_API_KEY:655488269595982}
+  api-secret: ${CLOUDINARY_API_SECRET:G1c_p5xy2VaZcCzd9nLofBYjHUc}
+  folder: prm/products
