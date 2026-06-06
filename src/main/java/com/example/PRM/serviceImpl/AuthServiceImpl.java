@@ -1,11 +1,11 @@
 package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.LoginReq;
-import com.example.PRM.dto.request.RegisterReq;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.AuthRes;
 import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
+import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,14 +31,14 @@ public class AuthServiceImpl {
 
     public AuthRes register(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
-            throw new RuntimeException("Username đã tồn tại");
+            throw new BadRequestException("Username đã tồn tại");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại");
+            throw new BadRequestException("Email đã tồn tại");
         }
 
         Role role = roleRepository.findByRoleName("MEMBER").
-                orElseThrow(() -> new RuntimeException("Role ADMIN không tồn tại"));
+                orElseThrow(() -> new BadRequestException("Role MEMBER không tồn tại"));
 
 
         User user = User.builder()
@@ -46,6 +46,8 @@ public class AuthServiceImpl {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(role)
+                .fullName(request.getFullName())
+                .phone(request.getPhone())
                 .build();
 
         userRepository.save(user);
@@ -63,7 +65,7 @@ public class AuthServiceImpl {
                             request.getUsername(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            throw new RuntimeException("Sai tài khoản hoặc mật khẩu");
+            throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());

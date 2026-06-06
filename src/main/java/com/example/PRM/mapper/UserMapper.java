@@ -3,7 +3,9 @@ package com.example.PRM.mapper;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.entity.User;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserMapper {
     public UserRes mapToUserRes(User user) {
         UserRes userRes = new UserRes();

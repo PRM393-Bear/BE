@@ -23,7 +23,7 @@ public class User {
     private String fullName;
     private String email;
     private String phone;
-    @OneToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "roleId")
     private Role role;
 

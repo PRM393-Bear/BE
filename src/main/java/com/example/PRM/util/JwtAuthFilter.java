@@ -46,15 +46,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (jwtUtil.isTokenValid(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    System.out.println("Token INVALID!");
                 }
             }
         } catch (Exception e) {
-            // Token không hợp lệ → bỏ qua
+            System.out.println("Token error: " + e.getMessage());
         }
-
         filterChain.doFilter(request, response);
     }
 }
