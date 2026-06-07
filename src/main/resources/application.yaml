@@ -1,6 +1,21 @@
 spring:
   application:
     name: PRM
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: gemma2:2b
+          temperature: 0.6
+      embedding:
+        options:
+          model: nomic-embed-text
+    vectorstore:
+      pgvector:
+        table-name: vector_store
+        dimension: 768
+        initialize-schema: true
   datasource:
     url: jdbc:postgresql://localhost:5432/prm
     username: postgres
