@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.LocalDateTime;
 
@@ -44,6 +46,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUsernameNotFound(UsernameNotFoundException ex) {
         return ResponseEntity.status(404).body(
                 new ErrorResponse(404, ex.getMessage(), LocalDateTime.now())
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse> handleMissingPart(MissingServletRequestPartException ex) {
+        return ResponseEntity.status(400).body(
+                new ErrorResponse(400, "Thiếu file upload (field name: file)", LocalDateTime.now())
+        );
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUpload(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(400).body(
+                new ErrorResponse(400, "File vượt quá dung lượng cho phép (5MB)", LocalDateTime.now())
         );
     }
 }
