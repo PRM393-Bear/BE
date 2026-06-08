@@ -6,7 +6,6 @@ import com.example.PRM.entity.User;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    public UserMapper userMapper;
+    private final UserMapper userMapper;
 
 
 
