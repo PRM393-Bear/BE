@@ -10,4 +10,5 @@ public interface UserService {
     public void deleteUserById(UUID userId);
     public void updateUserById(UUID userId, UserReq userReq);
     public void updatePassword(UUID userId, String oldPassword, String newPassword, String confirmPassword);
+    public UserRes getUserByUsername(String username);
 }

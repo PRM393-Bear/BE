@@ -8,6 +8,4 @@ import lombok.Data;
 @AllArgsConstructor
 public class AuthRes {
     private String token;
-    private String username;
-    private Role role;
 }

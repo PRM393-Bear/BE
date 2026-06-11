@@ -29,7 +29,7 @@ public class AuthServiceImpl {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
 
-    public AuthRes register(UserReq request) {
+    public void registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new BadRequestException("Username đã tồn tại");
         }
@@ -37,25 +37,17 @@ public class AuthServiceImpl {
             throw new BadRequestException("Email đã tồn tại");
         }
 
-        Role role = roleRepository.findByRoleName("MEMBER").
-                orElseThrow(() -> new BadRequestException("Role MEMBER không tồn tại"));
-
 
         User user = User.builder()
                 .userName(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(role)
+                .role(request.getRole())
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .build();
 
         userRepository.save(user);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserName());
-        String token = jwtUtil.generateToken(userDetails);
-
-        return new AuthRes(token, user.getUserName(), user.getRole());
     }
 
     public AuthRes login(LoginReq request) {
@@ -70,7 +62,6 @@ public class AuthServiceImpl {
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         String token = jwtUtil.generateToken(userDetails);
-        User user = userRepository.findByUserName(request.getUsername()).orElseThrow();
-        return new AuthRes(token, user.getUserName(), user.getRole());
+        return new AuthRes(token);
     }
 }

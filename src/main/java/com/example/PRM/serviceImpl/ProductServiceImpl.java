@@ -56,4 +56,12 @@ public class ProductServiceImpl implements ProductService {
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
     }
+
+    @Override
+    public List<ProductRes> search(String category, Long maxPrice) {
+        return productRepository.findByCategoryAndPriceLessThanEqual(category, maxPrice)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
 }

@@ -76,4 +76,11 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
+    @Override
+    public UserRes getUserByUsername(String username) {
+        User user = userRepository.findByUserName(username).orElseThrow(()
+                -> new NotFoundException("User not found with username: " + username));
+        return userMapper.getInfo(user);
+    }
 }
