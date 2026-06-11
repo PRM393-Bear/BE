@@ -62,4 +62,11 @@ public class GlobalExceptionHandler {
                 new ErrorResponse(400, "File vượt quá dung lượng cho phép (5MB)", LocalDateTime.now())
         );
     }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleGeneral(ForbiddenException ex) {
+        return ResponseEntity.status(401).body(
+                new ErrorResponse(401, ex.getMessage(), LocalDateTime.now())
+        );
+    }
 }

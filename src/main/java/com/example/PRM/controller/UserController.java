@@ -4,6 +4,8 @@ import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -42,4 +44,5 @@ public class UserController {
         userService.updatePassword(userId, oldPassword, newPassword, confirmPassword);
         return ResponseEntity.ok("Update password success");
     }
+
 }

@@ -68,6 +68,10 @@ public class Product {
     @Column(updatable = false)
     private OffsetDateTime createdAt;
 
+    @ManyToOne
+    @JoinColumn(name = "shop_id")
+    private Shop shop;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = OffsetDateTime.now();

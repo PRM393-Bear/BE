@@ -33,4 +33,12 @@ public class ProductController {
         ProductRes created = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    @GetMapping("/search")
+    public List<ProductRes> search(
+            @RequestParam String category,
+            @RequestParam Long maxPrice
+    ) {
+        return productService.search(category, maxPrice);
+    }
 }

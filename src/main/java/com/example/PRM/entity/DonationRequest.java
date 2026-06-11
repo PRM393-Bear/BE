@@ -28,7 +28,7 @@ public class DonationRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_detail_id", nullable = false)
-    private Organization organization;
+    private OrganizationDetail organizationDetail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donation_event_id")
