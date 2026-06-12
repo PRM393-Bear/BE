@@ -3,9 +3,8 @@ package com.example.PRM.controller;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.service.UserService;
+import com.example.PRM.util.AuthDetails;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -14,35 +13,43 @@ import java.util.UUID;
 @RequestMapping("/api/user")
 public class UserController {
     private final UserService userService;
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(@PathVariable UUID userId) {
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserById() {
+        UUID userId = AuthDetails.getCurrentUserId(); // ✅
         UserRes userRes = userService.getUserById(userId);
         return ResponseEntity.ok(userRes);
     }
 
-    @PutMapping("{userId}")
-    public ResponseEntity<?> updateUserById(@PathVariable UUID userId, @RequestBody UserReq userReq) {
+    @PutMapping("/me")
+    public ResponseEntity<?> updateUserById(@RequestBody UserReq userReq) {
+        UUID userId = AuthDetails.getCurrentUserId(); // ✅
         userService.updateUserById(userId, userReq);
         return ResponseEntity.ok("Update user success");
     }
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteUserById(@PathVariable UUID userId) {
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteUserById() {
+        UUID userId = AuthDetails.getCurrentUserId(); // ✅
         userService.deleteUserById(userId);
         return ResponseEntity.ok("Delete user success");
     }
 
-    @PutMapping("/{userId}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable UUID userId,
-                                            @RequestParam String oldPassword,
+    @PutMapping("/me/password")
+    public ResponseEntity<?> updatePassword(@RequestParam String oldPassword,
                                             @RequestParam String newPassword,
                                             @RequestParam String confirmPassword) {
+        UUID userId = AuthDetails.getCurrentUserId(); // ✅
         userService.updatePassword(userId, oldPassword, newPassword, confirmPassword);
         return ResponseEntity.ok("Update password success");
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
 }

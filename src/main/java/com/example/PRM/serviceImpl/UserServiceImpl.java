@@ -1,6 +1,7 @@
 package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.NotFoundException;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Service;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.UserService;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,5 +85,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUserName(username).orElseThrow(()
                 -> new NotFoundException("User not found with username: " + username));
         return userMapper.getInfo(user);
+    }
+
+    @Override
+    public List<UserAdminRes> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::mapToUserAdminRes)
+                .collect(Collectors.toList());
     }
 }
