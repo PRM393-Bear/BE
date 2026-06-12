@@ -18,6 +18,8 @@ import com.example.PRM.repository.RoleRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.util.JwtUtil;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl {
