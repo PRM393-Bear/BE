@@ -6,7 +6,12 @@ import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.UserMapper;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,7 +19,9 @@ import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.UserService;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +30,11 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final JavaMailSender mailSender;
+    private final StringRedisTemplate redisTemplate;
+
+    private static final String OTP_PREFIX   = "otp:";
+    private static final String TOKEN_PREFIX = "resetToken:";
 
 
 
@@ -93,5 +105,176 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(userMapper::mapToUserAdminRes)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void sendOtp(String email) {
+
+        // Kiểm tra email tồn tại
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+
+        // Tạo OTP 6 số
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        // Lưu Redis (5 phút)
+        redisTemplate.opsForValue()
+                .set(OTP_PREFIX + email, otp, 5, TimeUnit.MINUTES);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+
+            helper.setFrom("nguyenminhnguyen08112004@gmail.com");
+            helper.setTo(email);
+            helper.setSubject("ECO - Mã OTP đặt lại mật khẩu");
+
+            String html = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                </head>
+                <body style="
+                    margin:0;
+                    padding:0;
+                    background:#f4f6f8;
+                    font-family:Arial,sans-serif;
+                ">
+
+                <div style="
+                    max-width:600px;
+                    margin:40px auto;
+                    background:white;
+                    border-radius:12px;
+                    overflow:hidden;
+                    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+                ">
+
+                    <div style="
+                        background:#2e7d32;
+                        color:white;
+                        text-align:center;
+                        padding:24px;
+                    ">
+                        <h1 style="margin:0;">ECO</h1>
+                        <p style="margin-top:8px;">
+                            Password Reset Verification
+                        </p>
+                    </div>
+
+                    <div style="padding:32px;">
+
+                        <h2 style="color:#333;">
+                            Xin chào,
+                        </h2>
+
+                        <p style="
+                            color:#555;
+                            line-height:1.6;
+                        ">
+                            Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.
+                            Vui lòng sử dụng mã OTP bên dưới để tiếp tục:
+                        </p>
+
+                        <div style="
+                            margin:30px 0;
+                            text-align:center;
+                        ">
+                            <div style="
+                                display:inline-block;
+                                background:#e8f5e9;
+                                color:#2e7d32;
+                                font-size:36px;
+                                font-weight:bold;
+                                letter-spacing:10px;
+                                padding:20px 40px;
+                                border-radius:10px;
+                                border:2px dashed #2e7d32;
+                            ">
+                                %s
+                            </div>
+                        </div>
+
+                        <p style="
+                            color:#d32f2f;
+                            font-weight:bold;
+                        ">
+                            Mã OTP sẽ hết hạn sau 5 phút.
+                        </p>
+
+                        <p style="
+                            color:#555;
+                            line-height:1.6;
+                        ">
+                            Nếu bạn không thực hiện yêu cầu này,
+                            vui lòng bỏ qua email này.
+                        </p>
+
+                    </div>
+
+                    <div style="
+                        background:#f8f9fa;
+                        padding:20px;
+                        text-align:center;
+                        color:#888;
+                        font-size:12px;
+                    ">
+                        © 2026 ECO. All rights reserved.
+                    </div>
+
+                </div>
+
+                </body>
+                </html>
+                """.formatted(otp);
+
+            helper.setText(html, true);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email OTP", e);
+        }
+    }
+    @Override
+    public String verifyOtp(String email, String otp) {
+        String savedOtp = redisTemplate.opsForValue().get(OTP_PREFIX + email);
+
+        if (savedOtp == null) {
+            throw new RuntimeException("OTP đã hết hạn");
+        }
+        if (!savedOtp.equals(otp)) {
+            throw new RuntimeException("OTP không hợp lệ");
+        }
+
+        redisTemplate.delete(OTP_PREFIX + email);
+
+        String resetToken = UUID.randomUUID().toString();
+
+        redisTemplate.opsForValue().set(TOKEN_PREFIX + resetToken, email, 10, TimeUnit.MINUTES);
+
+        return resetToken;
+    }
+
+    @Override
+    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
+        String email = redisTemplate.opsForValue().get(TOKEN_PREFIX + resetToken);
+        if (email == null) {
+            throw new RuntimeException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        redisTemplate.delete(TOKEN_PREFIX + resetToken);
     }
 }
