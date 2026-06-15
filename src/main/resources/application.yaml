@@ -1,6 +1,24 @@
 spring:
   application:
     name: PRM
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  mail:
+    host: smtp-relay.brevo.com
+    port: 587
+    username: aebfda001@smtp-brevo.com
+    password: bskB55dVtLldf3Y
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   ai:
     ollama:
       base-url: http://localhost:11434
