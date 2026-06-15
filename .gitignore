@@ -20,7 +20,7 @@ target/
 *.ipr
 *.env
 *.application-dev.yaml
-src/main/resources/application.yaml
+src/main/resources/application-dev.yaml
 
 ### NetBeans ###
 /nbproject/private/
