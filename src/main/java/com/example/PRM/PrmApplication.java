@@ -1,5 +1,7 @@
 package com.example.PRM;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +18,14 @@ public class PrmApplication {
     @Bean
     public org.springframework.web.client.RestClient.Builder restClientBuilder() {
         return org.springframework.web.client.RestClient.builder();
+    }
+
+    @Value("${MAIL_HOST:NOT_FOUND}")
+    private String mailHost;
+
+    @PostConstruct
+    public void test() {
+        System.out.println("MAIL_HOST = " + mailHost);
     }
 
 }
