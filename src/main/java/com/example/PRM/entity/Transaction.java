@@ -1,5 +1,6 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,7 +46,4 @@ public class Transaction {
 
     private OffsetDateTime completedAt;
 
-    public enum TransactionStatus {
-        PENDING, PAYMENT_UPLOADED, PAYMENT_CONFIRMED, SHIPPING, RECEIVED, COMPLETED, CANCELLED
-    }
 }
