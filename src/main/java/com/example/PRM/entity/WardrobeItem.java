@@ -1,5 +1,7 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.AddedVia;
+import com.example.PRM.status_enum.WardrobeStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -46,7 +48,5 @@ public class WardrobeItem {
 
     private LocalDate acquiredAt;
 
-    public enum WardrobeStatus { OWNED, LISTED, SOLD, DONATED, DISPOSED }
-    public enum AddedVia { PURCHASE, UPLOAD }
 
 }

@@ -12,4 +12,5 @@ public interface ProductService {
     List<ProductRes> getAllProducts();
     ProductRes createProduct(ProductReq request);
     List<ProductRes> search(String category, Long maxPrice);
+
 }
