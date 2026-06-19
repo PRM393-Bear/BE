@@ -1,4 +1,5 @@
 package com.example.PRM.entity;
+import com.example.PRM.status_enum.DonationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -60,7 +61,4 @@ public class DonationRequest {
     @Column(columnDefinition = "TEXT")
     private String rejectedReason;
 
-    public enum DonationStatus {
-        PENDING, ACCEPTED, REJECTED, SHIPPING, SHIPPED, RECEIVED, COMPLETED
-    }
 }

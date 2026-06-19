@@ -39,12 +39,14 @@ public class AuthServiceImpl {
             throw new BadRequestException("Email đã tồn tại");
         }
 
+        Role role = roleRepository.findByRoleName(request.getRoleName().toUpperCase()).orElseThrow(()
+                -> new NotFoundException("Role not found with name: " + request.getRoleName()));
 
         User user = User.builder()
                 .userName(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .role(role)
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .build();
