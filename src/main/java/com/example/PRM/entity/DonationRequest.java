@@ -7,7 +7,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.cglib.core.Local;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,16 +38,15 @@ public class DonationRequest {
     @JoinColumn(name = "donation_event_id")
     private DonationEvent donationEvent;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_items_id")
-    private WardrobeItem wardrobeItem;
+    @OneToMany(mappedBy = "donationRequest")
+    private List<WardrobeItem> items = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
-    private List<String> images;
+    private List<String> images = new ArrayList<>();
 
     @Column(length = 50)
     private String trackingCode;
@@ -60,5 +62,20 @@ public class DonationRequest {
 
     @Column(columnDefinition = "TEXT")
     private String rejectedReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String cancelReason;
+
+    private LocalDateTime canceledAt;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    private LocalDateTime acceptedAt;
+
+    private LocalDateTime shippedAt;
+
+    private LocalDateTime completedAt;
 
 }

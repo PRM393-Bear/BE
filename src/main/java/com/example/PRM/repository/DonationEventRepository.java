@@ -1,0 +1,14 @@
+package com.example.PRM.repository;
+
+import com.example.PRM.entity.DonationEvent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface DonationEventRepository extends JpaRepository<DonationEvent, Long> {
+    Optional<DonationEvent> findByTitle(String title);
+    Optional<DonationEvent> findById(UUID donationEventId);
+}

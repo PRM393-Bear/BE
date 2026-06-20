@@ -1,5 +1,7 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.ProductStatus;
+import com.example.PRM.status_enum.ProductType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -77,6 +79,4 @@ public class Product {
         this.createdAt = OffsetDateTime.now();
     }
 
-    public enum ProductType { ITEM, BUNDLE }
-    public enum ProductStatus { AVAILABLE, SOLD, DONATED, HIDDEN }
 }

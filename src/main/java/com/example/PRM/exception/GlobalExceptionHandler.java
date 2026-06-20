@@ -1,13 +1,14 @@
 package com.example.PRM.exception;
 
 import com.example.PRM.dto.response.ErrorResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
-
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
@@ -22,9 +23,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+
         ex.printStackTrace();
+
         return ResponseEntity.status(500).body(
-                new ErrorResponse(500, "Internal server error", LocalDateTime.now())
+                new ErrorResponse(
+                        500,
+                        ex.getClass().getName(),
+                        LocalDateTime.now()
+                )
         );
     }
 
@@ -68,5 +75,41 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(401).body(
                 new ErrorResponse(401, ex.getMessage(), LocalDateTime.now())
         );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        403,
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException ex) {
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        401,
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(
+            AuthorizationDeniedException ex) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        403,
+                        "Access Denied",
+                        LocalDateTime.now()
+                ));
     }
 }
