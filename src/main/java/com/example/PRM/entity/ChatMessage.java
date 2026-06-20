@@ -1,5 +1,6 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.MessageStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.OffsetDateTime;
