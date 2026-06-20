@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.Length;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -43,6 +44,9 @@ public class Product {
 
     private Short condition;
 
+    @Column(length = 100)
+    private String brand;
+
     private Long price;
 
     @Column(length = 20)
@@ -67,6 +71,10 @@ public class Product {
 
     @Column(updatable = false)
     private OffsetDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "shop_id")
+    private Shop shop;
 
     @PrePersist
     public void prePersist() {

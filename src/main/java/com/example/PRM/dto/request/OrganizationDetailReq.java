@@ -1,31 +1,20 @@
-package com.example.PRM.entity;
+package com.example.PRM.dto.request;
 
-import jakarta.persistence.*;
-import lombok.Getter;
+import com.example.PRM.entity.User;
+import jakarta.persistence.Column;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
-@Entity
-@Table(name = "organization_detail")
-@Getter
-@Setter
+@Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class Organization {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
-    private User user;
-
+public class OrganizationDetailReq {
     @Column(length = 150)
     private String orgName;
 
@@ -51,6 +40,4 @@ public class Organization {
 
     private Boolean isVerified = false;
 
-    private Integer totalDonationReceived = 0;
 }
-

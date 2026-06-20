@@ -1,5 +1,6 @@
 package com.example.PRM.controller;
 
+import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
 import com.example.PRM.dto.response.ProductRes;
 import com.example.PRM.service.ProductService;
@@ -32,5 +33,37 @@ public class ProductController {
     public ResponseEntity<ProductRes> createProduct(@RequestBody ProductReq request) {
         ProductRes created = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/search-by-keyword")
+    public ResponseEntity<List<ProductRes>> searchByKeyword(@RequestParam("keyword") String keyword) {
+        return ResponseEntity.ok(productService.searchProductByKeyword(keyword));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductRes> updateProduct(
+            @PathVariable UUID id,
+            @RequestBody ProductReq request
+    ) {
+        ProductRes updated = productService.updateProduct(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/user/product")
+    public ResponseEntity<List<ProductRes>> getProductsByUserId(@RequestParam("userId") UUID userId) {
+        List<ProductRes> products = productService.getProductsByUserId(userId);
+        return ResponseEntity.ok(products);
+    }
+
+    @PutMapping("/hide")
+    public ResponseEntity<ProductRes> hideProduct(@RequestParam("productId") UUID id) {
+        ProductRes hiddenProduct = productService.hideProduct(id);
+        return ResponseEntity.ok(hiddenProduct);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ProductRes>> filterProducts(ProductFilterReq filter) {
+        List<ProductRes> results = productService.filterProducts(filter);
+        return ResponseEntity.ok(results);
     }
 }

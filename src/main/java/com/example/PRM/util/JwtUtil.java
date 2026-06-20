@@ -1,5 +1,8 @@
 package com.example.PRM.util;
 
+import com.example.PRM.entity.User;
+import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -11,9 +14,12 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
+
+    private final UserRepository userRepository;
 
     @Value("${app.jwt.secret}")
     private String secret;
@@ -21,13 +27,21 @@ public class JwtUtil {
     @Value("${app.jwt.expiration}")
     private long expiration;
 
+    public JwtUtil(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(UserDetails userDetails) {
+        User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+                -> new NotFoundException("User username not fount with " + userDetails.getUsername())); // cast sang class User của bạn
+
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("userId", user.getUserId().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -54,4 +68,15 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public UUID getUserIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return UUID.fromString(claims.get("userId", String.class)); // UUID lưu dạng String trong JWT
+    }
+
 }

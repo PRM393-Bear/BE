@@ -1,4 +1,5 @@
 package com.example.PRM.entity;
+import com.example.PRM.status_enum.DonationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class DonationRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_detail_id", nullable = false)
-    private Organization organization;
+    private OrganizationDetail organizationDetail;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "donation_event_id")
@@ -60,7 +61,4 @@ public class DonationRequest {
     @Column(columnDefinition = "TEXT")
     private String rejectedReason;
 
-    public enum DonationStatus {
-        PENDING, ACCEPTED, REJECTED, SHIPPING, SHIPPED, RECEIVED, COMPLETED
-    }
 }

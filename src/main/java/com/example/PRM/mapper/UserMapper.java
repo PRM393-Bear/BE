@@ -1,6 +1,7 @@
 package com.example.PRM.mapper;
 
 import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.entity.User;
 import org.springframework.stereotype.Component;
@@ -17,14 +18,18 @@ public class UserMapper {
         return userRes;
     }
 
-    public UserReq mapToUserReq(User user) {
-        UserReq userReq = new UserReq();
-        userReq.setEmail(user.getEmail());
-        userReq.setPassword(user.getPassword());
-        userReq.setPhone(user.getPhone());
-        userReq.setUsername(user.getUserName());
-        userReq.setFullName(user.getFullName());
-        return userReq;
+    public UserAdminRes mapToUserAdminRes(User user) {
+        UserAdminRes uAR = new UserAdminRes();
+
+        uAR.setEmail(user.getEmail());
+        uAR.setPhone(user.getPhone());
+        uAR.setFullName(user.getFullName());
+        uAR.setUserName(user.getUserName());
+        uAR.setLogoUrl(user.getLogoUrl());
+        uAR.setRole(user.getRole());
+        uAR.setUserId(user.getUserId());
+
+        return uAR;
     }
 
     public UserRes getInfo(User user) {
