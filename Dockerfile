@@ -2,11 +2,16 @@
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy the pom.xml and source code
+# Copy only the pom.xml first to cache dependencies
 COPY pom.xml .
+
+# Download dependencies (this layer will be cached unless pom.xml changes)
+RUN mvn dependency:go-offline -B
+
+# Copy the source code
 COPY src ./src
 
-# Build the application, skipping tests to speed up deployment
+# Build the application, skipping tests
 RUN mvn clean package -DskipTests
 
 # Stage 2: Run the application
