@@ -8,7 +8,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DonationRequestReq {
-    private String DonationEventName;
-    private String Description;
+    private String donationEventName;
 
+    private String description;
+
+    private String imageUrl;
+
+    private String organizationName;
+
+    private String itemName;
+
+    private String trackingCode;
 }

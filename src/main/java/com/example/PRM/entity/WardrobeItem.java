@@ -48,5 +48,9 @@ public class WardrobeItem {
 
     private LocalDate acquiredAt;
 
+    @ManyToOne
+    @JoinColumn(name = "donation_request_id")
+    private DonationRequest donationRequest;
+
 
 }

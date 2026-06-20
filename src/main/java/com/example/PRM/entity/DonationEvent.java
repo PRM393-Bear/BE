@@ -1,5 +1,6 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.EventStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -59,5 +60,4 @@ public class DonationEvent {
     @Column(columnDefinition = "TEXT")
     private String bannerUrl;
 
-    public enum EventStatus { UPCOMING, ONGOING, COMPLETED, CANCELLED }
 }

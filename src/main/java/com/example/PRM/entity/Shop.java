@@ -33,6 +33,8 @@ public class Shop {
     @Column(length = 20)
     private String phone;
 
+    private String avtShop;
+
     @Column(nullable = false)
     private Boolean isVerified = false;
 

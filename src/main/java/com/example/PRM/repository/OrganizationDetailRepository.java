@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface OrganizationDetailRepository extends JpaRepository<OrganizationDetail,Long> {
     Optional<OrganizationDetail> findById(UUID organizationDetailId);
+
+    Optional<OrganizationDetail> findByOrOrgName(String orgName);
 }

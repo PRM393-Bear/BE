@@ -33,7 +33,7 @@ public class InitialzerAdmin implements CommandLineRunner{
                     .userName("admin")
                     .password(passwordEncoder.encode("admin123@"))
                     .fullName("Tống Ngọc Anh Tài")
-                    .email("taitnase181719@fpt.com")
+                    .email("nguyennmse184571@fpt.com")
                     .phone("0909000000")
                     .role(adminRole)
                     .build();

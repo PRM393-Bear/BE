@@ -65,8 +65,11 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
         WardrobeItem wardrobeItem = wardrobeItemRepository.findById(wardrobeItemId).orElseThrow(()
                 -> new NotFoundException("Wardrobe item not found with id: " + wardrobeItemId));
-        wardrobeItemRepository.delete(wardrobeItem);
-
+        if(!wardrobeItem.getUser().getUserName().equals(user.getUserName())){
+            throw new IllegalArgumentException("You are not authorized to delete this wardrobe item");
+        }
+        wardrobeItem.setStatus(WardrobeStatus.DISPOSED);
+        wardrobeItemRepository.save(wardrobeItem);
     }
 
     @Override
