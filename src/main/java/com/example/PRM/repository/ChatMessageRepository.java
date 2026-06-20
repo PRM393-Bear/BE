@@ -1,6 +1,7 @@
 package com.example.PRM.repository;
 
 import com.example.PRM.entity.ChatMessage;
+import com.example.PRM.status_enum.MessageStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
@@ -14,5 +15,5 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
 
     @Modifying
     @Query("UPDATE ChatMessage m SET m.status = :newStatus WHERE m.room.id = :roomId AND m.sender.userId = :senderId AND m.status = :oldStatus")
-    int markMessagesAsRead(@Param("roomId") UUID roomId, @Param("senderId") UUID senderId, @Param("oldStatus") com.example.PRM.entity.MessageStatus oldStatus, @Param("newStatus") com.example.PRM.entity.MessageStatus newStatus);
+    int markMessagesAsRead(@Param("roomId") UUID roomId, @Param("senderId") UUID senderId, @Param("oldStatus") MessageStatus oldStatus, @Param("newStatus") MessageStatus newStatus);
 }

@@ -9,6 +9,7 @@ import com.example.PRM.entity.User;
 import com.example.PRM.repository.ChatMessageRepository;
 import com.example.PRM.repository.ChatRoomRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.status_enum.MessageStatus;
 import com.example.PRM.util.AuthDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -80,7 +81,7 @@ public class MessageController {
         User sender = userRepository.findByUserId(req.getSenderId()).orElseThrow();
 
         // Tìm tất cả các tin nhắn do sender gửi trong phòng này mà trạng thái đang là SENT
-        int updatedCount = chatMessageRepository.markMessagesAsRead(req.getRoomId(), sender.getUserId(), com.example.PRM.entity.MessageStatus.SENT, com.example.PRM.entity.MessageStatus.READ);
+        int updatedCount = chatMessageRepository.markMessagesAsRead(req.getRoomId(), sender.getUserId(), MessageStatus.SENT, MessageStatus.READ);
 
         if (updatedCount > 0) {
             // Gửi thông báo lại cho người gửi (sender) biết là reader đã đọc tin nhắn của phòng này
