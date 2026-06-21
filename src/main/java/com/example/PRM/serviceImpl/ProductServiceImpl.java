@@ -114,6 +114,7 @@ public class ProductServiceImpl implements ProductService {
         product.setColor(request.getColor());
         product.setImages(request.getImages());
         product.setAiTags(request.getAiTags());
+        product.setStatus(request.getStatus());
 
         if (request.getLifecycleGeneration() != null) {
             product.setLifecycleGeneration(request.getLifecycleGeneration());

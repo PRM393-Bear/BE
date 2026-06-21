@@ -1,5 +1,6 @@
 package com.example.PRM.dto.request;
 
+import com.example.PRM.entity.Product;
 import com.example.PRM.entity.Product.ProductType;
 import lombok.Data;
 
@@ -18,4 +19,5 @@ public class ProductReq {
     private List<String> images;
     private List<String> aiTags;
     private Short lifecycleGeneration;
+    private Product.ProductStatus status;
 }
