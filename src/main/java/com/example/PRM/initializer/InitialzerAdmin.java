@@ -36,6 +36,7 @@ public class InitialzerAdmin implements CommandLineRunner{
                     .email("nguyennmse184571@fpt.com")
                     .phone("0909000000")
                     .role(adminRole)
+                    .isVerified(true)
                     .build();
 
             userRepository.save(admin);

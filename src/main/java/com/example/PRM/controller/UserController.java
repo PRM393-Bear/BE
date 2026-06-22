@@ -3,6 +3,7 @@ package com.example.PRM.controller;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.service.UserService;
+import com.example.PRM.status_enum.OtpPurpose;
 import com.example.PRM.util.AuthDetails;
 import jakarta.mail.MessagingException;
 import org.springframework.http.ResponseEntity;
@@ -55,15 +56,28 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password/send-otp")
-    public ResponseEntity<?> sendOtp(@RequestParam String email){
-        userService.sendOtp(email);
+    public ResponseEntity<?> sendOtp(@RequestParam String email,
+                                     @RequestParam OtpPurpose otpPurpose){
+        userService.sendOtp(email, otpPurpose);
         return ResponseEntity.ok("OTP đã được gửi đến email " + email);
     }
 
     @PostMapping("/forgot-password/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestParam String email,
-                                       @RequestParam String otp) {
-        String resetToken = userService.verifyOtp(email, otp);
+                                       @RequestParam String otp,
+                                       @RequestParam OtpPurpose otpPurpose) {
+
+        String resetToken = userService.verifyOtp(email, otp, otpPurpose);
+
+        switch (otpPurpose) {
+            case REGISTER -> {
+                return ResponseEntity.ok("Verify success, please login!!");
+            }
+
+            case FORGOT_PASSWORD -> {
+                return ResponseEntity.ok("Verify success, please reset your password!!");
+            }
+        }
         return ResponseEntity.ok(resetToken);
     }
 

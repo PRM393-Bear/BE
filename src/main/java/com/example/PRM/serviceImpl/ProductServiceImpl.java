@@ -11,6 +11,7 @@ import com.example.PRM.mapper.ProductMapper;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.ProductService;
+import com.example.PRM.status_enum.ProductStatus;
 import com.example.PRM.util.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -140,7 +141,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found product with id: " + id));
 
-        product.setStatus(Product.ProductStatus.HIDDEN);
+        product.setStatus(ProductStatus.HIDDEN);
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
 

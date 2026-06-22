@@ -7,6 +7,7 @@ import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.status_enum.OtpPurpose;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,6 +31,7 @@ public class AuthServiceImpl {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+    private final UserServiceImpl userService;
 
     public void registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
@@ -49,9 +51,11 @@ public class AuthServiceImpl {
                 .role(role)
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
+                .isVerified(false)
                 .build();
 
         userRepository.save(user);
+        userService.sendOtp(user.getEmail(), OtpPurpose.REGISTER);
     }
 
     public AuthRes login(LoginReq request) {
