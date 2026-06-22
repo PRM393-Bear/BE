@@ -3,6 +3,7 @@ package com.example.PRM.serviceImpl;
 import com.example.PRM.dto.request.LoginReq;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.AuthRes;
+import com.example.PRM.entity.RefreshToken;
 import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
@@ -19,8 +20,6 @@ import com.example.PRM.repository.RoleRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.util.JwtUtil;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl {
@@ -32,6 +31,7 @@ public class AuthServiceImpl {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
     private final UserServiceImpl userService;
+    private final RefreshTokenServiceImpl refreshTokenService;
 
     public void registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
@@ -69,7 +69,12 @@ public class AuthServiceImpl {
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        String token = jwtUtil.generateToken(userDetails);
-        return new AuthRes(token);
+        User user = userRepository.findByUserName(request.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        String accessToken = jwtUtil.generateToken(userDetails);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return new AuthRes(accessToken, refreshToken.getToken());
     }
 }
