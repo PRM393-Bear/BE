@@ -14,6 +14,7 @@ public class OrganizationDetailMapper {
         res.setLatitude(od.getLatitude());
         res.setLongitude(od.getLongitude());
         res.setOrgName(od.getOrgName());
+        res.setAvtOrg(od.getAvtOrg());
         return res;
     }
 
@@ -24,6 +25,7 @@ public class OrganizationDetailMapper {
         od.setLatitude(req.getLatitude());
         od.setLongitude(req.getLongitude());
         od.setOrgName(req.getOrgName());
+        od.setAvtOrg(req.getAvtOrg());
         return od;
     }
 }

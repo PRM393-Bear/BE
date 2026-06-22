@@ -4,8 +4,10 @@ import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.entity.User;
+import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.UserMapper;
+import com.example.PRM.status_enum.OtpPurpose;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +21,10 @@ import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.UserService;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -108,18 +112,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendOtp(String email) {
+    public void sendOtp(String email, OtpPurpose otpPurpose) {
 
-        // Kiểm tra email tồn tại
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+        String otp = String.format("%06d",
+                ThreadLocalRandom.current().nextInt(100000, 1000000));
 
-        // Tạo OTP 6 số
-        String otp = String.format("%06d", new Random().nextInt(999999));
-
-        // Lưu Redis (5 phút)
-        redisTemplate.opsForValue()
-                .set(OTP_PREFIX + email, otp, 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(
+                OTP_PREFIX + otpPurpose + ":" + email,
+                otp,
+                5,
+                TimeUnit.MINUTES
+        );
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -239,23 +242,55 @@ public class UserServiceImpl implements UserService {
         }
     }
     @Override
-    public String verifyOtp(String email, String otp) {
-        String savedOtp = redisTemplate.opsForValue().get(OTP_PREFIX + email);
+    public String verifyOtp(
+            String email,
+            String otp,
+            OtpPurpose purpose) {
+
+        String key = OTP_PREFIX + purpose + ":" + email;
+
+        String savedOtp = redisTemplate.opsForValue().get(key);
 
         if (savedOtp == null) {
-            throw new RuntimeException("OTP đã hết hạn");
+            throw new BadRequestException("OTP đã hết hạn");
         }
+
         if (!savedOtp.equals(otp)) {
-            throw new RuntimeException("OTP không hợp lệ");
+            throw new BadRequestException("OTP không chính xác");
         }
 
-        redisTemplate.delete(OTP_PREFIX + email);
+        redisTemplate.delete(key);
 
-        String resetToken = UUID.randomUUID().toString();
+        switch (purpose) {
 
-        redisTemplate.opsForValue().set(TOKEN_PREFIX + resetToken, email, 10, TimeUnit.MINUTES);
+            case REGISTER -> {
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new NotFoundException("User not found"));
 
-        return resetToken;
+                user.setVerified(true);
+                userRepository.save(user);
+
+                return null;
+            }
+
+            case FORGOT_PASSWORD -> {
+                String resetToken = UUID.randomUUID().toString();
+
+                redisTemplate.opsForValue().set(
+                        "reset-token:" + resetToken,
+                        email,
+                        10,
+                        TimeUnit.MINUTES
+                );
+
+                return resetToken;
+            }
+
+            default -> {
+                return null;
+            }
+        }
     }
 
     @Override

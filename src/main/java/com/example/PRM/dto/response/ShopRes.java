@@ -28,4 +28,6 @@ public class ShopRes {
 
     @Column(precision = 12, scale = 8)
     private BigDecimal longitude;
+
+    private String avtShop;
 }

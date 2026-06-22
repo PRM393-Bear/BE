@@ -4,6 +4,7 @@ import com.example.PRM.dto.request.ProductReq;
 import com.example.PRM.dto.response.ProductRes;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
+import com.example.PRM.status_enum.ProductStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,7 +47,7 @@ public class ProductMapper {
         product.setColor(req.getColor());
         product.setImages(req.getImages());
         product.setAiTags(req.getAiTags());
-        product.setStatus(Product.ProductStatus.AVAILABLE);
+        product.setStatus(ProductStatus.AVAILABLE);
         product.setLifecycleGeneration(
                 req.getLifecycleGeneration() != null ? req.getLifecycleGeneration() : (short) 1
         );

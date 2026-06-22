@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface WardrobeItemRepository extends JpaRepository<WardrobeItem, Long> {
     Optional<WardrobeItem> findById(UUID wardrobeItemId);
+    Optional<WardrobeItem> findByName(String name);
 }

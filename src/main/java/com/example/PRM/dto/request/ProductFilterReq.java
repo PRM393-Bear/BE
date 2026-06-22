@@ -1,6 +1,7 @@
 package com.example.PRM.dto.request;
 
 import com.example.PRM.entity.Product;
+import com.example.PRM.status_enum.ProductType;
 import lombok.Data;
 
 @Data
@@ -13,7 +14,7 @@ public class ProductFilterReq {
     private String size;
     private String color;
     private String location;
-    private Product.ProductType type;
+    private ProductType type;
     private String sortBy;
 
 }

@@ -56,5 +56,7 @@ public class OrganizationDetail {
 
     @OneToMany(mappedBy = "organization")
     private List<Order> orders = new ArrayList<>();
+
+    private String avtOrg;
 }
 

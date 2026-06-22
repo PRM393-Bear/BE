@@ -1,7 +1,7 @@
 package com.example.PRM.dto.response;
 
-import com.example.PRM.entity.Product.ProductStatus;
-import com.example.PRM.entity.Product.ProductType;
+import com.example.PRM.status_enum.ProductStatus;
+import com.example.PRM.status_enum.ProductType;
 import lombok.Data;
 
 import java.time.OffsetDateTime;

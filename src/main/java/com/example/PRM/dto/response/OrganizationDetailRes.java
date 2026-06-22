@@ -25,4 +25,6 @@ public class OrganizationDetailRes {
 
     @Column(precision = 10, scale = 8)
     private BigDecimal longitude;
+
+    private String avtOrg;
 }

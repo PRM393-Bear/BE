@@ -15,6 +15,7 @@ public class ShopMapper {
         shopRes.setLongitude(shop.getLongitude());
         shopRes.setLatitude(shop.getLatitude());
         shopRes.setDescription(shop.getDescription());
+        shopRes.setAvtShop(shop.getAvtShop());
         return shopRes;
     }
 
@@ -26,6 +27,7 @@ public class ShopMapper {
         shop.setLongitude(shopReq.getLongitude());
         shop.setLatitude(shopReq.getLatitude());
         shop.setDescription(shopReq.getDescription());
+        shop.setAvtShop(shopReq.getAvtShop());
         return shop;
     }
 }
