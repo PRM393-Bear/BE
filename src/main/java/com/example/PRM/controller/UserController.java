@@ -75,10 +75,10 @@ public class UserController {
             }
 
             case FORGOT_PASSWORD -> {
-                return ResponseEntity.ok("Verify success, please reset your password!!");
+                return ResponseEntity.ok(resetToken);
             }
         }
-        return ResponseEntity.ok(resetToken);
+        return ResponseEntity.badRequest().body("Invalid OTP");
     }
 
     @PostMapping("/forgot-password/reset-password")

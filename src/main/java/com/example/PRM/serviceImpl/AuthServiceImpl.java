@@ -8,6 +8,7 @@ import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.status_enum.OtpPurpose;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +33,7 @@ public class AuthServiceImpl {
     private final UserDetailsServiceImpl userDetailsService;
     private final UserServiceImpl userService;
     private final RefreshTokenServiceImpl refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public void registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
@@ -68,12 +70,14 @@ public class AuthServiceImpl {
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
         }
 
+
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         String accessToken = jwtUtil.generateToken(userDetails);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
+                .orElseGet(() -> refreshTokenService.createRefreshToken(user));
 
         return new AuthRes(accessToken, refreshToken.getToken());
     }
