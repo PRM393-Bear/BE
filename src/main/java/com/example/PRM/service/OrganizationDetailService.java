@@ -5,6 +5,7 @@ import com.example.PRM.dto.response.OrganizationDetailRes;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface OrganizationDetailService {
@@ -12,5 +13,10 @@ public interface OrganizationDetailService {
     void updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq);
     void deleteOrganizationDetail(UUID organizationId, UserDetails userDetails);
     OrganizationDetailRes getOrganizationDetail(UUID organizationId);
+
+    List<OrganizationDetailRes> getAllOrganizations();
+    List<OrganizationDetailRes> getPendingOrganizations();
+    void approveOrganization(UUID organizationId);
+    void rejectOrganization(UUID organizationId);
 
 }
