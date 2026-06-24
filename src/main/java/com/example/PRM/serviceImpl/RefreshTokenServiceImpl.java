@@ -46,7 +46,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             throw new BadRequestException("Refresh token đã hết hạn, vui lòng đăng nhập lại");
         }
 
-        // Xóa cũ, tạo mới → sliding 7 ngày
+        refreshTokenRepository.delete(token);           // ← thêm dòng này
+        refreshTokenRepository.flush();                 // ← flush để xóa trước khi insert
         return createRefreshToken(token.getUser());
     }
 
