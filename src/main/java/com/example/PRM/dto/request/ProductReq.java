@@ -22,4 +22,5 @@ public class ProductReq {
     private List<String> aiTags;
     private Short lifecycleGeneration;
     private ProductStatus status;
+    private String brand;
 }
