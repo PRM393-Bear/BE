@@ -1,5 +1,6 @@
 package com.example.PRM.entity;
 
+import com.example.PRM.status_enum.VerificationOrganizationStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,13 +45,14 @@ public class OrganizationDetail {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
-    private List<String> acceptedTypes;
+    private List<String> acceptedTypes = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private List<String> verificationDocs;
 
-    private Boolean isVerified = false;
+    @Enumerated(EnumType.STRING)
+    private VerificationOrganizationStatus status = VerificationOrganizationStatus.PENDING;
 
     private Integer totalDonationReceived = 0;
 

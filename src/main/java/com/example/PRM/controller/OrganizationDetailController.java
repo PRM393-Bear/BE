@@ -6,10 +6,12 @@ import com.example.PRM.service.OrganizationDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -57,5 +59,29 @@ public class OrganizationDetailController {
                 organizationDetailService.getOrganizationDetail(id);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrganizationDetailRes>> getAllOrganizations() {
+        return ResponseEntity.ok(organizationDetailService.getAllOrganizations());
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<OrganizationDetailRes>> getPendingOrganizations() {
+        return ResponseEntity.ok(organizationDetailService.getPendingOrganizations());
+    }
+
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> approveOrganization(@PathVariable UUID id) {
+        organizationDetailService.approveOrganization(id);
+        return ResponseEntity.ok("Organization approved successfully");
+    }
+
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> rejectOrganization(@PathVariable UUID id) {
+        organizationDetailService.rejectOrganization(id);
+        return ResponseEntity.ok("Organization rejected successfully");
     }
 }

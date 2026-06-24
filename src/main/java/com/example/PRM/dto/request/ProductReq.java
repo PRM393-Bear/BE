@@ -3,6 +3,7 @@ package com.example.PRM.dto.request;
 
 import com.example.PRM.status_enum.ProductStatus;
 import com.example.PRM.status_enum.ProductType;
+
 import lombok.Data;
 
 import java.util.List;

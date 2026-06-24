@@ -1,5 +1,4 @@
 package com.example.PRM.initializer;
-
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
 import com.example.PRM.repository.ProductRepository;
@@ -40,11 +39,11 @@ public class InitializerProduct implements CommandLineRunner {
         // ════════════════════════════════════
         createProduct(seller, "White Cotton T-Shirt", "Soft cotton t-shirt, comfortable everyday wear.",
                 "top", ProductType.ITEM, (short) 9, 80000L, "L", "white",
-                imgs("white-tshirt-1.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782197343/prm/products/mnguyen0811/file_igmcxm.webp"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Black Oversize Tee", "Trendy oversized black t-shirt.",
                 "top", ProductType.ITEM, (short) 9, 95000L, "L", "black",
-                imgs("black-tee-1.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782197482/prm/products/mnguyen0811/file_e67wuz.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Navy Striped Shirt", "Office-ready navy striped button-up.",
                 "top", ProductType.ITEM, (short) 8, 250000L, "M", "navy",
@@ -207,15 +206,15 @@ public class InitializerProduct implements CommandLineRunner {
 
         createProduct(seller, "Cream Wide Trousers", "Flowy cream wide-leg trousers.",
                 "bottom", ProductType.ITEM, (short) 8, 280000L, "M", "cream",
-                imgs("cream-trousers-1.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782197728/prm/products/mnguyen0811/file_sitnme.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Navy Swim Shorts", "Quick-dry navy swim shorts.",
                 "bottom", ProductType.ITEM, (short) 9, 150000L, "M", "navy",
-                imgs("navy-swim-1.jpg"), tags("beach", "sport"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198067/prm/products/mnguyen0811/file_wdyb8b.jpg"), tags("beach", "sport"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "White Linen Shorts", "Breezy white linen shorts.",
                 "bottom", ProductType.ITEM, (short) 8, 170000L, "M", "white",
-                imgs("white-linen-shorts-1.jpg"), tags("beach", "casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198031/prm/products/mnguyen0811/file_a978w3.jpg"), tags("beach", "casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Gray Pencil Skirt", "Office-ready gray pencil skirt.",
                 "bottom", ProductType.ITEM, (short) 8, 230000L, "S", "gray",
@@ -270,7 +269,7 @@ public class InitializerProduct implements CommandLineRunner {
 
         createProduct(seller, "White Canvas Shoes", "Lightweight white canvas shoes.",
                 "shoes", ProductType.ITEM, (short) 8, 250000L, "40", "white",
-                imgs("white-canvas-1.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198111/prm/products/mnguyen0811/file_xfjono.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Brown Loafers", "Classic brown leather loafers.",
                 "shoes", ProductType.ITEM, (short) 8, 550000L, "42", "brown",

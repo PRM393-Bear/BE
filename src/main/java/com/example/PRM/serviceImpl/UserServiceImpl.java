@@ -249,6 +249,8 @@ public class UserServiceImpl implements UserService {
 
         String key = OTP_PREFIX + purpose + ":" + email;
 
+        System.out.println("Find key = " + key);
+
         String savedOtp = redisTemplate.opsForValue().get(key);
 
         if (savedOtp == null) {
@@ -278,7 +280,7 @@ public class UserServiceImpl implements UserService {
                 String resetToken = UUID.randomUUID().toString();
 
                 redisTemplate.opsForValue().set(
-                        "reset-token:" + resetToken,
+                        "resetToken:" + resetToken,
                         email,
                         10,
                         TimeUnit.MINUTES
@@ -296,6 +298,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
         String email = redisTemplate.opsForValue().get(TOKEN_PREFIX + resetToken);
+        System.out.println("Email = " + email);
         if (email == null) {
             throw new RuntimeException("Token không hợp lệ hoặc đã hết hạn");
         }
