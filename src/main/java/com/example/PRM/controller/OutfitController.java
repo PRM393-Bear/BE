@@ -24,7 +24,7 @@ public class OutfitController {
 
     private final RestTemplate restTemplate;
     private final UploadService uploadService;
-    private static final String AI_BASE_URL = "http://localhost:8000/api";
+    private static final String AI_BASE_URL = "http://brave-blessing-server.up.railway.app/api";
 
     private UUID getUserId(Authentication authentication) {
         UsernamePasswordAuthenticationToken authToken =

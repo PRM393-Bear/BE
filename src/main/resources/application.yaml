@@ -64,6 +64,10 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION}
+  refresh-token:
+    expiration-days: 7
+  mail:
+    from: nguyenminhnguyen08112004@gmail.com
 
 springdoc:
   swagger-ui:
