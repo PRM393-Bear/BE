@@ -13,16 +13,19 @@ import java.util.UUID;
 @Entity
 @Data
 @Table(name = "orders")
-public class Order { // Order là đơn đặt hàng
+public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Người đặt hàng
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "buyer_id", nullable = false)
+    private User buyer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private User seller;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
@@ -33,6 +36,12 @@ public class Order { // Order là đơn đặt hàng
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(length = 100)
+    private String trackingCode;
 
     @OneToMany(
             mappedBy = "order",
@@ -45,8 +54,14 @@ public class Order { // Order là đơn đặt hàng
     @JoinColumn(name = "organization_id")
     private OrganizationDetail organization;
 
-    @ManyToOne
-    @JoinColumn(name = "shop_id")
-    private Shop shop;
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
