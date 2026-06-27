@@ -65,7 +65,7 @@ app:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION}
   refresh-token:
-    expiration-days: 7
+    expiration-days: ${RFT_EXPIRATION}
   mail:
     from: nguyenminhnguyen08112004@gmail.com
 
