@@ -1,6 +1,5 @@
 spring:
-  profiles:
-    active: dev
+
   application:
     name: PRM
 
@@ -80,6 +79,3 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   folder: prm/products
-outfit-service:
-  base-url: http://localhost:8000   # đổi thành URL thật của Python FastAPI service khi deploy
-  internal-api-key: ${OUTFIT_INTERNAL_API_KEY}
