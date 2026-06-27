@@ -142,11 +142,11 @@ public class InitializerProduct implements CommandLineRunner {
         // ════════════════════════════════════
         createProduct(seller, "Black Slim Trousers", "Slim fit black trousers for office.",
                 "bottom", ProductType.ITEM, (short) 9, 320000L, "32", "black",
-                imgs("black-trousers-1.jpg"), tags("office", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442338/prm/products/taitna/file_lpynq5.webp"), tags("office", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Blue Denim Jeans", "Classic straight-leg blue jeans.",
                 "bottom", ProductType.ITEM, (short) 8, 280000L, "32", "denim",
-                imgs("blue-jeans-1.jpg"), tags("casual", "date", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442376/prm/products/taitna/file_cioftu.webp"), tags("casual", "date", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Gray Dress Pants", "Tailored gray dress pants.",
                 "bottom", ProductType.ITEM, (short) 9, 310000L, "32", "gray",
@@ -293,7 +293,7 @@ public class InitializerProduct implements CommandLineRunner {
 
         createProduct(seller, "White Flip Flops", "Simple white flip flops for the beach.",
                 "shoes", ProductType.ITEM, (short) 9, 90000L, "40", "white",
-                imgs("white-flipflops-1.jpg"), tags("beach", "casual"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442411/prm/products/taitna/file_nonmyf.webp"), tags("beach", "casual"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Navy Boat Shoes", "Classic navy boat shoes.",
                 "shoes", ProductType.ITEM, (short) 8, 420000L, "42", "navy",
@@ -352,7 +352,7 @@ public class InitializerProduct implements CommandLineRunner {
 
         createProduct(seller, "Black Leather Belt", "Classic black leather belt.",
                 "accessory", ProductType.ITEM, (short) 9, 180000L, "ONE", "black",
-                imgs("black-belt-1.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
+                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442438/prm/products/taitna/file_idgepx.webp"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
 
         createProduct(seller, "Navy Silk Scarf", "Luxurious navy silk scarf.",
                 "accessory", ProductType.ITEM, (short) 8, 140000L, "ONE", "navy",
@@ -466,10 +466,8 @@ public class InitializerProduct implements CommandLineRunner {
     // Helpers
     // ─────────────────────────────────────────
 
-    private List<String> imgs(String... fileNames) {
-        return List.of(fileNames).stream()
-                .map(f -> "https://example.com/images/" + f)
-                .toList();
+    private List<String> imgs(String... urls) {
+        return List.of(urls);
     }
 
     private List<String> tags(String... tags) {
