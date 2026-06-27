@@ -55,15 +55,14 @@ public class OrderServiceImpl implements OrderService {
         order.setCreatedAt(LocalDateTime.now());
 
         BigDecimal unitPrice = BigDecimal.valueOf(product.getPrice());
-        BigDecimal subTotal = unitPrice.multiply(BigDecimal.valueOf(req.getQuantity()));
-        order.setTotalAmount(subTotal);
+        order.setTotalAmount(unitPrice);
 
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
         orderItem.setProduct(product);
-        orderItem.setQuantity(req.getQuantity());
+        orderItem.setQuantity(1);
         orderItem.setUnitPrice(unitPrice);
-        orderItem.setSubtotal(subTotal);
+        orderItem.setSubtotal(unitPrice);
 
         order.getOrderItems().add(orderItem);
 
