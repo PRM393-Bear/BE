@@ -1,6 +1,9 @@
 package com.example.PRM.service;
 
+import com.example.PRM.dto.request.DonationRequestCustomReq;
 import com.example.PRM.dto.request.DonationRequestReq;
+import com.example.PRM.dto.request.ReceivedReq;
+import com.example.PRM.dto.request.ShippingReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.entity.DonationRequest;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,25 +12,22 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DonationRequestService {
-    public void createDonationRequest(DonationRequestReq donationRequestReq, UserDetails userDetails);
+    void createDonationRequest(DonationRequestReq donationRequestReq, UserDetails userDetails);
+    void createDonationRequest(DonationRequestCustomReq donationRequestReq, UserDetails userDetails);
 
-    public void accept(UUID donationRequestId);
+    void accept(UUID donationRequestId, UserDetails userDetails);
+    void reject(UUID donationRequestId, String reason, UserDetails userDetails);
 
-    public void reject(UUID donationRequestId, String reason);
+    void shipping(UUID donationRequestId, UserDetails userDetails);
+    void shipped(UUID donationRequestId, ShippingReq req, UserDetails userDetails);
+    void received(UUID donationRequestId, ReceivedReq req, UserDetails userDetails);
 
-    public void shipping(UUID donationRequestId);
+    void completed(UUID donationRequestId);
 
-    public void shipped(UUID donationRequestId);
+    void cancel(UUID donationRequestId, String cancelReason, UserDetails userDetails); // ✅ thêm userDetails
 
-    public void received(UUID donationRequestId);
+    void checkPendingDonations();
+    void assignOrganization(UUID donationRequestId, UUID organizationId);
 
-    public void completed(UUID donationRequestId);
-
-    public void cancel(UUID donationRequestId, String cancelReason);
-
-    public void checkPendingDonations();
-
-    public void assignOrganization(UUID donationRequestId, UUID organizationId);
-
-    public List<DonationPendingResponse> getPendingDonations(UserDetails userDetails);
+    List<DonationPendingResponse> getPendingDonations(UserDetails userDetails);
 }

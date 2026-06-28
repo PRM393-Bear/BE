@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DonationEventService {
-    public void createDonationEvent(DonationEventReq donationEventReq, String orgName);
+    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId);
     public void updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq);
     public List<DonationEventRes> getAllDonationEvents();
     public List<DonationEventRes> getAllByFilter(DonationEventFilterReq donationEventFilterReq);

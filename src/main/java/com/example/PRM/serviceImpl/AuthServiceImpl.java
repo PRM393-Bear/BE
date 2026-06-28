@@ -70,11 +70,13 @@ public class AuthServiceImpl {
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
         }
 
-
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        if(!user.isVerified()){
+            throw new BadRequestException("User must verify email before login!");
+        }
         String accessToken = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));

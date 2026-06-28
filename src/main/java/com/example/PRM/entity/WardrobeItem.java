@@ -48,6 +48,12 @@ public class WardrobeItem {
 
     private LocalDate acquiredAt;
 
+    @Column(length = 50)
+    private String condition; // "Còn mới", "Đã qua sử dụng"...
+
+    @Column(columnDefinition = "TEXT")
+    private String conditionNote; //
+
     @ManyToOne
     @JoinColumn(name = "donation_request_id")
     private DonationRequest donationRequest;
