@@ -22,6 +22,7 @@ public class OutfitServiceImpl implements OutfitService {
 
     private final RestTemplate restTemplate;
     private final UploadService uploadService;
+//    private static final String AI_BASE_URL = "http://localhost:8000/api";
     private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
 
     // ─────────────────────────────────────────
@@ -47,19 +48,42 @@ public class OutfitServiceImpl implements OutfitService {
         base64Data = base64Data.trim().replaceAll("\\s+", "");
         byte[] imageBytes = Base64.getDecoder().decode(base64Data);
 
-        // Detect mime type từ magic bytes
-        String mimeType = "image/png";
-        String extension = "png";
-        if (imageBytes[0] == (byte)0xFF && imageBytes[1] == (byte)0xD8) {
+        // Log 8 bytes đầu để xác định format
+        System.out.printf("Magic bytes: %02X %02X %02X %02X %02X %02X %02X %02X%n",
+                imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3],
+                imageBytes[4], imageBytes[5], imageBytes[6], imageBytes[7]);
+
+        String mimeType;
+        String extension;
+
+        if (imageBytes[0] == (byte)0x89 && imageBytes[1] == (byte)0x50
+                && imageBytes[2] == (byte)0x4E && imageBytes[3] == (byte)0x47) {
+            // PNG: 89 50 4E 47
+            mimeType = "image/png";
+            extension = "png";
+        } else if (imageBytes[0] == (byte)0xFF && imageBytes[1] == (byte)0xD8) {
+            // JPEG: FF D8
             mimeType = "image/jpeg";
             extension = "jpg";
-        } else if (imageBytes[0] == 'R' && imageBytes[1] == 'I' && imageBytes[2] == 'F' && imageBytes[3] == 'F') {
+        } else if (imageBytes[0] == (byte)0x52 && imageBytes[1] == (byte)0x49
+                && imageBytes[2] == (byte)0x46 && imageBytes[3] == (byte)0x46) {
+            // WebP: 52 49 46 46
             mimeType = "image/webp";
             extension = "webp";
+        } else if (imageBytes[0] == (byte)0x47 && imageBytes[1] == (byte)0x49
+                && imageBytes[2] == (byte)0x46) {
+            // GIF: 47 49 46
+            mimeType = "image/gif";
+            extension = "gif";
+        } else {
+            // Unknown — fallback jpeg
+            System.out.printf("Unknown image format, first bytes: %02X %02X %02X %02X%n",
+                    imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3]);
+            mimeType = "image/jpeg";
+            extension = "jpg";
         }
 
-        System.out.printf("Magic bytes: %02X %02X %02X %02X, mime=%s%n",
-                imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3], mimeType);
+        System.out.println("Detected mime: " + mimeType + ", size: " + imageBytes.length);
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
