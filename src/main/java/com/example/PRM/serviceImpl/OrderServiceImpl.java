@@ -125,7 +125,7 @@ public class OrderServiceImpl implements OrderService {
 
         if (order.getStatus() == OrderStatus.SHIPPING) {
 
-            order.setStatus(OrderStatus.COMPLETED);
+            order.setStatus(OrderStatus.RECEIVED);
 
             if (deliveryPhotoUrl != null && !deliveryPhotoUrl.isEmpty()) {
                 order.setDeliveryPhotoUrl(deliveryPhotoUrl);
