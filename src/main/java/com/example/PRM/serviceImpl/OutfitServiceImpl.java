@@ -22,7 +22,7 @@ public class OutfitServiceImpl implements OutfitService {
 
     private final RestTemplate restTemplate;
     private final UploadService uploadService;
-    private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
+    private static final String AI_BASE_URL = "http://localhost:8000/api";
 
     // ─────────────────────────────────────────
     // Helpers
@@ -40,11 +40,19 @@ public class OutfitServiceImpl implements OutfitService {
     }
 
     private String uploadBase64ToCloudinary(String base64Image, String username) {
+        System.out.println("base64Image prefix: " + base64Image.substring(0, Math.min(100, base64Image.length())));
+
         String base64Data = base64Image.contains(",")
                 ? base64Image.split(",")[1]
                 : base64Image;
 
+        base64Data = base64Data.trim().replaceAll("\\s+", "");
+
+        System.out.println("base64Data length: " + base64Data.length());
+        System.out.println("base64Data prefix: " + base64Data.substring(0, Math.min(50, base64Data.length())));
+
         byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+        System.out.println("imageBytes length: " + imageBytes.length);
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -86,10 +94,14 @@ public class OutfitServiceImpl implements OutfitService {
         UUID userId     = getUserId(authentication);
         String username = getUsername(authentication);
         String url      = AI_BASE_URL + "/wardrobe/" + userId + "/outfits/image?max_outfits=" + maxOutfits;
+        System.out.println("userId: " + userId);
+        System.out.println("username: " + username);
+        System.out.println("Calling AI url: " + url);
 
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             Map<String, Object> body = response.getBody();
+            System.out.println("AI response keys: " + (body != null ? body.keySet() : "null"));
 
             if (body != null && body.containsKey("outfits")) {
                 List<Map<String, Object>> outfits =
