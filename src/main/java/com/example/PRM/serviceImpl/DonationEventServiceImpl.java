@@ -30,9 +30,9 @@ public class DonationEventServiceImpl implements DonationEventService {
         this.organizationDetailRepository = organizationDetailRepository;
     }
     @Override
-    public void createDonationEvent(DonationEventReq donationEventReq, String orgName) {
+    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId) {
         DonationEvent donationEvent = donationEventMapper.toEntity(donationEventReq);
-        OrganizationDetail organizationDetail = organizationDetailRepository.findByOrOrgName(orgName).orElseThrow(()
+        OrganizationDetail organizationDetail = organizationDetailRepository.findById(orgId).orElseThrow(()
                 -> new NotFoundException("Organization not found"));
         donationEvent.setOrganizationDetail(organizationDetail);
         donationEventRepository.save(donationEvent);
