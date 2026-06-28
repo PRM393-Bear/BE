@@ -11,6 +11,7 @@ import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.repository.OrderRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.service.NotificationService;
 import com.example.PRM.service.OrderService;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.OrderStatus;
@@ -34,6 +35,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final WardrobeItemService wardrobeItemService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -66,7 +68,15 @@ public class OrderServiceImpl implements OrderService {
 
         order.getOrderItems().add(orderItem);
 
-        // Code here: send notification for seller
+        String title = "Đơn hàng mới!";
+        String message = "Bạn vừa nhận được một đơn đặt hàng mới từ người dùng " + buyer.getFullName() + ".";
+
+        notificationService.sendNotification(
+                order.getSeller().getUserId(),
+                title,
+                message,
+                "ORDER"
+        );
 
         return orderRepository.save(order);
     }
@@ -83,6 +93,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.PROCESSING);
+
+        notificationService.sendNotification(
+                order.getBuyer().getUserId(),
+                "Đơn hàng đã được xác nhận",
+                "Người bán đã xác nhận đơn hàng của bạn.",
+                "ORDER"
+        );
 
         return orderRepository.save(order);
     }
@@ -102,6 +119,13 @@ public class OrderServiceImpl implements OrderService {
 
             order.setStatus(OrderStatus.SHIPPING);
             order.setTrackingCode(trackingCode);
+
+            notificationService.sendNotification(
+                    order.getBuyer().getUserId(),
+                    "Đơn hàng đang được giao",
+                    "Đơn hàng của bạn đang được giao với mã vận đơn: " + trackingCode,
+                    "ORDER"
+            );
 
             return orderRepository.save(order);
         } else {
