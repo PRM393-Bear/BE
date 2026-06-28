@@ -22,7 +22,7 @@ public class OutfitServiceImpl implements OutfitService {
 
     private final RestTemplate restTemplate;
     private final UploadService uploadService;
-    private static final String AI_BASE_URL = "http://localhost:8000/api";
+    private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
 
     // ─────────────────────────────────────────
     // Helpers
@@ -44,12 +44,27 @@ public class OutfitServiceImpl implements OutfitService {
                 ? base64Image.split(",")[1]
                 : base64Image;
 
+        base64Data = base64Data.trim().replaceAll("\\s+", "");
         byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+
+        // Detect mime type từ magic bytes
+        String mimeType = "image/png";
+        String extension = "png";
+        if (imageBytes[0] == (byte)0xFF && imageBytes[1] == (byte)0xD8) {
+            mimeType = "image/jpeg";
+            extension = "jpg";
+        } else if (imageBytes[0] == 'R' && imageBytes[1] == 'I' && imageBytes[2] == 'F' && imageBytes[3] == 'F') {
+            mimeType = "image/webp";
+            extension = "webp";
+        }
+
+        System.out.printf("Magic bytes: %02X %02X %02X %02X, mime=%s%n",
+                imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3], mimeType);
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "outfit.png",
-                "image/png",
+                "outfit." + extension,
+                mimeType,
                 imageBytes
         );
 
@@ -86,10 +101,14 @@ public class OutfitServiceImpl implements OutfitService {
         UUID userId     = getUserId(authentication);
         String username = getUsername(authentication);
         String url      = AI_BASE_URL + "/wardrobe/" + userId + "/outfits/image?max_outfits=" + maxOutfits;
+        System.out.println("userId: " + userId);
+        System.out.println("username: " + username);
+        System.out.println("Calling AI url: " + url);
 
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             Map<String, Object> body = response.getBody();
+            System.out.println("AI response keys: " + (body != null ? body.keySet() : "null"));
 
             if (body != null && body.containsKey("outfits")) {
                 List<Map<String, Object>> outfits =

@@ -21,12 +21,12 @@ public class DonationEventController {
     @PreAuthorize("hasRole('ORGANIZATION')")
     public ResponseEntity<?> createDonationEvent(
             @RequestBody DonationEventReq donationEventReq,
-            @RequestParam String orgName
+            @RequestParam UUID orgId
     ) {
 
         donationEventService.createDonationEvent(
                 donationEventReq,
-                orgName
+                orgId
         );
 
         return ResponseEntity.ok("Donation event created successfully");

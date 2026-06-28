@@ -1,23 +1,30 @@
 package com.example.PRM.mapper;
 
+import com.example.PRM.dto.request.DonationRequestCustomReq;
 import com.example.PRM.dto.request.DonationRequestReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.entity.DonationRequest;
+import com.example.PRM.status_enum.DonationStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Component
 public class DonationRequestMapper {
     public DonationRequest toEntity(DonationRequestReq donationRequestReq){
         DonationRequest donationRequest = new DonationRequest();
 
-        donationRequest.getImages().add(donationRequestReq.getImageUrl());
-
         donationRequest.setDescription(donationRequestReq.getDescription());
 
-        donationRequest.setTrackingCode(donationRequestReq.getTrackingCode());
+        return donationRequest;
+    }
+
+    public DonationRequest toEntity(DonationRequestCustomReq donationRequestReq){
+        DonationRequest donationRequest = new DonationRequest();
+
+        donationRequest.setDescription(donationRequestReq.getDescription());
+        donationRequest.setCreatedAt(LocalDateTime.now());
+        donationRequest.setStatus(DonationStatus.PENDING);
 
         return donationRequest;
     }
