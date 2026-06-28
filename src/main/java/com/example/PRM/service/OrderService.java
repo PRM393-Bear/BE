@@ -11,7 +11,7 @@ public interface OrderService {
     Order createOrder(UserDetails userDetails, CreateOrderReq req);
     Order confirmOrder(UserDetails userDetails, UUID orderId);
     Order enterShipOrder(UserDetails userDetails, UUID orderId, String trackingCode);
-    Order confirmReceived(UserDetails userDetails, UUID orderId);
+    Order confirmReceived(UserDetails userDetails, UUID orderId, String deliveryPhotoUrl);
     
     List<Order> getOrdersByBuyer(UserDetails userDetails);
     List<Order> getOrdersBySeller(UserDetails userDetails);

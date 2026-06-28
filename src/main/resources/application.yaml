@@ -36,7 +36,7 @@ spring:
       pgvector:
         table-name: vector_store
         dimension: 768
-        initialize-schema: true
+        initialize-schema: false
 
   datasource:
     url: ${DB_URL}
@@ -46,7 +46,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:

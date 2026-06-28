@@ -111,7 +111,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order confirmReceived(UserDetails userDetails, UUID orderId) {
+    public Order confirmReceived(UserDetails userDetails, UUID orderId, String deliveryPhotoUrl) {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
@@ -125,7 +125,11 @@ public class OrderServiceImpl implements OrderService {
 
         if (order.getStatus() == OrderStatus.SHIPPING) {
 
-            order.setStatus(OrderStatus.COMPLETED);
+            order.setStatus(OrderStatus.RECEIVED);
+
+            if (deliveryPhotoUrl != null && !deliveryPhotoUrl.isEmpty()) {
+                order.setDeliveryPhotoUrl(deliveryPhotoUrl);
+            }
 
             for(OrderItem item : order.getOrderItems()) {
                 wardrobeItemService.createWardrobeItem(userDetails, item.getProduct().getId());
