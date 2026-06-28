@@ -5,15 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
-
+// ReceivedReq.java
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DonationRequestReq {
-    private UUID donationEventId;
-
-    private String description;
-
-    private UUID wardrobeItemId;
+public class ReceivedReq {
+    private MultipartFile receiptProofFile;
 }
