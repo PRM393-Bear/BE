@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -43,8 +44,9 @@ public class OrderController {
 
     @PutMapping("/{orderId}/receive")
     public ResponseEntity<?> confirmReceived(@AuthenticationPrincipal UserDetails userDetails,
-                                             @PathVariable UUID orderId) {
-        var result = orderService.confirmReceived(userDetails, orderId);
+                                             @PathVariable UUID orderId,
+                                             @RequestParam(required = false) String deliveryPhotoUrl) {
+        var result = orderService.confirmReceived(userDetails, orderId, deliveryPhotoUrl);
         return ResponseEntity.ok(new ApiResponse(200, "Order status updated successfully."));
     }
 

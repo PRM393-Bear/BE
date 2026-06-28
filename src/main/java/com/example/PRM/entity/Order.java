@@ -64,4 +64,7 @@ public class Order {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    @Column(name = "delivery_photo_url", length = 500)
+    private String deliveryPhotoUrl;
 }
