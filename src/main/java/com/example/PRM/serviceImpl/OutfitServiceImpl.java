@@ -40,24 +40,31 @@ public class OutfitServiceImpl implements OutfitService {
     }
 
     private String uploadBase64ToCloudinary(String base64Image, String username) {
-        System.out.println("base64Image prefix: " + base64Image.substring(0, Math.min(100, base64Image.length())));
-
         String base64Data = base64Image.contains(",")
                 ? base64Image.split(",")[1]
                 : base64Image;
 
         base64Data = base64Data.trim().replaceAll("\\s+", "");
-
-        System.out.println("base64Data length: " + base64Data.length());
-        System.out.println("base64Data prefix: " + base64Data.substring(0, Math.min(50, base64Data.length())));
-
         byte[] imageBytes = Base64.getDecoder().decode(base64Data);
-        System.out.println("imageBytes length: " + imageBytes.length);
+
+        // Detect mime type từ magic bytes
+        String mimeType = "image/png";
+        String extension = "png";
+        if (imageBytes[0] == (byte)0xFF && imageBytes[1] == (byte)0xD8) {
+            mimeType = "image/jpeg";
+            extension = "jpg";
+        } else if (imageBytes[0] == 'R' && imageBytes[1] == 'I' && imageBytes[2] == 'F' && imageBytes[3] == 'F') {
+            mimeType = "image/webp";
+            extension = "webp";
+        }
+
+        System.out.printf("Magic bytes: %02X %02X %02X %02X, mime=%s%n",
+                imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3], mimeType);
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "outfit.png",
-                "image/png",
+                "outfit." + extension,
+                mimeType,
                 imageBytes
         );
 
