@@ -1,5 +1,15 @@
 version: '3.8'
 services:
+  be:
+    build:
+      context: .        # thư mục chứa Dockerfile (dấu . = thư mục hiện tại)
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+
   db:
     image: ankane/pgvector:latest
     environment:

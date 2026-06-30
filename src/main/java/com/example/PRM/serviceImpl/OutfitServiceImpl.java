@@ -24,6 +24,7 @@ public class OutfitServiceImpl implements OutfitService {
     private final UploadService uploadService;
 //    private static final String AI_BASE_URL = "http://localhost:8000/api";
     private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
+//private static final String AI_BASE_URL = "http://api:8000/api";
 
     // ─────────────────────────────────────────
     // Helpers
