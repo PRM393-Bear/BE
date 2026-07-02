@@ -15,20 +15,20 @@ public class OutfitController {
 
     private final OutfitService outfitService;
 
-    @GetMapping("/image")
-    public ResponseEntity<?> getOutfitImage(
+    @GetMapping
+    public ResponseEntity<?> getOutfits(
             Authentication authentication,
             @RequestParam(defaultValue = "3") int maxOutfits
     ) {
-        return outfitService.getOutfitImage(authentication, maxOutfits);
+        return outfitService.getOutfits(authentication, maxOutfits);
     }
 
-    @PostMapping("/occasion/image")
-    public ResponseEntity<?> getOutfitOccasionImage(
+    @PostMapping("/occasion")
+    public ResponseEntity<?> getOutfitsByOccasion(
             Authentication authentication,
             @RequestBody Map<String, String> body,
             @RequestParam(defaultValue = "3") int maxOutfits
     ) {
-        return outfitService.getOutfitOccasionImage(authentication, body, maxOutfits);
+        return outfitService.getOutfitsByOccasion(authentication, body, maxOutfits);
     }
 }
