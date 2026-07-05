@@ -1,10 +1,9 @@
 package com.example.PRM.entity;
 
+import io.lettuce.core.dynamic.annotation.CommandNaming;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,24 +21,11 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "userId")
     private User user;
 
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
-
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
-    private List<CartItem> items = new ArrayList<>();
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = this.updatedAt = OffsetDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> cartItems = new ArrayList<>();
 
 }
