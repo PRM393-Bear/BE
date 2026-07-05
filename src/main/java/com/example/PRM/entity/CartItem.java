@@ -1,6 +1,7 @@
 package com.example.PRM.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,13 +28,4 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-
-    private Short quantity = 1;
-
-    private OffsetDateTime addedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.addedAt = OffsetDateTime.now();
-    }
 }
