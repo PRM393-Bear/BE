@@ -21,7 +21,7 @@ WORKDIR /app
 # Copy the built jar file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the default Spring Boot port
+# Expose the default Spring Boot por
 EXPOSE 8080
 
 # Run the application

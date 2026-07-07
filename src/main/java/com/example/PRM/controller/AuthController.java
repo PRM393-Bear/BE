@@ -8,6 +8,7 @@ import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.service.RefreshTokenService;
 import com.example.PRM.serviceImpl.UserDetailsServiceImpl;
 import com.example.PRM.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,14 +27,16 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserReq request) {
-        authService.registerForMember(request);
+    public ResponseEntity<?> register(@RequestBody UserReq request,
+                                      HttpServletRequest httpRequest) {
+        authService.registerForMember(request, httpRequest);
         return ResponseEntity.ok("User registered successfully, please check your email to verify your account!!");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthRes> login(@RequestBody LoginReq request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthRes> login(@RequestBody LoginReq request,
+                                         HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.login(request, httpRequest));
     }
 
     // Lấy access token mới bằng refresh token
@@ -49,9 +52,9 @@ public class AuthController {
 
     // Logout
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestParam String refreshToken) {
+    public ResponseEntity<String> logout(@RequestParam String refreshToken , HttpServletRequest httpRequest) {
         refreshTokenRepository.findByToken(refreshToken)
-                .ifPresent(t -> refreshTokenService.revokeByUser(t.getUser()));
+                .ifPresent(t -> refreshTokenService.revokeByUser(t.getUser(),httpRequest));
         return ResponseEntity.ok("Đăng xuất thành công");
     }
 

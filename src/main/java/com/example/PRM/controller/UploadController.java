@@ -2,6 +2,7 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.response.UploadRes;
 import com.example.PRM.service.UploadService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,13 +20,14 @@ public class UploadController {
 
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadRes> uploadImage(
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request
     ) {
         String username = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
 
-        UploadRes result = uploadService.uploadImage(file, username);
+        UploadRes result = uploadService.uploadImage(file, username, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }

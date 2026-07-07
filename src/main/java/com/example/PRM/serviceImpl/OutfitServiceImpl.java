@@ -5,14 +5,11 @@ import com.example.PRM.service.UploadService;
 import com.example.PRM.util.AuthDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,8 +20,8 @@ public class OutfitServiceImpl implements OutfitService {
     private final RestTemplate restTemplate;
     private final UploadService uploadService;
 //    private static final String AI_BASE_URL = "http://localhost:8000/api";
-    private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
-//private static final String AI_BASE_URL = "http://api:8000/api";
+//    private static final String AI_BASE_URL = "https://brave-blessing-server.up.railway.app/api";
+    private static final String AI_BASE_URL = "http://api:8000/api";
 
     // ─────────────────────────────────────────
     // Helpers
@@ -41,108 +38,14 @@ public class OutfitServiceImpl implements OutfitService {
         return authentication.getName();
     }
 
-    private String uploadBase64ToCloudinary(String base64Image, String username) {
-        String base64Data = base64Image.contains(",")
-                ? base64Image.split(",")[1]
-                : base64Image;
-
-        base64Data = base64Data.trim().replaceAll("\\s+", "");
-        byte[] imageBytes = Base64.getDecoder().decode(base64Data);
-
-        // Log 8 bytes đầu để xác định format
-        System.out.printf("Magic bytes: %02X %02X %02X %02X %02X %02X %02X %02X%n",
-                imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3],
-                imageBytes[4], imageBytes[5], imageBytes[6], imageBytes[7]);
-
-        String mimeType;
-        String extension;
-
-        if (imageBytes[0] == (byte)0x89 && imageBytes[1] == (byte)0x50
-                && imageBytes[2] == (byte)0x4E && imageBytes[3] == (byte)0x47) {
-            // PNG: 89 50 4E 47
-            mimeType = "image/png";
-            extension = "png";
-        } else if (imageBytes[0] == (byte)0xFF && imageBytes[1] == (byte)0xD8) {
-            // JPEG: FF D8
-            mimeType = "image/jpeg";
-            extension = "jpg";
-        } else if (imageBytes[0] == (byte)0x52 && imageBytes[1] == (byte)0x49
-                && imageBytes[2] == (byte)0x46 && imageBytes[3] == (byte)0x46) {
-            // WebP: 52 49 46 46
-            mimeType = "image/webp";
-            extension = "webp";
-        } else if (imageBytes[0] == (byte)0x47 && imageBytes[1] == (byte)0x49
-                && imageBytes[2] == (byte)0x46) {
-            // GIF: 47 49 46
-            mimeType = "image/gif";
-            extension = "gif";
-        } else {
-            // Unknown — fallback jpeg
-            System.out.printf("Unknown image format, first bytes: %02X %02X %02X %02X%n",
-                    imageBytes[0], imageBytes[1], imageBytes[2], imageBytes[3]);
-            mimeType = "image/jpeg";
-            extension = "jpg";
-        }
-
-        System.out.println("Detected mime: " + mimeType + ", size: " + imageBytes.length);
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "outfit." + extension,
-                mimeType,
-                imageBytes
-        );
-
-        return uploadService.uploadImage(file, username).getUrl();
-    }
-
-    /**
-     * Xử lý list outfits — upload từng ảnh base64 lên Cloudinary
-     * thay thế image_b64 bằng image_url
-     */
-    private void processOutfitImages(List<Map<String, Object>> outfits, String username) {
-        for (Map<String, Object> outfit : outfits) {
-            if (outfit.containsKey("image_b64")) {
-                try {
-                    String base64        = (String) outfit.get("image_b64");
-                    String cloudinaryUrl = uploadBase64ToCloudinary(base64, username);
-                    outfit.put("image_url", cloudinaryUrl);
-                } catch (Exception e) {
-                    outfit.put("image_url", null);
-                    System.out.println("Upload Cloudinary lỗi: " + e.getMessage());
-                } finally {
-                    outfit.remove("image_b64");  // xóa base64 khỏi response
-                }
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────
-    // 1. Phối đồ tự động có ảnh
-    // ─────────────────────────────────────────
-
     @Override
-    public ResponseEntity<?> getOutfitImage(Authentication authentication, int maxOutfits) {
-        UUID userId     = getUserId(authentication);
-        String username = getUsername(authentication);
-        String url      = AI_BASE_URL + "/wardrobe/" + userId + "/outfits/image?max_outfits=" + maxOutfits;
-        System.out.println("userId: " + userId);
-        System.out.println("username: " + username);
-        System.out.println("Calling AI url: " + url);
+    public ResponseEntity<?> getOutfits(Authentication authentication, int maxOutfits) {
+        UUID userId = getUserId(authentication);
+        String url  = AI_BASE_URL + "/wardrobe/" + userId + "/outfits?max_outfits=" + maxOutfits;
 
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            Map<String, Object> body = response.getBody();
-            System.out.println("AI response keys: " + (body != null ? body.keySet() : "null"));
-
-            if (body != null && body.containsKey("outfits")) {
-                List<Map<String, Object>> outfits =
-                        (List<Map<String, Object>>) body.get("outfits");
-                processOutfitImages(outfits, username);
-            }
-
-            return ResponseEntity.ok(body);
-
+            return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", "AI service lỗi: " + e.getMessage()));
@@ -150,19 +53,20 @@ public class OutfitServiceImpl implements OutfitService {
     }
 
     // ─────────────────────────────────────────
-    // 2. Phối đồ theo dịp có ảnh
+    // 2. Phối đồ theo dịp
+    // POST /api/outfit/occasion
+    // Body: {"message": "gợi ý đồ đi biển"}
     // ─────────────────────────────────────────
 
     @Override
-    public ResponseEntity<?> getOutfitOccasionImage(
+    public ResponseEntity<?> getOutfitsByOccasion(
             Authentication authentication,
             Map<String, String> body,
             int maxOutfits
     ) {
-        UUID userId     = getUserId(authentication);
-        String username = getUsername(authentication);
-        String url      = AI_BASE_URL + "/wardrobe/" + userId
-                + "/outfits/occasion/image?max_outfits=" + maxOutfits;
+        UUID userId = getUserId(authentication);
+        String url  = AI_BASE_URL + "/wardrobe/" + userId
+                + "/outfits/occasion?max_outfits=" + maxOutfits;
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -170,16 +74,7 @@ public class OutfitServiceImpl implements OutfitService {
             HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
-            Map<String, Object> responseBody = response.getBody();
-
-            if (responseBody != null && responseBody.containsKey("outfits")) {
-                List<Map<String, Object>> outfits =
-                        (List<Map<String, Object>>) responseBody.get("outfits");
-                processOutfitImages(outfits, username);
-            }
-
-            return ResponseEntity.ok(responseBody);
-
+            return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("error", "AI service lỗi: " + e.getMessage()));

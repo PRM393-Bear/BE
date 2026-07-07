@@ -4,6 +4,7 @@ import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
 import com.example.PRM.dto.response.ProductRes;
 import com.example.PRM.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +31,9 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductRes> createProduct(@RequestBody ProductReq request) {
-        ProductRes created = productService.createProduct(request);
+    public ResponseEntity<ProductRes> createProduct(@RequestBody ProductReq request,
+                                                    HttpServletRequest request1) {
+        ProductRes created = productService.createProduct(request,request1);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -43,9 +45,10 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductRes> updateProduct(
             @PathVariable UUID id,
-            @RequestBody ProductReq request
+            @RequestBody ProductReq request,
+            HttpServletRequest request1
     ) {
-        ProductRes updated = productService.updateProduct(id, request);
+        ProductRes updated = productService.updateProduct(id, request,request1);
         return ResponseEntity.ok(updated);
     }
 
@@ -56,8 +59,9 @@ public class ProductController {
     }
 
     @PutMapping("/hide")
-    public ResponseEntity<ProductRes> hideProduct(@RequestParam("productId") UUID id) {
-        ProductRes hiddenProduct = productService.hideProduct(id);
+    public ResponseEntity<ProductRes> hideProduct(@RequestParam("productId") UUID id,
+                                                  HttpServletRequest request1) {
+        ProductRes hiddenProduct = productService.hideProduct(id,request1);
         return ResponseEntity.ok(hiddenProduct);
     }
 
@@ -65,5 +69,11 @@ public class ProductController {
     public ResponseEntity<List<ProductRes>> filterProducts(ProductFilterReq filter) {
         List<ProductRes> results = productService.filterProducts(filter);
         return ResponseEntity.ok(results);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<String> deleteProduct(@RequestParam("productId") UUID id, HttpServletRequest request1) {
+        productService.deleteProduct(id,request1);
+        return ResponseEntity.ok("Product deleted successfully");
     }
 }

@@ -6,6 +6,7 @@ import com.example.PRM.service.UserService;
 import com.example.PRM.status_enum.OtpPurpose;
 import com.example.PRM.util.AuthDetails;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,9 +45,10 @@ public class UserController {
     @PutMapping("/me/password")
     public ResponseEntity<?> updatePassword(@RequestParam String oldPassword,
                                             @RequestParam String newPassword,
-                                            @RequestParam String confirmPassword) {
+                                            @RequestParam String confirmPassword,
+                                            HttpServletRequest httpRequest) {
         UUID userId = AuthDetails.getCurrentUserId(); // ✅
-        userService.updatePassword(userId, oldPassword, newPassword, confirmPassword);
+        userService.updatePassword(userId, oldPassword, newPassword, confirmPassword, httpRequest);
         return ResponseEntity.ok("Update password success");
     }
 
@@ -84,8 +86,9 @@ public class UserController {
     @PostMapping("/forgot-password/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String resetToken,
                                            @RequestParam String newPassword,
-                                           @RequestParam String confirmPassword) {
-        userService.resetPassword(resetToken, newPassword, confirmPassword);
+                                           @RequestParam String confirmPassword,
+                                           HttpServletRequest httpRequest) {
+        userService.resetPassword(resetToken, newPassword, confirmPassword, httpRequest);
         return ResponseEntity.ok("Đặt lại mật khẩu thành công");
     }
 }
