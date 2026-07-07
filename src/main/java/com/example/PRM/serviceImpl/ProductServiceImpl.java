@@ -3,11 +3,13 @@ package com.example.PRM.serviceImpl;
 import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
 import com.example.PRM.dto.response.ProductRes;
+import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.ProductMapper;
+import com.example.PRM.repository.CategoryRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.ProductService;
@@ -29,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public ProductRes getProductById(UUID id) {
@@ -59,6 +62,13 @@ public class ProductServiceImpl implements ProductService {
         User seller = userRepository.findByUserName(username)
                 .orElseThrow(() -> new NotFoundException("User not found: " + username));
         Product product = productMapper.toEntity(request, seller);
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + request.getCategoryId()));
+            product.setCategory(category);
+        }
+
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
     }
@@ -107,7 +117,13 @@ public class ProductServiceImpl implements ProductService {
 
         product.setTitle(request.getTitle());
         product.setDescription(request.getDescription());
-        product.setCategory(request.getCategory());
+
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + request.getCategoryId()));
+            product.setCategory(category);
+        }
+
         product.setType(request.getType());
         product.setCondition(request.getCondition());
         product.setPrice(request.getPrice());

@@ -15,7 +15,9 @@ public class ProductMapper {
         res.setId(product.getId());
         res.setTitle(product.getTitle());
         res.setDescription(product.getDescription());
-        res.setCategory(product.getCategory());
+        if (product.getCategory() != null) {
+            res.setCategory(product.getCategory().getName());
+        }
         res.setType(product.getType());
         res.setCondition(product.getCondition());
         res.setPrice(product.getPrice());
@@ -39,7 +41,6 @@ public class ProductMapper {
         product.setSeller(seller);
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
-        product.setCategory(req.getCategory());
         product.setType(req.getType());
         product.setCondition(req.getCondition());
         product.setPrice(req.getPrice());
