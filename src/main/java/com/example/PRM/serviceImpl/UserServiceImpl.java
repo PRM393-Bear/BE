@@ -10,6 +10,7 @@ import com.example.PRM.mapper.UserMapper;
 import com.example.PRM.status_enum.OtpPurpose;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
 
     private static final String OTP_PREFIX   = "otp:";
     private static final String TOKEN_PREFIX = "resetToken:";
+    private final AuditLogServiceImpl auditLogService;
 
 
 
@@ -80,7 +82,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updatePassword(UUID userId, String oldPassword, String newPassword, String confirmPassword) {
+    public void updatePassword(UUID userId, String oldPassword, String newPassword, String confirmPassword, HttpServletRequest request) {
         User user = userRepository.findByUserId(userId).orElseThrow(() ->
                 new NotFoundException("User not found with id: " + userId));
 
@@ -94,6 +96,15 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        auditLogService.log("UPDATE_PASSWORD",
+                "UPDATE_PASSWORD",
+                null,
+                "User update password successfully",
+                "SUCCESS",
+                user.getUserId(),
+                user.getUserName(),
+                request
+        );
     }
 
     @Override
@@ -318,7 +329,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
+    public void resetPassword(String resetToken, String newPassword, String confirmPassword, HttpServletRequest request) {
         String email = redisTemplate.opsForValue().get(TOKEN_PREFIX + resetToken);
         System.out.println("Email = " + email);
         if (email == null) {
@@ -334,6 +345,15 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        auditLogService.log("RESET_PASSWORD",
+                "RESET_PASSWORD",
+                null,
+                "User reset password successfully",
+                "SUCCESS",
+                user.getUserId(),
+                user.getUserName(),
+                request
+        );
 
         redisTemplate.delete(TOKEN_PREFIX + resetToken);
     }

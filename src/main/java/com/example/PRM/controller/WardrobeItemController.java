@@ -3,6 +3,7 @@ package com.example.PRM.controller;
 import com.example.PRM.dto.response.WardrobeItemRes;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.WardrobeStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,8 +21,10 @@ public class WardrobeItemController {
     }
 
     @PostMapping("/{productId}")
-    public ResponseEntity<?> createWardrobeItem(@PathVariable UUID productId, @AuthenticationPrincipal UserDetails userDetails) {
-        wardrobeItemService.createWardrobeItem(userDetails, productId);
+    public ResponseEntity<?> createWardrobeItem(@PathVariable UUID productId,
+                                                @AuthenticationPrincipal UserDetails userDetails,
+                                                HttpServletRequest request) {
+        wardrobeItemService.createWardrobeItem(userDetails, productId,request);
         return ResponseEntity.ok("Wardrobe item created successfully");
     }
 
@@ -42,9 +45,10 @@ public class WardrobeItemController {
     @DeleteMapping("/{wardrobeItemId}")
     public ResponseEntity<?> deleteWardrobeItem(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable UUID wardrobeItemId) {
+            @PathVariable UUID wardrobeItemId,
+            HttpServletRequest request) {
 
-        wardrobeItemService.deleteWardrobeItem(userDetails, wardrobeItemId);
+        wardrobeItemService.deleteWardrobeItem(userDetails, wardrobeItemId,request);
 
         return ResponseEntity.ok("Xóa vật phẩm khỏi tủ đồ thành công");
     }
@@ -53,12 +57,14 @@ public class WardrobeItemController {
     public ResponseEntity<?> updateWardrobeItemStatus(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID wardrobeItemId,
-            @RequestParam WardrobeStatus status) {
+            @RequestParam WardrobeStatus status,
+            HttpServletRequest request) {
 
         wardrobeItemService.updateWardrobeItem(
                 userDetails,
                 wardrobeItemId,
-                status
+                status,
+                request
         );
 
         return ResponseEntity.ok("Cập nhật trạng thái vật phẩm thành công");

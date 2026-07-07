@@ -15,6 +15,7 @@ import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.ProductService;
 import com.example.PRM.status_enum.ProductStatus;
 import com.example.PRM.util.ProductSpecification;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,6 +33,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final AuditLogServiceImpl auditLogService;
 
     @Override
     public ProductRes getProductById(UUID id) {
@@ -49,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductRes createProduct(ProductReq request) {
+    public ProductRes createProduct(ProductReq request, HttpServletRequest request1) {
 
         if (request.getTitle() == null || request.getTitle().isBlank()) {
             throw new IllegalArgumentException("Title is required");
@@ -70,6 +72,16 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product saved = productRepository.save(product);
+
+        auditLogService.log("CREATE_PRODUCT",
+                product.getTitle(),
+                product.getId().toString(),
+                "User reset password successfully",
+                "SUCCESS",
+                seller.getUserId(),
+                seller.getUserName(),
+                request1
+        );
         return productMapper.toResponse(saved);
     }
 
@@ -96,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductRes updateProduct(UUID id, ProductReq request) {
+    public ProductRes updateProduct(UUID id, ProductReq request,HttpServletRequest request1) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found product with id: " + id));
@@ -139,6 +151,15 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product saved = productRepository.save(product);
+        auditLogService.log("UPDATE_PRODUCT",
+                product.getTitle(),
+                product.getId().toString(),
+                "Seller update product successfully",
+                "SUCCESS",
+                product.getSeller().getUserId(),
+                product.getSeller().getUserName(),
+                request1
+        );
         return productMapper.toResponse(saved);
 
     }
@@ -154,13 +175,22 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductRes hideProduct(UUID id) {
+    public ProductRes hideProduct(UUID id, HttpServletRequest request1) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found product with id: " + id));
 
         product.setStatus(ProductStatus.HIDDEN);
         Product saved = productRepository.save(product);
+        auditLogService.log("HIDE_PRODUCT",
+                product.getTitle(),
+                product.getId().toString(),
+                "Seller hide product successfully",
+                "SUCCESS",
+                product.getSeller().getUserId(),
+                product.getSeller().getUserName(),
+                request1
+        );
         return productMapper.toResponse(saved);
 
     }
@@ -188,5 +218,21 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public void deleteProduct(UUID id, HttpServletRequest request) {
+        Product product = productRepository.findById(id).orElseThrow(()
+                -> new NotFoundException("Product not found with id: " + id));
+        productRepository.delete(product);
+        auditLogService.log("DELETE_PRODUCT",
+                product.getTitle(),
+                product.getId().toString(),
+                "User delete product successfully",
+                "SUCCESS",
+                product.getSeller().getUserId(),
+                product.getSeller().getUserName(),
+                request
+        );
     }
 }
