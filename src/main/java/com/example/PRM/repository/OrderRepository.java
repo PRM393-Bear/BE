@@ -10,8 +10,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
-    List<Order> findByBuyer(User user);
+    List<Order> findByBuyerOrderByCreatedAtDesc(User buyer);
     List<Order> findBySeller(User seller);
     List<Order> findByStatusAndUpdatedAtBefore(OrderStatus status, LocalDateTime time);
+    List<Order> findByBuyerAndStatusOrderByCreatedAtDesc(User buyer, OrderStatus status);
 
 }
