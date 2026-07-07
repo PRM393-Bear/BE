@@ -1,6 +1,7 @@
 package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.entity.Order;
 import com.example.PRM.entity.OrderItem;
 import com.example.PRM.entity.Product;
@@ -8,9 +9,11 @@ import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.mapper.OrderMapper;
 import com.example.PRM.repository.OrderRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.service.NotificationService;
 import com.example.PRM.service.OrderService;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.OrderStatus;
@@ -25,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final WardrobeItemService wardrobeItemService;
+    private final NotificationService notificationService;
+    private final OrderMapper orderMapper;
 
     @Override
     @Transactional
@@ -66,7 +72,15 @@ public class OrderServiceImpl implements OrderService {
 
         order.getOrderItems().add(orderItem);
 
-        // Code here: send notification for seller
+        String title = "Đơn hàng mới!";
+        String message = "Bạn vừa nhận được một đơn đặt hàng mới từ người dùng " + buyer.getFullName() + ".";
+
+        notificationService.sendNotification(
+                order.getSeller().getUserId(),
+                title,
+                message,
+                "ORDER"
+        );
 
         return orderRepository.save(order);
     }
@@ -83,6 +97,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.PROCESSING);
+
+        notificationService.sendNotification(
+                order.getBuyer().getUserId(),
+                "Đơn hàng đã được xác nhận",
+                "Người bán đã xác nhận đơn hàng của bạn.",
+                "ORDER"
+        );
 
         return orderRepository.save(order);
     }
@@ -102,6 +123,13 @@ public class OrderServiceImpl implements OrderService {
 
             order.setStatus(OrderStatus.SHIPPING);
             order.setTrackingCode(trackingCode);
+
+            notificationService.sendNotification(
+                    order.getBuyer().getUserId(),
+                    "Đơn hàng đang được giao",
+                    "Đơn hàng của bạn đang được giao với mã vận đơn: " + trackingCode,
+                    "ORDER"
+            );
 
             return orderRepository.save(order);
         } else {
@@ -143,23 +171,46 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getOrdersByBuyer(UserDetails userDetails) {
+    public List<OrderRes> getOrdersByBuyer(UserDetails userDetails) {
         User buyer = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return orderRepository.findByBuyer(buyer);
+        return orderRepository.findByBuyerOrderByCreatedAtDesc(buyer)
+                .stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Order> getOrdersBySeller(UserDetails userDetails) {
+    public List<OrderRes> getOrdersBySeller(UserDetails userDetails) {
         User seller = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return orderRepository.findBySeller(seller);
+        return orderRepository.findBySeller(seller)
+                .stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public Order getOrderById(UserDetails userDetails, UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+    }
+
+    @Override
+    public List<OrderRes> getOrderHistory(UserDetails userDetails, OrderStatus status) {
+
+        User buyer = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        List<Order> orders;
+
+        if (status != null) {
+            orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(buyer, status);
+        } else {
+            orders = orderRepository.findByBuyerOrderByCreatedAtDesc(buyer);
+        }
+        return orders.stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
