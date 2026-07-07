@@ -11,7 +11,11 @@ import org.springframework.stereotype.Component;
 public class WardrobeItemMapper {
     public WardrobeItemRes toResponse(WardrobeItem wardrobeItem){
         WardrobeItemRes wardrobeItemRes = new WardrobeItemRes();
-        wardrobeItemRes.setCategory(wardrobeItem.getCategory());
+
+        if (wardrobeItem.getCategory() != null) {
+            wardrobeItemRes.setCategory(wardrobeItem.getCategory().getName());
+        }
+
         wardrobeItemRes.setName(wardrobeItem.getName());
         wardrobeItemRes.setImageUrl(wardrobeItem.getImageUrl());
         return wardrobeItemRes;
@@ -22,7 +26,6 @@ public class WardrobeItemMapper {
         wi.setStatus(WardrobeStatus.LISTED);
         wi.setAddedVia(AddedVia.UPLOAD);
         wi.setName(wardrobeItemRes.getItemName());
-        wi.setCategory(wardrobeItemRes.getCategory());
         wi.setCondition(wardrobeItemRes.getCondition());
         wi.setConditionNote(wardrobeItemRes.getConditionNote());
         return wi;

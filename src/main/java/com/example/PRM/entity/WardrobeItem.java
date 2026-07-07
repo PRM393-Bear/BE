@@ -34,8 +34,9 @@ public class WardrobeItem {
     @Column(length = 150)
     private String name;
 
-    @Column(length = 50)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @Column(columnDefinition = "TEXT")
     private String imageUrl;

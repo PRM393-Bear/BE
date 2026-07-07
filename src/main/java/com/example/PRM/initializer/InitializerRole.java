@@ -18,7 +18,7 @@ public class InitializerRole implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         createRoleIfNotExists("ADMIN", "Quản trị viên hệ thống");
-        createRoleIfNotExists("SELLER", "Người bán hàng");
+        createRoleIfNotExists("STAFF", "Nhân viên");
         createRoleIfNotExists("ORGANIZATION", "Tổ chức");
         createRoleIfNotExists("MEMBER", "Người dùng thông thường");
         createRoleIfNotExists("GUEST", "Khách");

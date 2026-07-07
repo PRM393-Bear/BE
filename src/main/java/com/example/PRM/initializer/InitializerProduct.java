@@ -1,6 +1,8 @@
 package com.example.PRM.initializer;
+import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
+import com.example.PRM.repository.CategoryRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.status_enum.ProductStatus;
@@ -17,11 +19,14 @@ public class InitializerProduct implements CommandLineRunner {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+
 
     public InitializerProduct(ProductRepository productRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -478,7 +483,7 @@ public class InitializerProduct implements CommandLineRunner {
             User seller,
             String title,
             String description,
-            String category,
+            String categoryName,
             ProductType type,
             Short condition,
             Long price,
@@ -489,6 +494,18 @@ public class InitializerProduct implements CommandLineRunner {
             ProductStatus status,
             Short lifecycleGeneration
     ) {
+
+        Category category = categoryRepository.findAll()
+                .stream()
+                .filter(c -> c.getName().equalsIgnoreCase(categoryName))
+                .findFirst()
+                .orElseGet(() -> {
+                    Category newCat = new com.example.PRM.entity.Category();
+                    newCat.setName(categoryName);
+                    newCat.setDescription("Category for " + categoryName);
+                    return categoryRepository.save(newCat);
+                });
+
         Product product = new Product();
         product.setSeller(seller);
         product.setTitle(title);
