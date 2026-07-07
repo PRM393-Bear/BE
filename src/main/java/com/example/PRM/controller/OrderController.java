@@ -2,13 +2,16 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.CreateOrderReq;
 import com.example.PRM.dto.response.ApiResponse;
+import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.service.OrderService;
+import com.example.PRM.status_enum.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -50,7 +53,7 @@ public class OrderController {
         return ResponseEntity.ok(new ApiResponse(200, "Order status updated successfully."));
     }
 
-    @GetMapping("/buyer")
+    @GetMapping("/history/all")
     public ResponseEntity<?> getOrdersByBuyer(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(orderService.getOrdersByBuyer(userDetails));
     }
@@ -64,5 +67,15 @@ public class OrderController {
     public ResponseEntity<?> getOrderById(@AuthenticationPrincipal UserDetails userDetails,
                                           @PathVariable UUID orderId) {
         return ResponseEntity.ok(orderService.getOrderById(userDetails, orderId));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getOrderHistory(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false)OrderStatus status
+            ) {
+
+            List<OrderRes> orders = orderService.getOrderHistory(userDetails, status);
+            return ResponseEntity.ok(orders);
     }
 }

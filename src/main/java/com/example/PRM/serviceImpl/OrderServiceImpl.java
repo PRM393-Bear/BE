@@ -1,6 +1,7 @@
 package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.entity.Order;
 import com.example.PRM.entity.OrderItem;
 import com.example.PRM.entity.Product;
@@ -8,6 +9,7 @@ import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.mapper.OrderMapper;
 import com.example.PRM.repository.OrderRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
@@ -26,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final WardrobeItemService wardrobeItemService;
     private final NotificationService notificationService;
+    private final OrderMapper orderMapper;
 
     @Override
     @Transactional
@@ -167,23 +171,46 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getOrdersByBuyer(UserDetails userDetails) {
+    public List<OrderRes> getOrdersByBuyer(UserDetails userDetails) {
         User buyer = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return orderRepository.findByBuyer(buyer);
+        return orderRepository.findByBuyerOrderByCreatedAtDesc(buyer)
+                .stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<Order> getOrdersBySeller(UserDetails userDetails) {
+    public List<OrderRes> getOrdersBySeller(UserDetails userDetails) {
         User seller = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return orderRepository.findBySeller(seller);
+        return orderRepository.findBySeller(seller)
+                .stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public Order getOrderById(UserDetails userDetails, UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+    }
+
+    @Override
+    public List<OrderRes> getOrderHistory(UserDetails userDetails, OrderStatus status) {
+
+        User buyer = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        List<Order> orders;
+
+        if (status != null) {
+            orders = orderRepository.findByBuyerAndStatusOrderByCreatedAtDesc(buyer, status);
+        } else {
+            orders = orderRepository.findByBuyerOrderByCreatedAtDesc(buyer);
+        }
+        return orders.stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
