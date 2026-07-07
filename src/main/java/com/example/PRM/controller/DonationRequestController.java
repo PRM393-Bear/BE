@@ -3,6 +3,7 @@ package com.example.PRM.controller;
 import com.example.PRM.dto.request.*;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.service.DonationRequestService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +27,11 @@ public class DonationRequestController {
     @PostMapping
     public ResponseEntity<?> create(
             @RequestBody DonationRequestReq request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
         userDetails.getAuthorities();
-        donationRequestService.createDonationRequest(request, userDetails);
+        donationRequestService.createDonationRequest(request, userDetails,request1);
 
         return ResponseEntity.ok("Donation request created successfully");
     }
@@ -38,9 +40,10 @@ public class DonationRequestController {
     @PostMapping(value = "/custom", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createCustom(
             @ModelAttribute DonationRequestCustomReq request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
-        donationRequestService.createDonationRequest(request, userDetails);
+        donationRequestService.createDonationRequest(request, userDetails,request1);
         return ResponseEntity.ok("Donation request created successfully");
     }
 
@@ -48,9 +51,10 @@ public class DonationRequestController {
     @PatchMapping("/{id}/accept")
     public ResponseEntity<?> accept(
             @PathVariable UUID id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
-        donationRequestService.accept(id, userDetails);
+        donationRequestService.accept(id, userDetails,request1);
 
         return ResponseEntity.ok("Donation request accepted successfully");
     }
@@ -60,9 +64,10 @@ public class DonationRequestController {
     public ResponseEntity<?> reject(
             @PathVariable UUID id,
             @RequestBody DonationRequestReject request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
-        donationRequestService.reject(id, request.getReason(),userDetails);
+        donationRequestService.reject(id, request.getReason(),userDetails,request1);
 
         return ResponseEntity.ok("Donation request rejected successfully");
     }
@@ -71,9 +76,10 @@ public class DonationRequestController {
     @PatchMapping("/{id}/shipping")
     public ResponseEntity<?> shipping(
             @PathVariable UUID id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
-        donationRequestService.shipping(id, userDetails);
+        donationRequestService.shipping(id, userDetails,request1);
 
         return ResponseEntity.ok("Shipping donation request successfully");
     }
@@ -84,10 +90,11 @@ public class DonationRequestController {
             @PathVariable UUID id,
             @RequestParam("trackingCode") String trackingCode,
             @RequestParam("shippingProofFile") MultipartFile shippingProofFile,
+            HttpServletRequest request1,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         ShippingReq req = new ShippingReq(trackingCode, shippingProofFile);
-        donationRequestService.shipped(id, req, userDetails);
+        donationRequestService.shipped(id, req, userDetails,request1);
         return ResponseEntity.ok("Shipped donation request successfully");
     }
 
@@ -96,19 +103,21 @@ public class DonationRequestController {
     public ResponseEntity<?> received(
             @PathVariable UUID id,
             @RequestParam("receiptProofFile") MultipartFile receiptProofFile,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
 
         ReceivedReq req = new ReceivedReq(receiptProofFile);
-        donationRequestService.received(id, req, userDetails);
+        donationRequestService.received(id, req, userDetails,request1);
         return ResponseEntity.ok("Received donation request successfully");
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/completed")
     public ResponseEntity<Void> completed(
-            @PathVariable UUID id) {
+            @PathVariable UUID id,
+            HttpServletRequest request1) {
 
-        donationRequestService.completed(id);
+        donationRequestService.completed(id, request1);
 
         return ResponseEntity.ok().build();
     }
@@ -127,10 +136,11 @@ public class DonationRequestController {
     @PatchMapping("/{donationId}/assign-organization/{organizationId}")
     public ResponseEntity<?> assignOrganization(
             @PathVariable UUID donationId,
-            @PathVariable UUID organizationId
+            @PathVariable UUID organizationId,
+            HttpServletRequest request1
     ) {
 
-        donationRequestService.assignOrganization(donationId, organizationId);
+        donationRequestService.assignOrganization(donationId, organizationId, request1);
 
         return ResponseEntity.ok(
                 "Assign organization successfully"

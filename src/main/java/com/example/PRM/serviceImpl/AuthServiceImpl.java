@@ -10,6 +10,7 @@ import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.status_enum.OtpPurpose;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -34,8 +35,10 @@ public class AuthServiceImpl {
     private final UserServiceImpl userService;
     private final RefreshTokenServiceImpl refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuditLogServiceImpl auditLogService;
+    private final String entity = "AUTH";
 
-    public void registerForMember(UserReq request) {
+    public void registerForMember(UserReq request, HttpServletRequest httpRequest) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new BadRequestException("Username đã tồn tại");
         }
@@ -57,17 +60,39 @@ public class AuthServiceImpl {
                 .build();
 
         userRepository.save(user);
+        auditLogService.log("REGISTER_SUCCESS",
+                entity,
+                null,
+                "User registered successfully",
+                "SUCCESS",
+                user.getUserId(),
+                user.getUserName(),
+                httpRequest
+        );
         userService.sendOtp(user.getEmail(), OtpPurpose.REGISTER);
     }
 
-    public AuthRes login(LoginReq request) {
+    public AuthRes login(LoginReq request, HttpServletRequest httpRequest) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
+            User user = userRepository.findByUserName(request.getUsername())
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+            auditLogService.log("LOGIN_FAILED",
+                    entity,
+                    null,
+                    "User login failed",
+                    "FAILED",
+                    user.getUserId(),
+                    user.getUserName(),
+                    httpRequest
+                    );
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
+
+
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
@@ -81,6 +106,15 @@ public class AuthServiceImpl {
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));
 
+        auditLogService.log("LOGIN_SUCCESS",
+                entity,
+                null,
+                "User login success",
+                "SUCCESS",
+                user.getUserId(),
+                user.getUserName(),
+                httpRequest
+        );
         return new AuthRes(accessToken, refreshToken.getToken());
     }
 }

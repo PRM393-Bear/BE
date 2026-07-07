@@ -5,6 +5,7 @@ import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.service.RefreshTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private long expirationDays;
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuditLogServiceImpl auditLogService;
 
     @Transactional
     public RefreshToken createRefreshToken(User user) {
@@ -52,7 +54,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Transactional
-    public void revokeByUser(User user) {
+    public void revokeByUser(User user, HttpServletRequest request) {
+
+        auditLogService.log("LOGOUT",
+                "LOGOUT",
+                null,
+                "User log out successfully",
+                "SUCCESS",
+                user.getUserId(),
+                user.getUserName(),
+                request
+        );
         refreshTokenRepository.deleteByUser(user);
     }
 }

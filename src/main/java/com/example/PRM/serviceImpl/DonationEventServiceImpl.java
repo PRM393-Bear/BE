@@ -11,7 +11,9 @@ import com.example.PRM.mapper.DonationEventMapper;
 import com.example.PRM.repository.DonationEventRepository;
 import com.example.PRM.repository.OrganizationDetailRepository;
 import com.example.PRM.service.DonationEventService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,64 +26,97 @@ public class DonationEventServiceImpl implements DonationEventService {
     private final DonationEventRepository donationEventRepository;
     private final DonationEventMapper donationEventMapper;
     private final OrganizationDetailRepository organizationDetailRepository;
-    public DonationEventServiceImpl(DonationEventRepository donationEventRepository, DonationEventMapper donationEventMapper, OrganizationDetailRepository organizationDetailRepository) {
+    private final AuditLogServiceImpl auditLogService;
+    public DonationEventServiceImpl(DonationEventRepository donationEventRepository, DonationEventMapper donationEventMapper, OrganizationDetailRepository organizationDetailRepository, AuditLogServiceImpl auditLogService) {
         this.donationEventRepository = donationEventRepository;
         this.donationEventMapper = donationEventMapper;
         this.organizationDetailRepository = organizationDetailRepository;
+        this.auditLogService = auditLogService;
     }
     @Override
-    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId) {
+    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId, HttpServletRequest request, UserDetails userDetails) {
         DonationEvent donationEvent = donationEventMapper.toEntity(donationEventReq);
-        OrganizationDetail organizationDetail = organizationDetailRepository.findById(orgId).orElseThrow(()
-                -> new NotFoundException("Organization not found"));
+        OrganizationDetail organizationDetail = organizationDetailRepository.findById(orgId)
+                .orElseThrow(() -> new NotFoundException("Organization not found"));
         donationEvent.setOrganizationDetail(organizationDetail);
         donationEventRepository.save(donationEvent);
+
+        auditLogService.log(
+                "CREATE_DONATION_EVENT",
+                "DonationEvent",
+                donationEvent.getId().toString(),
+                "Organization created donation event: " + donationEvent.getTitle(),
+                "SUCCESS",
+                organizationDetail.getUser().getUserId(),
+                userDetails.getUsername(),
+                request
+        );
     }
 
     @Override
-    public void updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq) {
-        DonationEvent donationEvent = donationEventRepository.findById(donationEventId).orElseThrow(()
-                -> new NotFoundException("Donation event not found with id: " + donationEventId));
-        if (donationEventReq.getTitle() != null) {
+    public void updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq,
+                                    UserDetails userDetails, HttpServletRequest request) {
+        DonationEvent donationEvent = donationEventRepository.findById(donationEventId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Donation event not found with id: " + donationEventId));
+
+        if (donationEventReq.getTitle() != null)
             donationEvent.setTitle(donationEventReq.getTitle());
-        }
-        if (donationEventReq.getDescription() != null) {
+        if (donationEventReq.getDescription() != null)
             donationEvent.setDescription(donationEventReq.getDescription());
-        }
-        if (donationEventReq.getStartDate() != null) {
+        if (donationEventReq.getStartDate() != null)
             donationEvent.setStartDate(donationEventReq.getStartDate());
-        }
-        if (donationEventReq.getEndDate() != null) {
+        if (donationEventReq.getEndDate() != null)
             donationEvent.setEndDate(donationEventReq.getEndDate());
-        }
-        if (donationEventReq.getLatitude() != null) {
+        if (donationEventReq.getLatitude() != null)
             donationEvent.setLatitude(donationEventReq.getLatitude());
-        }
-        if (donationEventReq.getLongitude() != null) {
+        if (donationEventReq.getLongitude() != null)
             donationEvent.setLongitude(donationEventReq.getLongitude());
-        }
-        if (donationEventReq.getAcceptedTypes() != null) {
+        if (donationEventReq.getAcceptedTypes() != null)
             donationEvent.setAcceptedTypes(donationEventReq.getAcceptedTypes());
-        }
-
-        if (donationEventReq.getTargetQuantity() != null) {
+        if (donationEventReq.getTargetQuantity() != null)
             donationEvent.setTargetQuantity(donationEventReq.getTargetQuantity());
-        }
-
-        if (donationEventReq.getStatus() != null) {
+        if (donationEventReq.getStatus() != null)
             donationEvent.setStatus(donationEventReq.getStatus());
-        }
-
-        if(donationEventReq.getAcceptedTypes() != null && !donationEventReq.getAcceptedTypes().isEmpty()){
+        if (donationEventReq.getAcceptedTypes() != null && !donationEventReq.getAcceptedTypes().isEmpty())
             donationEvent.getOrganizationDetail().setAcceptedTypes(donationEventReq.getAcceptedTypes());
-        }
-
-        if(donationEventReq.getBannerUrl() != null){
+        if (donationEventReq.getBannerUrl() != null)
             donationEvent.setBannerUrl(donationEventReq.getBannerUrl());
-        }
+
         donationEventRepository.save(donationEvent);
+
+        auditLogService.log(
+                "UPDATE_DONATION_EVENT",
+                "DonationEvent",
+                donationEventId.toString(),
+                "Organization updated donation event: " + donationEvent.getTitle(),
+                "SUCCESS",
+                donationEvent.getOrganizationDetail().getUser().getUserId(),
+                userDetails.getUsername(),
+                request
+        );
     }
 
+    @Override
+    public void deleteDonationEvent(UUID donationEventId,
+                                    UserDetails userDetails, HttpServletRequest request) {
+        DonationEvent donationEvent = donationEventRepository.findById(donationEventId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Donation event not found with id: " + donationEventId));
+
+        donationEventRepository.delete(donationEvent);
+
+        auditLogService.log(
+                "DELETE_DONATION_EVENT",
+                "DonationEvent",
+                donationEventId.toString(),
+                "Organization deleted donation event: " + donationEvent.getTitle(),
+                "SUCCESS",
+                donationEvent.getOrganizationDetail().getUser().getUserId(),
+                userDetails.getUsername(),
+                request
+        );
+    }
     @Override
     public List<DonationEventRes> getAllDonationEvents() {
         List<DonationEvent> donationEvents = donationEventRepository.findAll();
