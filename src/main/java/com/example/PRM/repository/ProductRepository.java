@@ -1,6 +1,7 @@
 package com.example.PRM.repository;
 
 import com.example.PRM.entity.Product;
+import com.example.PRM.status_enum.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -15,10 +16,11 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     @Query("""
     SELECT p
     FROM Product p
-    WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    WHERE p.status = :status AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
        OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%'))
-       OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+       OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
 """)
-    List<Product> searchByKeyword(@Param("keyword") String keyword);
+    List<Product> searchByKeyword(@Param("keyword") String keyword, @Param("status") ProductStatus status);
     List<Product> findBySellerUserId(UUID sellerId);
+    List<Product> findByStatus(ProductStatus status);
 }
