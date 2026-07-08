@@ -2,17 +2,12 @@
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy only the pom.xml first to cache dependencies
+# Copy the pom.xml and source code
 COPY pom.xml .
-
-# Download dependencies (this layer will be cached unless pom.xml changes)
-RUN mvn dependency:go-offline -B
-
-# Copy the source code
 COPY src ./src
 
-# Build the application, skipping tests
-RUN mvn clean package -DskipTests
+# Build the application, using Docker BuildKit cache for Maven dependencies
+RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests
 
 # Stage 2: Run the application
 FROM eclipse-temurin:21-jre
