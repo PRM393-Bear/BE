@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpecificationExecutor<Product> {
-    List<Product> findByCategoryAndPriceLessThanEqual(String category, Long price);
+    List<Product> findByCategoryNameAndPriceLessThanEqual(String categoryName, Long price);
 
     @Query("""
     SELECT p
