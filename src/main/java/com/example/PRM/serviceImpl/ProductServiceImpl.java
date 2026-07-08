@@ -77,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductRes> search(String category, Long maxPrice) {
-        return productRepository.findByCategoryAndPriceLessThanEqual(category, maxPrice)
+        return productRepository.findByCategoryNameAndPriceLessThanEqual(category, maxPrice)
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
