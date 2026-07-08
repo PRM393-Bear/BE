@@ -16,6 +16,7 @@ public class UserMapper {
         userRes.setPhone(user.getPhone());
         userRes.setUsername(user.getUserName());
         userRes.setFullName(user.getFullName());
+        userRes.setRole(user.getRole());
         return userRes;
     }
 
@@ -38,6 +39,7 @@ public class UserMapper {
         userRes.setEmail(user.getEmail());
         userRes.setPhone(user.getPhone());
         userRes.setFullName(user.getFullName());
+        userRes.setRole(user.getRole());
         return userRes;
     }
 

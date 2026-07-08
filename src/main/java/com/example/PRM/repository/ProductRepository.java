@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,5 +23,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 """)
     List<Product> searchByKeyword(@Param("keyword") String keyword, @Param("status") ProductStatus status);
     List<Product> findBySellerUserId(UUID sellerId);
+    List<Product> findBySellerUserNameAndStatus(String userName, ProductStatus status);
     List<Product> findByStatus(ProductStatus status);
 }
