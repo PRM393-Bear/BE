@@ -2,7 +2,9 @@ package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.LoginReq;
 import com.example.PRM.dto.request.UserReq;
-import com.example.PRM.dto.response.AuthRes;
+import com.example.PRM.dto.user.AuthRes;
+import com.example.PRM.dto.user.LoginLogRes;
+import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.entity.RefreshToken;
 import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
@@ -10,7 +12,6 @@ import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.status_enum.OtpPurpose;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -38,7 +39,7 @@ public class AuthServiceImpl {
     private final AuditLogServiceImpl auditLogService;
     private final String entity = "AUTH";
 
-    public void registerForMember(UserReq request, HttpServletRequest httpRequest) {
+    public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new BadRequestException("Username đã tồn tại");
         }
@@ -60,19 +61,12 @@ public class AuthServiceImpl {
                 .build();
 
         userRepository.save(user);
-        auditLogService.log("REGISTER_SUCCESS",
-                entity,
-                null,
-                "User registered successfully",
-                "SUCCESS",
-                user.getUserId(),
-                user.getUserName(),
-                httpRequest
-        );
+
         userService.sendOtp(user.getEmail(), OtpPurpose.REGISTER);
+        return new UserLogRes(user.getUserName(),user.getUserId());
     }
 
-    public AuthRes login(LoginReq request, HttpServletRequest httpRequest) {
+    public LoginLogRes login(LoginReq request) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -81,15 +75,7 @@ public class AuthServiceImpl {
         } catch (BadCredentialsException e) {
             User user = userRepository.findByUserName(request.getUsername())
                     .orElseThrow(() -> new NotFoundException("User not found"));
-            auditLogService.log("LOGIN_FAILED",
-                    entity,
-                    null,
-                    "User login failed",
-                    "FAILED",
-                    user.getUserId(),
-                    user.getUserName(),
-                    httpRequest
-                    );
+
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
 
 
@@ -106,15 +92,7 @@ public class AuthServiceImpl {
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));
 
-        auditLogService.log("LOGIN_SUCCESS",
-                entity,
-                null,
-                "User login success",
-                "SUCCESS",
-                user.getUserId(),
-                user.getUserName(),
-                httpRequest
-        );
-        return new AuthRes(accessToken, refreshToken.getToken());
+
+        return new LoginLogRes(accessToken, refreshToken.getToken(),user.getUserName(),user.getUserId());
     }
 }

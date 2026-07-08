@@ -2,9 +2,12 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.LoginReq;
 import com.example.PRM.dto.request.UserReq;
-import com.example.PRM.dto.response.AuthRes;
+import com.example.PRM.dto.user.AuthRes;
+import com.example.PRM.dto.user.LoginLogRes;
+import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.entity.RefreshToken;
 import com.example.PRM.repository.RefreshTokenRepository;
+import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.RefreshTokenService;
 import com.example.PRM.serviceImpl.UserDetailsServiceImpl;
 import com.example.PRM.util.JwtUtil;
@@ -25,18 +28,38 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserReq request,
                                       HttpServletRequest httpRequest) {
-        authService.registerForMember(request, httpRequest);
+        UserLogRes res = authService.registerForMember(request);
+        auditLogService.log("REGISTER_SUCCESS",
+                "AUTH_REGISTER",
+                "IS_NOT_VERIFIED",
+                "User registered successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                httpRequest
+        );
         return ResponseEntity.ok("User registered successfully, please check your email to verify your account!!");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthRes> login(@RequestBody LoginReq request,
+    public ResponseEntity<?> login(@RequestBody LoginReq request,
                                          HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(authService.login(request, httpRequest));
+        LoginLogRes res = authService.login(request);
+        auditLogService.log("LOGIN_SUCCESS",
+                "AUTH_LOGIN",
+                null,
+                "User login success",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                httpRequest
+        );
+        return ResponseEntity.ok(res);
     }
 
     // Lấy access token mới bằng refresh token

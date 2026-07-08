@@ -18,6 +18,7 @@ import com.example.PRM.service.OrderService;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.OrderStatus;
 import com.example.PRM.status_enum.ProductStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,6 +41,7 @@ public class OrderServiceImpl implements OrderService {
     private final WardrobeItemService wardrobeItemService;
     private final NotificationService notificationService;
     private final OrderMapper orderMapper;
+    private final AuditLogServiceImpl auditLogService;
 
     @Override
     @Transactional
@@ -139,7 +141,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order confirmReceived(UserDetails userDetails, UUID orderId, String deliveryPhotoUrl) {
+    public Order confirmReceived(UserDetails userDetails, UUID orderId, String deliveryPhotoUrl, HttpServletRequest request) {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));

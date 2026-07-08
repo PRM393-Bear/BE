@@ -2,7 +2,9 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.*;
 import com.example.PRM.dto.response.DonationPendingResponse;
+import com.example.PRM.entity.DonationRequest;
 import com.example.PRM.service.DonationRequestService;
+import com.example.PRM.serviceImpl.AuditLogServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -22,6 +24,8 @@ import java.util.UUID;
 public class DonationRequestController {
 
     private final DonationRequestService donationRequestService;
+    private final AuditLogServiceImpl auditLogService;
+    private static final String ENTITY = "DonationRequest";
 
     @PreAuthorize("hasRole('MEMBER')")
     @PostMapping
@@ -30,8 +34,18 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request1) {
 
-        userDetails.getAuthorities();
-        donationRequestService.createDonationRequest(request, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.createDonationRequest(request, userDetails);
+
+        auditLogService.log(
+                "CREATE_DONATION_REQUEST",
+                ENTITY,
+                donationRequest.getId().toString(),
+                "User created donation request successfully",
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
 
         return ResponseEntity.ok("Donation request created successfully");
     }
@@ -43,7 +57,19 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request1) {
 
-        donationRequestService.createDonationRequest(request, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.createDonationRequest(request, userDetails);
+
+        auditLogService.log(
+                "CREATE_DONATION_REQUEST_CUSTOM",
+                ENTITY,
+                donationRequest.getId().toString(),
+                "User created custom donation request successfully",
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
+
         return ResponseEntity.ok("Donation request created successfully");
     }
 
@@ -54,7 +80,18 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request1) {
 
-        donationRequestService.accept(id, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.accept(id, userDetails);
+
+        auditLogService.log(
+                "ACCEPT_DONATION_REQUEST",
+                ENTITY,
+                id.toString(),
+                "Organization accepted donation request",
+                "SUCCESS",
+                donationRequest.getOrganizationDetail().getUser().getUserId(),
+                donationRequest.getOrganizationDetail().getUser().getUserName(),
+                request1
+        );
 
         return ResponseEntity.ok("Donation request accepted successfully");
     }
@@ -67,7 +104,18 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request1) {
 
-        donationRequestService.reject(id, request.getReason(),userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.reject(id, request.getReason(), userDetails);
+
+        auditLogService.log(
+                "REJECT_DONATION_REQUEST",
+                ENTITY,
+                id.toString(),
+                "Organization rejected donation request. Reason: " + request.getReason(),
+                "SUCCESS",
+                donationRequest.getOrganizationDetail().getUser().getUserId(),
+                donationRequest.getOrganizationDetail().getUser().getUserName(),
+                request1
+        );
 
         return ResponseEntity.ok("Donation request rejected successfully");
     }
@@ -79,7 +127,18 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest request1) {
 
-        donationRequestService.shipping(id, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.shipping(id, userDetails);
+
+        auditLogService.log(
+                "USER_SHIPPING",
+                ENTITY,
+                id.toString(),
+                "User changed status to SHIPPING",
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
 
         return ResponseEntity.ok("Shipping donation request successfully");
     }
@@ -94,7 +153,19 @@ public class DonationRequestController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         ShippingReq req = new ShippingReq(trackingCode, shippingProofFile);
-        donationRequestService.shipped(id, req, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.shipped(id, req, userDetails);
+
+        auditLogService.log(
+                "IMAGE_PROVE_SHIPPED",
+                ENTITY,
+                id.toString(),
+                "User uploaded shipping proof image",
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
+
         return ResponseEntity.ok("Shipped donation request successfully");
     }
 
@@ -107,7 +178,19 @@ public class DonationRequestController {
             HttpServletRequest request1) {
 
         ReceivedReq req = new ReceivedReq(receiptProofFile);
-        donationRequestService.received(id, req, userDetails,request1);
+        DonationRequest donationRequest = donationRequestService.received(id, req, userDetails);
+
+        auditLogService.log(
+                "IMAGE_PROVE_RECEIVED",
+                ENTITY,
+                id.toString(),
+                "Organization uploaded receipt proof image",
+                "SUCCESS",
+                donationRequest.getOrganizationDetail().getUser().getUserId(),
+                donationRequest.getOrganizationDetail().getUser().getUserName(),
+                request1
+        );
+
         return ResponseEntity.ok("Received donation request successfully");
     }
 
@@ -117,7 +200,18 @@ public class DonationRequestController {
             @PathVariable UUID id,
             HttpServletRequest request1) {
 
-        donationRequestService.completed(id, request1);
+        DonationRequest donationRequest = donationRequestService.completed(id);
+
+        auditLogService.log(
+                "COMPLETED_DONATION",
+                ENTITY,
+                id.toString(),
+                "Donation request completed",
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
 
         return ResponseEntity.ok().build();
     }
@@ -127,11 +221,24 @@ public class DonationRequestController {
     public ResponseEntity<?> cancel(
             @PathVariable UUID id,
             @RequestBody String reason,
-            @AuthenticationPrincipal UserDetails userDetails){
-        donationRequestService.cancel(id, reason, userDetails);
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request1) {
+
+        DonationRequest donationRequest = donationRequestService.cancel(id, reason, userDetails);
+
+        auditLogService.log(
+                "CANCEL_DONATION_REQUEST",
+                ENTITY,
+                id.toString(),
+                "User cancelled donation request. Reason: " + reason,
+                "SUCCESS",
+                donationRequest.getUser().getUserId(),
+                donationRequest.getUser().getUserName(),
+                request1
+        );
+
         return ResponseEntity.ok("Cancel donation request successfully");
     }
-
 
     @PatchMapping("/{donationId}/assign-organization/{organizationId}")
     public ResponseEntity<?> assignOrganization(
@@ -140,11 +247,20 @@ public class DonationRequestController {
             HttpServletRequest request1
     ) {
 
-        donationRequestService.assignOrganization(donationId, organizationId, request1);
+        donationRequestService.assignOrganization(donationId, organizationId);
 
-        return ResponseEntity.ok(
-                "Assign organization successfully"
+        auditLogService.log(
+                "ASSIGN_ORGANIZATION",
+                ENTITY,
+                donationId.toString(),
+                "Admin assigned organization " + organizationId + " to donation request",
+                "SUCCESS",
+                null,
+                "SYSTEM",
+                request1
         );
+
+        return ResponseEntity.ok("Assign organization successfully");
     }
 
     @GetMapping("/lists")

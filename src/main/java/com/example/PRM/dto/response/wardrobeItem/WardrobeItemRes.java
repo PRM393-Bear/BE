@@ -1,4 +1,4 @@
-package com.example.PRM.dto.response;
+package com.example.PRM.dto.response.wardrobeItem;
 
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;

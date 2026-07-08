@@ -1,7 +1,8 @@
 package com.example.PRM.mapper;
 
 import com.example.PRM.dto.request.ProductReq;
-import com.example.PRM.dto.response.ProductRes;
+import com.example.PRM.dto.response.product.ProductRes;
+import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
 import com.example.PRM.status_enum.ProductStatus;
@@ -53,5 +54,14 @@ public class ProductMapper {
                 req.getLifecycleGeneration() != null ? req.getLifecycleGeneration() : (short) 1
         );
         return product;
+    }
+
+    public ProductRes toProductRes(Product product) {
+        ProductRes productLogRes = new ProductRes();
+        productLogRes.setId(product.getId());
+        productLogRes.setTitle(product.getTitle());
+        productLogRes.setSellerName(product.getSeller().getUserName());
+        productLogRes.setSellerId(product.getSeller().getUserId());
+        return productLogRes;
     }
 }

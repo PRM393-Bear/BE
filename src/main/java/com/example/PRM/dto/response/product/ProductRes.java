@@ -1,4 +1,4 @@
-package com.example.PRM.dto.response;
+package com.example.PRM.dto.response.product;
 
 import com.example.PRM.status_enum.ProductStatus;
 import com.example.PRM.status_enum.ProductType;

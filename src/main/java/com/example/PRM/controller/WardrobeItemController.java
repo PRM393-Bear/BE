@@ -1,6 +1,8 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.response.WardrobeItemRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemLogRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemRes;
+import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.WardrobeStatus;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,15 +18,26 @@ import java.util.UUID;
 @RequestMapping("/api/wardrobe-items")
 public class WardrobeItemController {
     private final WardrobeItemService wardrobeItemService;
-    public WardrobeItemController(WardrobeItemService wardrobeItemService) {
+    private final AuditLogService auditLogService;
+    public WardrobeItemController(WardrobeItemService wardrobeItemService, AuditLogService auditLogService) {
         this.wardrobeItemService = wardrobeItemService;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/{productId}")
     public ResponseEntity<?> createWardrobeItem(@PathVariable UUID productId,
                                                 @AuthenticationPrincipal UserDetails userDetails,
                                                 HttpServletRequest request) {
-        wardrobeItemService.createWardrobeItem(userDetails, productId,request);
+        WardrobeItemLogRes res = wardrobeItemService.createWardrobeItem(userDetails, productId);
+        auditLogService.log("CREATE_WARDROBE_ITEM",
+                res.getName(),
+                res.getId().toString(),
+                "User create wardrobe item successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
         return ResponseEntity.ok("Wardrobe item created successfully");
     }
 
@@ -48,7 +61,16 @@ public class WardrobeItemController {
             @PathVariable UUID wardrobeItemId,
             HttpServletRequest request) {
 
-        wardrobeItemService.deleteWardrobeItem(userDetails, wardrobeItemId,request);
+        WardrobeItemLogRes res = wardrobeItemService.deleteWardrobeItem(userDetails, wardrobeItemId);
+        auditLogService.log("DELETE_WARDROBE_ITEM",
+                res.getName(),
+                wardrobeItemId.toString(),
+                "User delete wardrobe item successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
 
         return ResponseEntity.ok("Xóa vật phẩm khỏi tủ đồ thành công");
     }
@@ -60,10 +82,18 @@ public class WardrobeItemController {
             @RequestParam WardrobeStatus status,
             HttpServletRequest request) {
 
-        wardrobeItemService.updateWardrobeItem(
+        WardrobeItemLogRes res = wardrobeItemService.updateWardrobeItem(
                 userDetails,
                 wardrobeItemId,
-                status,
+                status
+        );
+        auditLogService.log("UPDATE_WARDROBE_ITEM",
+                res.getName(),
+                res.getId().toString(),
+                "User update wardrobe item successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
                 request
         );
 

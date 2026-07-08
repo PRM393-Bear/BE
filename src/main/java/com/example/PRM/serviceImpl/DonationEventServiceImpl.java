@@ -2,7 +2,8 @@ package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.DonationEventFilterReq;
 import com.example.PRM.dto.request.DonationEventReq;
-import com.example.PRM.dto.response.DonationEventRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventRes;
 import com.example.PRM.entity.DonationEvent;
 import com.example.PRM.entity.OrganizationDetail;
 import com.example.PRM.exception.BadRequestException;
@@ -11,12 +12,10 @@ import com.example.PRM.mapper.DonationEventMapper;
 import com.example.PRM.repository.DonationEventRepository;
 import com.example.PRM.repository.OrganizationDetailRepository;
 import com.example.PRM.service.DonationEventService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,36 +25,25 @@ public class DonationEventServiceImpl implements DonationEventService {
     private final DonationEventRepository donationEventRepository;
     private final DonationEventMapper donationEventMapper;
     private final OrganizationDetailRepository organizationDetailRepository;
-    private final AuditLogServiceImpl auditLogService;
-    public DonationEventServiceImpl(DonationEventRepository donationEventRepository, DonationEventMapper donationEventMapper, OrganizationDetailRepository organizationDetailRepository, AuditLogServiceImpl auditLogService) {
+    public DonationEventServiceImpl(DonationEventRepository donationEventRepository, DonationEventMapper donationEventMapper, OrganizationDetailRepository organizationDetailRepository) {
         this.donationEventRepository = donationEventRepository;
         this.donationEventMapper = donationEventMapper;
         this.organizationDetailRepository = organizationDetailRepository;
-        this.auditLogService = auditLogService;
     }
     @Override
-    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId, HttpServletRequest request, UserDetails userDetails) {
+    public DonationEventLogRes createDonationEvent(DonationEventReq donationEventReq, UUID orgId, UserDetails userDetails) {
         DonationEvent donationEvent = donationEventMapper.toEntity(donationEventReq);
         OrganizationDetail organizationDetail = organizationDetailRepository.findById(orgId)
                 .orElseThrow(() -> new NotFoundException("Organization not found"));
         donationEvent.setOrganizationDetail(organizationDetail);
         donationEventRepository.save(donationEvent);
 
-        auditLogService.log(
-                "CREATE_DONATION_EVENT",
-                "DonationEvent",
-                donationEvent.getId().toString(),
-                "Organization created donation event: " + donationEvent.getTitle(),
-                "SUCCESS",
-                organizationDetail.getUser().getUserId(),
-                userDetails.getUsername(),
-                request
-        );
+        return donationEventMapper.toResponseLog(donationEvent);
     }
 
     @Override
-    public void updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq,
-                                    UserDetails userDetails, HttpServletRequest request) {
+    public DonationEventLogRes updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq,
+                                    UserDetails userDetails) {
         DonationEvent donationEvent = donationEventRepository.findById(donationEventId)
                 .orElseThrow(() -> new NotFoundException(
                         "Donation event not found with id: " + donationEventId));
@@ -85,37 +73,19 @@ public class DonationEventServiceImpl implements DonationEventService {
 
         donationEventRepository.save(donationEvent);
 
-        auditLogService.log(
-                "UPDATE_DONATION_EVENT",
-                "DonationEvent",
-                donationEventId.toString(),
-                "Organization updated donation event: " + donationEvent.getTitle(),
-                "SUCCESS",
-                donationEvent.getOrganizationDetail().getUser().getUserId(),
-                userDetails.getUsername(),
-                request
-        );
+        return donationEventMapper.toResponseLog(donationEvent);
     }
 
     @Override
-    public void deleteDonationEvent(UUID donationEventId,
-                                    UserDetails userDetails, HttpServletRequest request) {
+    public DonationEventLogRes deleteDonationEvent(UUID donationEventId,
+                                    UserDetails userDetails) {
         DonationEvent donationEvent = donationEventRepository.findById(donationEventId)
                 .orElseThrow(() -> new NotFoundException(
                         "Donation event not found with id: " + donationEventId));
 
         donationEventRepository.delete(donationEvent);
 
-        auditLogService.log(
-                "DELETE_DONATION_EVENT",
-                "DonationEvent",
-                donationEventId.toString(),
-                "Organization deleted donation event: " + donationEvent.getTitle(),
-                "SUCCESS",
-                donationEvent.getOrganizationDetail().getUser().getUserId(),
-                userDetails.getUsername(),
-                request
-        );
+        return donationEventMapper.toResponseLog(donationEvent);
     }
     @Override
     public List<DonationEventRes> getAllDonationEvents() {

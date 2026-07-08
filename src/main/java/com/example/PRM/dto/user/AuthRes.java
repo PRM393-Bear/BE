@@ -1,7 +1,9 @@
-package com.example.PRM.dto.response;
+package com.example.PRM.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor

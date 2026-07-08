@@ -1,6 +1,7 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.response.WardrobeItemRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemLogRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemRes;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
 import com.example.PRM.entity.WardrobeItem;
@@ -13,7 +14,6 @@ import com.example.PRM.repository.WardrobeItemRepository;
 import com.example.PRM.service.WardrobeItemService;
 import com.example.PRM.status_enum.AddedVia;
 import com.example.PRM.status_enum.WardrobeStatus;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +37,7 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
     }
 
     @Override
-    public void createWardrobeItem(UserDetails userDetails, UUID productId, HttpServletRequest request) {
+    public WardrobeItemLogRes createWardrobeItem(UserDetails userDetails, UUID productId) {
         User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
         Product product = productRepository.findById(productId).orElseThrow(() ->
@@ -52,17 +52,9 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
         wardrobeItem.setAcquiredAt(LocalDate.now());
         wardrobeItem.setAddedVia(AddedVia.PURCHASE);
 
-        auditLogService.log("CREATE_WARDROBE_ITEM",
-                wardrobeItem.getName(),
-                wardrobeItem.getId().toString(),
-                "User create wardrobe item successfully",
-                "SUCCESS",
-                wardrobeItem.getUser().getUserId(),
-                wardrobeItem.getUser().getUserName(),
-                request
-        );
 
         wardrobeItemRepository.save(wardrobeItem);
+        return wardrobeItemMapper.toWardrobeItemLogRes(wardrobeItem);
     }
 
     @Override
@@ -74,7 +66,7 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
     }
 
     @Override
-    public void deleteWardrobeItem(UserDetails userDetails, UUID wardrobeItemId, HttpServletRequest request) {
+    public WardrobeItemLogRes deleteWardrobeItem(UserDetails userDetails, UUID wardrobeItemId) {
         User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
         WardrobeItem wardrobeItem = wardrobeItemRepository.findById(wardrobeItemId).orElseThrow(()
@@ -83,23 +75,16 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
             throw new IllegalArgumentException("You are not authorized to delete this wardrobe item");
         }
         wardrobeItem.setStatus(WardrobeStatus.DISPOSED);
-        auditLogService.log("DELETE_WARDROBE_ITEM",
-                wardrobeItem.getName(),
-                wardrobeItemId.toString(),
-                "User delete wardrobe item successfully",
-                "SUCCESS",
-                wardrobeItem.getUser().getUserId(),
-                wardrobeItem.getUser().getUserName(),
-                request
-        );
+
         wardrobeItemRepository.save(wardrobeItem);
+        return wardrobeItemMapper.toWardrobeItemLogRes(wardrobeItem);
     }
 
     @Override
-    public void updateWardrobeItem(UserDetails userDetails
+    public WardrobeItemLogRes updateWardrobeItem(UserDetails userDetails
             , UUID wardrobeItemId
             , WardrobeStatus status
-            , HttpServletRequest request) {
+            ) {
         User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
         WardrobeItem wardrobeItem = wardrobeItemRepository.findById(wardrobeItemId).orElseThrow(()
@@ -108,15 +93,8 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
             throw new BadRequestException("You are not authorized to update this wardrobe item");
         }
         wardrobeItem.setStatus(status);
-        auditLogService.log("UPDATE_WARDROBE_ITEM",
-                wardrobeItem.getName(),
-                wardrobeItem.getId().toString(),
-                "User reset password successfully",
-                "SUCCESS",
-                wardrobeItem.getUser().getUserId(),
-                wardrobeItem.getUser().getUserName(),
-                request
-        );
+
         wardrobeItemRepository.save(wardrobeItem);
+        return wardrobeItemMapper.toWardrobeItemLogRes(wardrobeItem);
     }
 }
