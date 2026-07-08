@@ -77,6 +77,9 @@ public class Product {
     @JoinColumn(name = "shop_id")
     private Shop shop;
 
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = OffsetDateTime.now();

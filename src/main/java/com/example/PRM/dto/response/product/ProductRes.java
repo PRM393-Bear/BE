@@ -22,6 +22,7 @@ public class ProductRes {
     private List<String> images;
     private List<String> aiTags;
     private ProductStatus status;
+    private String rejectReason;
     private Short lifecycleGeneration;
     private OffsetDateTime createdAt;
 
