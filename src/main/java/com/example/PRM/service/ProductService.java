@@ -4,6 +4,7 @@ import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.status_enum.ProductStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,4 +23,5 @@ public interface ProductService {
     List<ProductRes> getProductPendingStatus();
     ProductRes approveProduct(UUID id);
     ProductRes rejectProduct(UUID id, String rejectReason);
+    List<ProductRes> getMyRejectedProducts(UserDetails userDetails);
 }

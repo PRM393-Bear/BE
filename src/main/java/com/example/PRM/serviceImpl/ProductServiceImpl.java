@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -246,5 +247,13 @@ public class ProductServiceImpl implements ProductService {
         // Send notification
 
         return productMapper.toResponse(saved);
+    }
+
+    @Override
+    public List<ProductRes> getMyRejectedProducts(UserDetails userDetails) {
+        return productRepository.findBySellerUserNameAndStatus(userDetails.getUsername(), ProductStatus.REJECTED)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
     }
 }

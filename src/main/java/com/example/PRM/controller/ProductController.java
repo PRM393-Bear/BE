@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -137,6 +139,12 @@ public class ProductController {
             @RequestParam String reason) {
         productService.rejectProduct(id, reason);
         return ResponseEntity.ok(new ApiResponse(200, "reject product successfully"));
+    }
+
+    @GetMapping("/my-rejected")
+    public ResponseEntity<List<ProductRes>> getMyRejectedProducts(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(productService.getMyRejectedProducts(userDetails));
     }
 
 }
