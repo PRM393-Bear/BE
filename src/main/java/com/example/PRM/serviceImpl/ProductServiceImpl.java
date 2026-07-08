@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -220,9 +221,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductRes approveProduct(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
-        if (product.getStatus() != ProductStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING products can be approved.");
-        }
+
         product.setStatus(ProductStatus.AVAILABLE);
         product.setRejectReason(null);
         Product saved = productRepository.save(product);
@@ -236,12 +235,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductRes rejectProduct(UUID id, String rejectReason) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
-        if (product.getStatus() != ProductStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING products can be rejected.");
-        }
+
         if (rejectReason == null || rejectReason.isBlank()) {
             throw new IllegalArgumentException("Reject reason is required.");
         }
+
         product.setStatus(ProductStatus.REJECTED);
         product.setRejectReason(rejectReason);
         Product saved = productRepository.save(product);
@@ -249,5 +247,13 @@ public class ProductServiceImpl implements ProductService {
         // Send notification
 
         return productMapper.toResponse(saved);
+    }
+
+    @Override
+    public List<ProductRes> getMyRejectedProducts(UserDetails userDetails) {
+        return productRepository.findBySellerUserNameAndStatus(userDetails.getUsername(), ProductStatus.REJECTED)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
     }
 }
