@@ -14,7 +14,12 @@ public class ProductSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             if (filter.getCategory() != null && !filter.getCategory().isBlank()) {
-                predicates.add(cb.equal(root.get("category"), filter.getCategory()));
+                try {
+                    java.util.UUID categoryId = java.util.UUID.fromString(filter.getCategory());
+                    predicates.add(cb.equal(root.join("category").get("id"), categoryId));
+                } catch (IllegalArgumentException e) {
+                    predicates.add(cb.equal(root.join("category").get("name"), filter.getCategory()));
+                }
             }
             if (filter.getMinPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filter.getMinPrice()));

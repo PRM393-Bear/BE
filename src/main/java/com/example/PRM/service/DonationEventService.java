@@ -2,14 +2,17 @@ package com.example.PRM.service;
 
 import com.example.PRM.dto.request.DonationEventFilterReq;
 import com.example.PRM.dto.request.DonationEventReq;
-import com.example.PRM.dto.response.DonationEventRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventRes;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface DonationEventService {
-    public void createDonationEvent(DonationEventReq donationEventReq, UUID orgId);
-    public void updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq);
+    public DonationEventLogRes createDonationEvent(DonationEventReq donationEventReq, UUID orgId, UserDetails userDetails);
+    public DonationEventLogRes updateDonationEvent(UUID donationEventId, DonationEventReq donationEventReq,UserDetails userDetails);
+    public DonationEventLogRes deleteDonationEvent(UUID donationEventId,UserDetails userDetails);
     public List<DonationEventRes> getAllDonationEvents();
     public List<DonationEventRes> getAllByFilter(DonationEventFilterReq donationEventFilterReq);
 

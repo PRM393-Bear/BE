@@ -1,7 +1,8 @@
 package com.example.PRM.mapper;
 
 import com.example.PRM.dto.request.DonationEventReq;
-import com.example.PRM.dto.response.DonationEventRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
+import com.example.PRM.dto.response.donationEvent.DonationEventRes;
 import com.example.PRM.entity.DonationEvent;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +40,15 @@ public class DonationEventMapper {
         donationEvent.setStatus(donationEventreq.getStatus());
 
         return donationEvent;
+    }
+
+    public DonationEventLogRes toResponseLog(DonationEvent donationEvent){
+        DonationEventLogRes donationEventLogRes = new DonationEventLogRes();
+        donationEventLogRes.setDonationEventId(donationEvent.getId());
+        donationEventLogRes.setDonationEventName(donationEvent.getTitle());
+        donationEventLogRes.setUserId(donationEvent.getOrganizationDetail().getUser().getUserId());
+        donationEventLogRes.setUsername(donationEvent.getOrganizationDetail().getUser().getUserName());
+        return donationEventLogRes;
     }
 
 }

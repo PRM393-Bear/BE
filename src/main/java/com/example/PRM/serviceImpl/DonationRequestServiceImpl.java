@@ -27,6 +27,7 @@ import java.util.UUID;
 @Service
 @Transactional
 public class DonationRequestServiceImpl implements DonationRequestService {
+
     private final DonationRequestRepository donationRequestRepository;
     private final DonationEventRepository donationEventRepository;
     private final WardrobeItemRepository wardrobeItemRepository;
@@ -37,21 +38,34 @@ public class DonationRequestServiceImpl implements DonationRequestService {
     private final UploadServiceImpl uploadService;
     private final WardrobeItemMapper wardrobeItemMapper;
 
-    public DonationRequestServiceImpl(DonationRequestRepository donationRequestRepository, DonationEventRepository donationEventRepository, WardrobeItemRepository wardrobeItemRepository, OrganizationDetailRepository organizationDetailRepository, DonationRequestMapper donationRequestMapper, UserRepository userRepository, NotificationAdminServiceImpl notificationAdminService, UploadServiceImpl uploadService, WardrobeItemMapper wardrobeItemMapper) {
-        this.donationRequestRepository = donationRequestRepository;
-        this.donationEventRepository = donationEventRepository;
-        this.wardrobeItemRepository = wardrobeItemRepository;
+    public DonationRequestServiceImpl(
+            DonationRequestRepository donationRequestRepository,
+            DonationEventRepository donationEventRepository,
+            WardrobeItemRepository wardrobeItemRepository,
+            OrganizationDetailRepository organizationDetailRepository,
+            DonationRequestMapper donationRequestMapper,
+            UserRepository userRepository,
+            NotificationAdminServiceImpl notificationAdminService,
+            UploadServiceImpl uploadService,
+            WardrobeItemMapper wardrobeItemMapper) {
+        this.donationRequestRepository    = donationRequestRepository;
+        this.donationEventRepository      = donationEventRepository;
+        this.wardrobeItemRepository       = wardrobeItemRepository;
         this.organizationDetailRepository = organizationDetailRepository;
-        this.donationRequestMapper = donationRequestMapper;
-        this.userRepository = userRepository;
-        this.notificationAdminService = notificationAdminService;
-        this.uploadService = uploadService;
-        this.wardrobeItemMapper = wardrobeItemMapper;
+        this.donationRequestMapper        = donationRequestMapper;
+        this.userRepository               = userRepository;
+        this.notificationAdminService     = notificationAdminService;
+        this.uploadService                = uploadService;
+        this.wardrobeItemMapper           = wardrobeItemMapper;
     }
 
-    @Override
-    public void createDonationRequest(DonationRequestReq donationRequestReq, UserDetails userDetails) {
+    // ─────────────────────────────────────────
+    // CREATE
+    // ─────────────────────────────────────────
 
+    @Override
+    public DonationRequest createDonationRequest(DonationRequestReq donationRequestReq,
+                                                 UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestMapper.toEntity(donationRequestReq);
         donationRequest.setStatus(DonationStatus.PENDING);
 
@@ -76,13 +90,14 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.getItems().add(wi);
         donationRequest.setOrganizationDetail(de.getOrganizationDetail());
         donationRequest.setCreatedAt(LocalDateTime.now());
-
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
     @Override
-    public void createDonationRequest(DonationRequestCustomReq donationRequestReq, UserDetails userDetails) {
-
+    public DonationRequest createDonationRequest(DonationRequestCustomReq donationRequestReq,
+                                                 UserDetails userDetails) {
         User user = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new NotFoundException(
                         "User not found with userName: " + userDetails.getUsername()));
@@ -110,18 +125,24 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setCreatedAt(LocalDateTime.now());
         donationRequest.getImages().add(uploadRes.getUrl());
         donationRequest.getItems().add(wi);
-
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
-    @Override
-    public void accept(UUID donationRequestId, UserDetails userDetails) {
+    // ─────────────────────────────────────────
+    // ACCEPT / REJECT
+    // ─────────────────────────────────────────
 
+    @Override
+    public DonationRequest accept(UUID donationRequestId, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
-        if (!donationRequest.getOrganizationDetail().getUser().getUserName().equals(userDetails.getUsername())) {
-            throw new BadRequestException("User cannot accept donation request because user not come from this organization");
+        if (!donationRequest.getOrganizationDetail().getUser().getUserName()
+                .equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    "User cannot accept donation request because user not come from this organization");
         }
 
         if (donationRequest.getStatus() != DonationStatus.PENDING) {
@@ -131,16 +152,19 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setStatus(DonationStatus.ACCEPTED);
         donationRequest.setAcceptedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
     @Override
-    public void reject(UUID donationRequestId, String reason, UserDetails userDetails) {
-
+    public DonationRequest reject(UUID donationRequestId, String reason, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
-        if (!donationRequest.getOrganizationDetail().getUser().getUserName().equals(userDetails.getUsername())) {
-            throw new BadRequestException("User cannot reject donation request because user not come from this organization");
+        if (!donationRequest.getOrganizationDetail().getUser().getUserName()
+                .equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    "User cannot reject donation request because user not come from this organization");
         }
 
         if (donationRequest.getStatus() != DonationStatus.PENDING) {
@@ -151,11 +175,16 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setRejectedReason(reason);
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
-    @Override
-    public void shipping(UUID donationRequestId, UserDetails userDetails) {
+    // ─────────────────────────────────────────
+    // SHIPPING / SHIPPED / RECEIVED
+    // ─────────────────────────────────────────
 
+    @Override
+    public DonationRequest shipping(UUID donationRequestId, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
@@ -170,11 +199,12 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setStatus(DonationStatus.SHIPPING);
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
     @Override
-    public void shipped(UUID donationRequestId, ShippingReq req, UserDetails userDetails) {
-
+    public DonationRequest shipped(UUID donationRequestId, ShippingReq req, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
@@ -186,22 +216,25 @@ public class DonationRequestServiceImpl implements DonationRequestService {
             throw new BadRequestException("Only shipping donation can be marked as shipped");
         }
 
-        UploadRes uploadRes = uploadService.uploadImage(req.getShippingProofFile(), userDetails.getUsername());
+        UploadRes uploadRes = uploadService.uploadImage(
+                req.getShippingProofFile(), userDetails.getUsername());
 
         donationRequest.setStatus(DonationStatus.SHIPPED);
         donationRequest.setTrackingCode(req.getTrackingCode());
         donationRequest.setShippingProofUrl(uploadRes.getUrl());
         donationRequest.setShippedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
     @Override
-    public void received(UUID donationRequestId, ReceivedReq req, UserDetails userDetails) {
-
+    public DonationRequest received(UUID donationRequestId, ReceivedReq req, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
-        if (!donationRequest.getOrganizationDetail().getUser().getUserName().equals(userDetails.getUsername())) {
+        if (!donationRequest.getOrganizationDetail().getUser().getUserName()
+                .equals(userDetails.getUsername())) {
             throw new BadRequestException("User is not the owner of the donation request");
         }
 
@@ -209,17 +242,23 @@ public class DonationRequestServiceImpl implements DonationRequestService {
             throw new BadRequestException("Only shipped donation can be marked as received");
         }
 
-        UploadRes uploadRes = uploadService.uploadImage(req.getReceiptProofFile(), userDetails.getUsername());
+        UploadRes uploadRes = uploadService.uploadImage(
+                req.getReceiptProofFile(), userDetails.getUsername());
 
         donationRequest.setStatus(DonationStatus.RECEIVED);
         donationRequest.setReceiptProofUrl(uploadRes.getUrl());
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
 
-    @Override
-    public void completed(UUID donationRequestId) {
+    // ─────────────────────────────────────────
+    // COMPLETED
+    // ─────────────────────────────────────────
 
+    @Override
+    public DonationRequest completed(UUID donationRequestId) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
@@ -248,11 +287,16 @@ public class DonationRequestServiceImpl implements DonationRequestService {
             item.setStatus(WardrobeStatus.DONATED);
             wardrobeItemRepository.save(item);
         }
+
+        return donationRequest;
     }
 
-    @Override
-    public void cancel(UUID donationRequestId, String cancelReason, UserDetails userDetails) {
+    // ─────────────────────────────────────────
+    // CANCEL
+    // ─────────────────────────────────────────
 
+    @Override
+    public DonationRequest cancel(UUID donationRequestId, String cancelReason, UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
@@ -269,13 +313,18 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setStatus(DonationStatus.CANCELLED);
         donationRequest.setCanceledAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
+
+    // ─────────────────────────────────────────
+    // SCHEDULED / ASSIGN
+    // ─────────────────────────────────────────
 
     @Override
     @Scheduled(cron = "0 0 8 * * *")
     public void checkPendingDonations() {
         LocalDateTime deadline = LocalDateTime.now().minusDays(5);
-
         System.out.println("=== SCHEDULE RUNNING ===");
 
         List<DonationRequest> donations = donationRequestRepository
@@ -286,8 +335,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
     }
 
     @Override
-    public void assignOrganization(UUID donationRequestId, UUID organizationId) {
-
+    public DonationRequest assignOrganization(UUID donationRequestId, UUID organizationId) {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation not found"));
 
@@ -305,11 +353,16 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setOrganizationDetail(organization);
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        return donationRequest;
     }
+
+    // ─────────────────────────────────────────
+    // GET
+    // ─────────────────────────────────────────
 
     @Override
     public List<DonationPendingResponse> getPendingDonations(UserDetails userDetails) {
-
         List<DonationRequest> lists = donationRequestRepository
                 .findPendingDonationsOverdue(DonationStatus.PENDING, LocalDateTime.now().minusDays(5));
 

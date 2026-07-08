@@ -4,8 +4,12 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.PRM.config.CloudinaryProperties;
 import com.example.PRM.dto.response.UploadRes;
+import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
+import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.UploadService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +28,8 @@ public class UploadServiceImpl implements UploadService {
 
     private final Cloudinary cloudinary;
     private final CloudinaryProperties properties;
+    private final UserRepository userRepository;
+    private final AuditLogServiceImpl auditLogService;
 
     @Override
     public UploadRes uploadImage(MultipartFile file, String username) {

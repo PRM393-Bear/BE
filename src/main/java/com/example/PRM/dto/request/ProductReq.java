@@ -7,12 +7,13 @@ import com.example.PRM.status_enum.ProductType;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class ProductReq {
     private String title;
     private String description;
-    private String category;
+    private UUID categoryId;
     private ProductType type;
     private Short condition;
     private Long price;

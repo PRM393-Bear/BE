@@ -1,23 +1,31 @@
 package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
+import com.example.PRM.dto.user.UserLogRes;
+import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.UserService;
 import com.example.PRM.status_enum.OtpPurpose;
 import com.example.PRM.util.AuthDetails;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
     private final UserService userService;
+    private final AuditLogService auditLogService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AuditLogService auditLogService) {
         this.userService = userService;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping("/me")
@@ -44,9 +52,19 @@ public class UserController {
     @PutMapping("/me/password")
     public ResponseEntity<?> updatePassword(@RequestParam String oldPassword,
                                             @RequestParam String newPassword,
-                                            @RequestParam String confirmPassword) {
+                                            @RequestParam String confirmPassword,
+                                            HttpServletRequest request) {
         UUID userId = AuthDetails.getCurrentUserId(); // ✅
-        userService.updatePassword(userId, oldPassword, newPassword, confirmPassword);
+        UserLogRes res = userService.updatePassword(userId, oldPassword, newPassword, confirmPassword);
+        auditLogService.log("UPDATE_PASSWORD",
+                "UPDATE_PASSWORD",
+                null,
+                "User update password successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
         return ResponseEntity.ok("Update password success");
     }
 
@@ -84,8 +102,53 @@ public class UserController {
     @PostMapping("/forgot-password/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String resetToken,
                                            @RequestParam String newPassword,
-                                           @RequestParam String confirmPassword) {
-        userService.resetPassword(resetToken, newPassword, confirmPassword);
+                                           @RequestParam String confirmPassword,
+                                           HttpServletRequest request) {
+        UserLogRes res = userService.resetPassword(resetToken, newPassword, confirmPassword);
+        auditLogService.log("RESET_PASSWORD",
+                "RESET_PASSWORD",
+                null,
+                "User reset password successfully",
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
         return ResponseEntity.ok("Đặt lại mật khẩu thành công");
+    }
+    // ─────────────────────────────────────────
+// Lấy danh sách user theo role (hiển thị bảng)
+// ─────────────────────────────────────────
+    @GetMapping("/by-role")
+    public ResponseEntity<List<UserAdminRes>> getUsersByRole(
+            @RequestParam String role
+    ) {
+        return ResponseEntity.ok(userService.getAllUsersByRole(role));
+    }
+
+    // ─────────────────────────────────────────
+// Lấy danh sách user theo trạng thái (hiển thị bảng)
+// ─────────────────────────────────────────
+    @GetMapping("/by-status")
+    public ResponseEntity<List<UserAdminRes>> getUsersByStatus(
+            @RequestParam boolean active
+    ) {
+        return ResponseEntity.ok(userService.getAllUserByActive(active));
+    }
+
+    // ─────────────────────────────────────────
+// Thống kê user theo role (dùng cho chart)
+// ─────────────────────────────────────────
+    @GetMapping("/chart/by-role")
+    public ResponseEntity<Map<String, Long>> getUserChartByRole() {
+        return ResponseEntity.ok(userService.getUserCountByRole());
+    }
+
+    // ─────────────────────────────────────────
+// Thống kê user theo trạng thái (dùng cho chart)
+// ─────────────────────────────────────────
+    @GetMapping("/chart/by-status")
+    public ResponseEntity<Map<String, Long>> getUserChartByStatus() {
+        return ResponseEntity.ok(userService.getUserCountByStatus());
     }
 }

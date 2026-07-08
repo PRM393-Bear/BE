@@ -2,8 +2,7 @@ package com.example.PRM.service;
 
 import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
-import com.example.PRM.dto.response.ProductRes;
-import com.example.PRM.entity.Product;
+import com.example.PRM.dto.response.product.ProductRes;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,4 +17,5 @@ public interface ProductService {
     List<ProductRes> getProductsByUserId(UUID userId);
     ProductRes hideProduct(UUID id);
     List<ProductRes> filterProducts(ProductFilterReq filter);
+    ProductRes deleteProduct(UUID id);
 }

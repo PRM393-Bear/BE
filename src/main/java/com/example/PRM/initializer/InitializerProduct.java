@@ -1,6 +1,8 @@
 package com.example.PRM.initializer;
+import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
+import com.example.PRM.repository.CategoryRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.status_enum.ProductStatus;
@@ -17,11 +19,14 @@ public class InitializerProduct implements CommandLineRunner {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+
 
     public InitializerProduct(ProductRepository productRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -164,300 +169,6 @@ public class InitializerProduct implements CommandLineRunner {
                 "bottom", ProductType.ITEM, (short) 8, 300000L, "M", "black",
                 imgs("black-wideleg-1.jpg"), tags("casual", "office", "party"), ProductStatus.AVAILABLE, (short) 1);
 
-        createProduct(seller, "Navy Chino Pants", "Smart casual navy chinos.",
-                "bottom", ProductType.ITEM, (short) 8, 270000L, "32", "navy",
-                imgs("navy-chino-1.jpg"), tags("casual", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Mini Skirt", "Chic black mini skirt for nights out.",
-                "bottom", ProductType.ITEM, (short) 8, 190000L, "S", "black",
-                imgs("black-miniskirt-1.jpg"), tags("party", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Khaki Cargo Pants", "Durable khaki cargo pants.",
-                "bottom", ProductType.ITEM, (short) 8, 290000L, "32", "beige",
-                imgs("khaki-cargo-1.jpg"), tags("casual", "outdoor", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Olive Cargo Shorts", "Comfortable olive cargo shorts.",
-                "bottom", ProductType.ITEM, (short) 8, 180000L, "M", "olive",
-                imgs("olive-shorts-1.jpg"), tags("casual", "outdoor", "beach"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Denim Shorts", "Classic blue denim shorts.",
-                "bottom", ProductType.ITEM, (short) 8, 150000L, "M", "denim",
-                imgs("denim-shorts-1.jpg"), tags("casual", "beach", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Joggers", "Comfy black jogger pants.",
-                "bottom", ProductType.ITEM, (short) 9, 200000L, "L", "black",
-                imgs("black-joggers-1.jpg"), tags("sport", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gray Sweatpants", "Soft gray sweatpants.",
-                "bottom", ProductType.ITEM, (short) 8, 190000L, "L", "gray",
-                imgs("gray-sweatpants-1.jpg"), tags("sport", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Pink Pleated Skirt", "Soft pink pleated skirt.",
-                "bottom", ProductType.ITEM, (short) 8, 220000L, "S", "pink",
-                imgs("pink-skirt-1.jpg"), tags("casual", "date", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Brown Corduroy Pants", "Vintage style brown corduroy pants.",
-                "bottom", ProductType.ITEM, (short) 7, 250000L, "32", "brown",
-                imgs("brown-corduroy-1.jpg"), tags("casual", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Leather Pants", "Sleek black faux leather pants.",
-                "bottom", ProductType.ITEM, (short) 8, 380000L, "M", "black",
-                imgs("black-leather-pants-1.jpg"), tags("party", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Cream Wide Trousers", "Flowy cream wide-leg trousers.",
-                "bottom", ProductType.ITEM, (short) 8, 280000L, "M", "cream",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782197728/prm/products/mnguyen0811/file_sitnme.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Swim Shorts", "Quick-dry navy swim shorts.",
-                "bottom", ProductType.ITEM, (short) 9, 150000L, "M", "navy",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198067/prm/products/mnguyen0811/file_wdyb8b.jpg"), tags("beach", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Linen Shorts", "Breezy white linen shorts.",
-                "bottom", ProductType.ITEM, (short) 8, 170000L, "M", "white",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198031/prm/products/mnguyen0811/file_a978w3.jpg"), tags("beach", "casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gray Pencil Skirt", "Office-ready gray pencil skirt.",
-                "bottom", ProductType.ITEM, (short) 8, 230000L, "S", "gray",
-                imgs("gray-pencilskirt-1.jpg"), tags("office", "formal"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Formal Skirt", "Tailored black formal skirt.",
-                "bottom", ProductType.ITEM, (short) 8, 250000L, "S", "black",
-                imgs("black-formalskirt-1.jpg"), tags("office", "formal", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Light Blue Jeans", "Relaxed fit light blue jeans.",
-                "bottom", ProductType.ITEM, (short) 8, 270000L, "32", "light-blue",
-                imgs("lightblue-jeans-1.jpg"), tags("casual", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Culottes", "Trendy black culottes.",
-                "bottom", ProductType.ITEM, (short) 8, 240000L, "M", "black",
-                imgs("black-culottes-1.jpg"), tags("casual", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Wedding Trousers", "Elegant beige trousers for formal events.",
-                "bottom", ProductType.ITEM, (short) 9, 350000L, "32", "beige",
-                imgs("beige-formal-pants-1.jpg"), tags("wedding", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Wedding Skirt", "Sophisticated navy skirt for weddings.",
-                "bottom", ProductType.ITEM, (short) 9, 320000L, "S", "navy",
-                imgs("navy-wedding-skirt-1.jpg"), tags("wedding", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        // ════════════════════════════════════
-        // SHOES — Giày (25 sản phẩm)
-        // ════════════════════════════════════
-        createProduct(seller, "White Sneakers", "Classic clean white sneakers.",
-                "shoes", ProductType.ITEM, (short) 9, 450000L, "42", "white",
-                imgs("white-sneakers-1.jpg"), tags("casual", "sport", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Oxford Shoes", "Polished black oxford dress shoes.",
-                "shoes", ProductType.ITEM, (short) 9, 650000L, "42", "black",
-                imgs("black-oxford-1.jpg"), tags("office", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Sandals", "Comfortable beige strap sandals.",
-                "shoes", ProductType.ITEM, (short) 8, 280000L, "38", "beige",
-                imgs("beige-sandals-1.jpg"), tags("casual", "beach", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Nude Heels", "Elegant nude block heels.",
-                "shoes", ProductType.ITEM, (short) 9, 480000L, "37", "beige",
-                imgs("nude-heels-1.jpg"), tags("formal", "party", "wedding", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Slip-On Shoes", "Casual navy slip-on shoes.",
-                "shoes", ProductType.ITEM, (short) 8, 380000L, "42", "navy",
-                imgs("navy-sliponshoes-1.jpg"), tags("casual", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Heels", "Classic black pointed heels.",
-                "shoes", ProductType.ITEM, (short) 9, 420000L, "37", "black",
-                imgs("black-heels-1.jpg"), tags("formal", "party", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Canvas Shoes", "Lightweight white canvas shoes.",
-                "shoes", ProductType.ITEM, (short) 8, 250000L, "40", "white",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782198111/prm/products/mnguyen0811/file_xfjono.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Brown Loafers", "Classic brown leather loafers.",
-                "shoes", ProductType.ITEM, (short) 8, 550000L, "42", "brown",
-                imgs("brown-loafers-1.jpg"), tags("office", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Running Shoes", "Performance black running shoes.",
-                "shoes", ProductType.ITEM, (short) 9, 520000L, "42", "black",
-                imgs("black-running-1.jpg"), tags("sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gray Sneakers", "Versatile gray sneakers.",
-                "shoes", ProductType.ITEM, (short) 8, 400000L, "41", "gray",
-                imgs("gray-sneakers-1.jpg"), tags("casual", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Camel Ankle Boots", "Stylish camel ankle boots.",
-                "shoes", ProductType.ITEM, (short) 8, 480000L, "38", "camel",
-                imgs("camel-boots-1.jpg"), tags("casual", "outdoor", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Combat Boots", "Edgy black combat boots.",
-                "shoes", ProductType.ITEM, (short) 8, 530000L, "40", "black",
-                imgs("black-combatboots-1.jpg"), tags("casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Flip Flops", "Simple white flip flops for the beach.",
-                "shoes", ProductType.ITEM, (short) 9, 90000L, "40", "white",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442411/prm/products/taitna/file_nonmyf.webp"), tags("beach", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Boat Shoes", "Classic navy boat shoes.",
-                "shoes", ProductType.ITEM, (short) 8, 420000L, "42", "navy",
-                imgs("navy-boatshoes-1.jpg"), tags("casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gold Strappy Sandals", "Glamorous gold strappy heels.",
-                "shoes", ProductType.ITEM, (short) 8, 390000L, "37", "gold",
-                imgs("gold-sandals-1.jpg"), tags("party", "formal"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Silver Flat Sandals", "Chic silver flat sandals.",
-                "shoes", ProductType.ITEM, (short) 8, 260000L, "38", "silver",
-                imgs("silver-sandals-1.jpg"), tags("party", "casual", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Platform Sneakers", "Trendy black platform sneakers.",
-                "shoes", ProductType.ITEM, (short) 8, 460000L, "39", "black",
-                imgs("black-platform-1.jpg"), tags("casual", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Tennis Shoes", "Sporty white tennis shoes.",
-                "shoes", ProductType.ITEM, (short) 9, 470000L, "41", "white",
-                imgs("white-tennis-1.jpg"), tags("sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Espadrilles", "Summer-ready beige espadrilles.",
-                "shoes", ProductType.ITEM, (short) 8, 230000L, "38", "beige",
-                imgs("beige-espadrilles-1.jpg"), tags("beach", "casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Derby Shoes", "Refined black derby shoes.",
-                "shoes", ProductType.ITEM, (short) 9, 600000L, "42", "black",
-                imgs("black-derby-1.jpg"), tags("office", "formal", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Brown Oxford Shoes", "Classic brown leather oxfords.",
-                "shoes", ProductType.ITEM, (short) 8, 580000L, "42", "brown",
-                imgs("brown-oxford-1.jpg"), tags("office", "formal"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Pink Sneakers", "Fun pink casual sneakers.",
-                "shoes", ProductType.ITEM, (short) 8, 350000L, "37", "pink",
-                imgs("pink-sneakers-1.jpg"), tags("casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gray Hiking Boots", "Durable gray hiking boots.",
-                "shoes", ProductType.ITEM, (short) 8, 620000L, "42", "gray",
-                imgs("gray-hiking-1.jpg"), tags("outdoor", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Wedge Sandals", "Elegant navy wedge sandals.",
-                "shoes", ProductType.ITEM, (short) 8, 340000L, "38", "navy",
-                imgs("navy-wedge-1.jpg"), tags("party", "date", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Wedding Heels", "Delicate white heels for weddings.",
-                "shoes", ProductType.ITEM, (short) 9, 510000L, "37", "white",
-                imgs("white-weddingheels-1.jpg"), tags("wedding", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        // ════════════════════════════════════
-        // ACCESSORY — Phụ kiện (25 sản phẩm)
-        // ════════════════════════════════════
-        createProduct(seller, "White Canvas Tote Bag", "Spacious white canvas tote.",
-                "accessory", ProductType.ITEM, (short) 9, 150000L, "ONE", "white",
-                imgs("white-tote-1.jpg"), tags("casual", "beach", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Leather Belt", "Classic black leather belt.",
-                "accessory", ProductType.ITEM, (short) 9, 180000L, "ONE", "black",
-                imgs("https://res.cloudinary.com/dktu0nbjx/image/upload/v1782442438/prm/products/taitna/file_idgepx.webp"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Silk Scarf", "Luxurious navy silk scarf.",
-                "accessory", ProductType.ITEM, (short) 8, 140000L, "ONE", "navy",
-                imgs("navy-scarf-1.jpg"), tags("formal", "office", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Clutch Bag", "Sleek black clutch for evenings.",
-                "accessory", ProductType.ITEM, (short) 8, 320000L, "ONE", "black",
-                imgs("black-clutch-1.jpg"), tags("party", "formal", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Brown Leather Belt", "Genuine brown leather belt.",
-                "accessory", ProductType.ITEM, (short) 8, 190000L, "ONE", "brown",
-                imgs("brown-belt-1.jpg"), tags("casual", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Straw Hat", "Wide-brim beige straw hat.",
-                "accessory", ProductType.ITEM, (short) 8, 170000L, "ONE", "beige",
-                imgs("beige-hat-1.jpg"), tags("beach", "outdoor", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Sunglasses", "Stylish black UV sunglasses.",
-                "accessory", ProductType.ITEM, (short) 9, 220000L, "ONE", "black",
-                imgs("black-sunglasses-1.jpg"), tags("casual", "beach", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gold Statement Necklace", "Eye-catching gold necklace.",
-                "accessory", ProductType.ITEM, (short) 8, 280000L, "ONE", "gold",
-                imgs("gold-necklace-1.jpg"), tags("party", "formal", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Silver Hoop Earrings", "Classic silver hoop earrings.",
-                "accessory", ProductType.ITEM, (short) 9, 95000L, "ONE", "silver",
-                imgs("silver-earrings-1.jpg"), tags("casual", "office", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Backpack", "Durable navy canvas backpack.",
-                "accessory", ProductType.ITEM, (short) 8, 350000L, "ONE", "navy",
-                imgs("navy-backpack-1.jpg"), tags("casual", "outdoor", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Crossbody Bag", "Compact black crossbody bag.",
-                "accessory", ProductType.ITEM, (short) 8, 290000L, "ONE", "black",
-                imgs("black-crossbody-1.jpg"), tags("casual", "date", "office"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Leather Handbag", "Elegant beige leather handbag.",
-                "accessory", ProductType.ITEM, (short) 8, 420000L, "ONE", "beige",
-                imgs("beige-handbag-1.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Beanie", "Warm black knit beanie.",
-                "accessory", ProductType.ITEM, (short) 9, 80000L, "ONE", "black",
-                imgs("black-beanie-1.jpg"), tags("casual", "outdoor", "sport"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Baseball Cap", "Classic white baseball cap.",
-                "accessory", ProductType.ITEM, (short) 9, 110000L, "ONE", "white",
-                imgs("white-cap-1.jpg"), tags("sport", "casual", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gold Watch", "Elegant gold-tone wristwatch.",
-                "accessory", ProductType.ITEM, (short) 8, 650000L, "ONE", "gold",
-                imgs("gold-watch-1.jpg"), tags("formal", "office", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Leather Watch", "Minimalist black leather watch.",
-                "accessory", ProductType.ITEM, (short) 9, 480000L, "ONE", "black",
-                imgs("black-watch-1.jpg"), tags("office", "formal", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Pink Mini Bag", "Cute pink mini shoulder bag.",
-                "accessory", ProductType.ITEM, (short) 8, 230000L, "ONE", "pink",
-                imgs("pink-bag-1.jpg"), tags("casual", "date", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Navy Tie", "Classic navy silk tie.",
-                "accessory", ProductType.ITEM, (short) 9, 120000L, "ONE", "navy",
-                imgs("navy-tie-1.jpg"), tags("office", "formal", "wedding"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Black Tie", "Formal black silk tie.",
-                "accessory", ProductType.ITEM, (short) 9, 120000L, "ONE", "black",
-                imgs("black-tie-1.jpg"), tags("formal", "wedding", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Brown Leather Wallet", "Compact brown leather wallet.",
-                "accessory", ProductType.ITEM, (short) 8, 160000L, "ONE", "brown",
-                imgs("brown-wallet-1.jpg"), tags("office", "casual"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "White Pearl Necklace", "Timeless white pearl necklace.",
-                "accessory", ProductType.ITEM, (short) 8, 310000L, "ONE", "white",
-                imgs("pearl-necklace-1.jpg"), tags("wedding", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Beige Wedding Clutch", "Refined beige clutch for weddings.",
-                "accessory", ProductType.ITEM, (short) 8, 270000L, "ONE", "beige",
-                imgs("beige-clutch-1.jpg"), tags("wedding", "formal", "party"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Gray Wool Scarf", "Warm gray wool scarf for winter.",
-                "accessory", ProductType.ITEM, (short) 8, 150000L, "ONE", "gray",
-                imgs("gray-scarf-1.jpg"), tags("casual", "office", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Camel Leather Gloves", "Soft camel leather gloves.",
-                "accessory", ProductType.ITEM, (short) 8, 190000L, "ONE", "camel",
-                imgs("camel-gloves-1.jpg"), tags("office", "formal", "outdoor"), ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Silver Bracelet", "Delicate silver chain bracelet.",
-                "accessory", ProductType.ITEM, (short) 9, 130000L, "ONE", "silver",
-                imgs("silver-bracelet-1.jpg"), tags("casual", "party", "date"), ProductStatus.AVAILABLE, (short) 1);
-
-        // ════════════════════════════════════
-        // BUNDLE — vài combo
-        // ════════════════════════════════════
-        createProduct(seller, "Summer Outfit Bundle", "Bundle includes t-shirt, shorts, and cap.",
-                "bundle", ProductType.BUNDLE, (short) 7, 350000L, "M", "Mixed",
-                imgs("bundle-1.jpg", "bundle-2.jpg"), tags("bundle", "summer", "outfit", "beach"),
-                ProductStatus.AVAILABLE, (short) 1);
-
-        createProduct(seller, "Office Look Bundle", "Bundle includes shirt, trousers, and belt.",
-                "bundle", ProductType.BUNDLE, (short) 8, 520000L, "M", "Mixed",
-                imgs("office-bundle-1.jpg"), tags("bundle", "office", "formal"),
-                ProductStatus.AVAILABLE, (short) 1);
 
         System.out.println("✅ 100+ Example products created successfully!");
     }
@@ -478,7 +189,7 @@ public class InitializerProduct implements CommandLineRunner {
             User seller,
             String title,
             String description,
-            String category,
+            String categoryName,
             ProductType type,
             Short condition,
             Long price,
@@ -489,6 +200,18 @@ public class InitializerProduct implements CommandLineRunner {
             ProductStatus status,
             Short lifecycleGeneration
     ) {
+
+        Category category = categoryRepository.findAll()
+                .stream()
+                .filter(c -> c.getName().equalsIgnoreCase(categoryName))
+                .findFirst()
+                .orElseGet(() -> {
+                    Category newCat = new com.example.PRM.entity.Category();
+                    newCat.setName(categoryName);
+                    newCat.setDescription("Category for " + categoryName);
+                    return categoryRepository.save(newCat);
+                });
+
         Product product = new Product();
         product.setSeller(seller);
         product.setTitle(title);

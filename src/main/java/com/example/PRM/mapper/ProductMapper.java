@@ -1,7 +1,8 @@
 package com.example.PRM.mapper;
 
 import com.example.PRM.dto.request.ProductReq;
-import com.example.PRM.dto.response.ProductRes;
+import com.example.PRM.dto.response.product.ProductRes;
+import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
 import com.example.PRM.status_enum.ProductStatus;
@@ -15,7 +16,9 @@ public class ProductMapper {
         res.setId(product.getId());
         res.setTitle(product.getTitle());
         res.setDescription(product.getDescription());
-        res.setCategory(product.getCategory());
+        if (product.getCategory() != null) {
+            res.setCategory(product.getCategory().getName());
+        }
         res.setType(product.getType());
         res.setCondition(product.getCondition());
         res.setPrice(product.getPrice());
@@ -39,7 +42,6 @@ public class ProductMapper {
         product.setSeller(seller);
         product.setTitle(req.getTitle());
         product.setDescription(req.getDescription());
-        product.setCategory(req.getCategory());
         product.setType(req.getType());
         product.setCondition(req.getCondition());
         product.setPrice(req.getPrice());
@@ -52,5 +54,14 @@ public class ProductMapper {
                 req.getLifecycleGeneration() != null ? req.getLifecycleGeneration() : (short) 1
         );
         return product;
+    }
+
+    public ProductRes toProductRes(Product product) {
+        ProductRes productLogRes = new ProductRes();
+        productLogRes.setId(product.getId());
+        productLogRes.setTitle(product.getTitle());
+        productLogRes.setSellerName(product.getSeller().getUserName());
+        productLogRes.setSellerId(product.getSeller().getUserId());
+        return productLogRes;
     }
 }

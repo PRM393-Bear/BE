@@ -5,6 +5,7 @@ import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.service.OrderService;
 import com.example.PRM.status_enum.OrderStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,8 +49,9 @@ public class OrderController {
     @PutMapping("/{orderId}/receive")
     public ResponseEntity<?> confirmReceived(@AuthenticationPrincipal UserDetails userDetails,
                                              @PathVariable UUID orderId,
-                                             @RequestParam(required = false) String deliveryPhotoUrl) {
-        var result = orderService.confirmReceived(userDetails, orderId, deliveryPhotoUrl);
+                                             @RequestParam(required = false) String deliveryPhotoUrl,
+                                             HttpServletRequest request) {
+        var result = orderService.confirmReceived(userDetails, orderId, deliveryPhotoUrl,request);
         return ResponseEntity.ok(new ApiResponse(200, "Order status updated successfully."));
     }
 

@@ -3,6 +3,7 @@ package com.example.PRM.mapper;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
+import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -38,5 +39,12 @@ public class UserMapper {
         userRes.setPhone(user.getPhone());
         userRes.setFullName(user.getFullName());
         return userRes;
+    }
+
+    public UserLogRes toUserLogRes(User user){
+        UserLogRes userLogRes = new UserLogRes();
+        userLogRes.setUserId(user.getUserId());
+        userLogRes.setUsername(user.getUserName());
+        return userLogRes;
     }
 }
