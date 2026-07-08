@@ -2,6 +2,7 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.ProductFilterReq;
 import com.example.PRM.dto.request.ProductReq;
+import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.ProductService;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -114,4 +116,27 @@ public class ProductController {
         );
         return ResponseEntity.ok("Product deleted successfully");
     }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<List<ProductRes>> getPendingProducts() {
+        return ResponseEntity.ok(productService.getProductPendingStatus());
+    }
+
+    @PutMapping("/approve")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<?> approveProduct(@RequestParam UUID id) {
+        productService.approveProduct(id);
+        return ResponseEntity.ok(new ApiResponse(200, "approved product successfully"));
+    }
+
+    @PutMapping("/reject")
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<?> rejectProduct(
+            @RequestParam UUID id,
+            @RequestParam String reason) {
+        productService.rejectProduct(id, reason);
+        return ResponseEntity.ok(new ApiResponse(200, "reject product successfully"));
+    }
+
 }
