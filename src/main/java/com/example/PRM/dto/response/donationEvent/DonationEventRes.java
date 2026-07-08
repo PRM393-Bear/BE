@@ -1,4 +1,4 @@
-package com.example.PRM.dto.response;
+package com.example.PRM.dto.response.donationEvent;
 
 import com.example.PRM.status_enum.EventStatus;
 import jakarta.persistence.Column;

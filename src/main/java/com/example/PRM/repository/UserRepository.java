@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<User> findByEmail(String email);
 
     List<User> findByRole_RoleName(String admin);
+    List<User> findByVerified(boolean verified);
+    long countByVerified(boolean verified);
 }

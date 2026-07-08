@@ -1,7 +1,8 @@
 package com.example.PRM.mapper;
 
 import com.example.PRM.dto.request.DonationRequestCustomReq;
-import com.example.PRM.dto.response.WardrobeItemRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemLogRes;
+import com.example.PRM.dto.response.wardrobeItem.WardrobeItemRes;
 import com.example.PRM.entity.WardrobeItem;
 import com.example.PRM.status_enum.AddedVia;
 import com.example.PRM.status_enum.WardrobeStatus;
@@ -29,5 +30,14 @@ public class WardrobeItemMapper {
         wi.setCondition(wardrobeItemRes.getCondition());
         wi.setConditionNote(wardrobeItemRes.getConditionNote());
         return wi;
+    }
+
+    public WardrobeItemLogRes toWardrobeItemLogRes(WardrobeItem wardrobeItem){
+        WardrobeItemLogRes wardrobeItemLogRes = new WardrobeItemLogRes();
+        wardrobeItemLogRes.setId(wardrobeItem.getId());
+        wardrobeItemLogRes.setName(wardrobeItem.getName());
+        wardrobeItemLogRes.setUsername(wardrobeItem.getUser().getUserName());
+        wardrobeItemLogRes.setUserId(wardrobeItem.getUser().getUserId());
+        return wardrobeItemLogRes;
     }
 }

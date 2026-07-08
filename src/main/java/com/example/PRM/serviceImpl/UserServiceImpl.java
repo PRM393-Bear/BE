@@ -3,6 +3,7 @@ package com.example.PRM.serviceImpl;
 import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
+import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
@@ -21,10 +22,7 @@ import org.springframework.stereotype.Service;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.UserService;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -82,7 +80,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updatePassword(UUID userId, String oldPassword, String newPassword, String confirmPassword, HttpServletRequest request) {
+    public UserLogRes updatePassword(UUID userId, String oldPassword, String newPassword, String confirmPassword) {
         User user = userRepository.findByUserId(userId).orElseThrow(() ->
                 new NotFoundException("User not found with id: " + userId));
 
@@ -96,15 +94,7 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        auditLogService.log("UPDATE_PASSWORD",
-                "UPDATE_PASSWORD",
-                null,
-                "User update password successfully",
-                "SUCCESS",
-                user.getUserId(),
-                user.getUserName(),
-                request
-        );
+        return userMapper.toUserLogRes(user);
     }
 
     @Override
@@ -120,6 +110,47 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(userMapper::mapToUserAdminRes)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserAdminRes> getAllUsersByRole(String role) {
+        List<User> users = userRepository.findByRole_RoleName(role);
+        if (users != null && !users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::mapToUserAdminRes)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("User not found");
+    }
+
+    @Override
+    public List<UserAdminRes> getAllUserByActive(boolean active) {
+        List<User> users = userRepository.findByVerified(active);
+        if (users != null && !users.isEmpty()) {
+            return users.stream()
+                    .map(userMapper::mapToUserAdminRes)
+                    .collect(Collectors.toList());
+        }
+        throw new NotFoundException("User not found");
+    }
+    @Override
+    public Map<String, Long> getUserCountByRole() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .collect(Collectors.groupingBy(
+                        u -> u.getRole().getRoleName(),
+                        Collectors.counting()
+                ));
+    }
+
+    @Override
+    public Map<String, Long> getUserCountByStatus() {
+        long active   = userRepository.countByVerified(true);
+        long inactive = userRepository.countByVerified(false);
+        return Map.of(
+                "active",   active,
+                "inactive", inactive
+        );
     }
 
     @Override
@@ -329,7 +360,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void resetPassword(String resetToken, String newPassword, String confirmPassword, HttpServletRequest request) {
+    public UserLogRes resetPassword(String resetToken, String newPassword, String confirmPassword) {
         String email = redisTemplate.opsForValue().get(TOKEN_PREFIX + resetToken);
         System.out.println("Email = " + email);
         if (email == null) {
@@ -345,16 +376,9 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        auditLogService.log("RESET_PASSWORD",
-                "RESET_PASSWORD",
-                null,
-                "User reset password successfully",
-                "SUCCESS",
-                user.getUserId(),
-                user.getUserName(),
-                request
-        );
+
 
         redisTemplate.delete(TOKEN_PREFIX + resetToken);
+        return userMapper.toUserLogRes(user);
     }
 }

@@ -32,23 +32,11 @@ public class UploadServiceImpl implements UploadService {
     private final AuditLogServiceImpl auditLogService;
 
     @Override
-    public UploadRes uploadImage(MultipartFile file, String username, HttpServletRequest request) {
+    public UploadRes uploadImage(MultipartFile file, String username) {
         validateFile(file);
 
         try {
             String folder = properties.getFolder() + "/" + username;
-
-            User user = userRepository.findByUserName(username).orElseThrow(()
-                    -> new NotFoundException("User not found: " + username));
-            auditLogService.log("UPLOAD_IMAGE",
-                    "IMAGE",
-                    null,
-                    "User reset password successfully",
-                    "SUCCESS",
-                    user.getUserId(),
-                    user.getUserName(),
-                    request
-            );
 
             Map<?, ?> result = cloudinary.uploader().upload(
                     file.getBytes(),

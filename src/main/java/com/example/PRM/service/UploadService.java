@@ -5,5 +5,5 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UploadService {
-    UploadRes uploadImage(MultipartFile file, String username, HttpServletRequest request);
+    UploadRes uploadImage(MultipartFile file, String username);
 }
