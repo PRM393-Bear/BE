@@ -1,5 +1,6 @@
 package com.example.PRM.dto.response;
 
+import com.example.PRM.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,4 +14,5 @@ public class UserRes {
     String email;
     String fullName;
     String phone;
+    Role role;
 }

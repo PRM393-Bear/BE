@@ -27,6 +27,7 @@ public class ProductMapper {
         res.setImages(product.getImages());
         res.setAiTags(product.getAiTags());
         res.setStatus(product.getStatus());
+        res.setRejectReason(product.getRejectReason());
         res.setLifecycleGeneration(product.getLifecycleGeneration());
         res.setCreatedAt(product.getCreatedAt());
 

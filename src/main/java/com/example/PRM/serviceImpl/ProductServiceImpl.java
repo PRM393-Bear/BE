@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -64,11 +65,14 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new NotFoundException("User not found: " + username));
         Product product = productMapper.toEntity(request, seller);
 
+
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new NotFoundException("Category not found with id: " + request.getCategoryId()));
             product.setCategory(category);
         }
+
+        product.setStatus(ProductStatus.PENDING);
 
         Product saved = productRepository.save(product);
 
@@ -77,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductRes> search(String category, Long maxPrice) {
-        return productRepository.findByCategoryAndPriceLessThanEqual(category, maxPrice)
+        return productRepository.findByCategoryNameAndPriceLessThanEqual(category, maxPrice)
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
@@ -87,10 +91,13 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductRes> searchProductByKeyword(String keyword) {
 
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllProducts();
+            return productRepository.findByStatus(ProductStatus.AVAILABLE)
+                    .stream()
+                    .map(productMapper::toResponse)
+                    .toList();
         }
 
-        return productRepository.searchByKeyword(keyword.trim())
+        return productRepository.searchByKeyword(keyword.trim(), ProductStatus.AVAILABLE)
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
@@ -200,5 +207,53 @@ public class ProductServiceImpl implements ProductService {
                 -> new NotFoundException("Product not found with id: " + id));
         productRepository.delete(product);
         return productMapper.toResponse(product);
+    }
+
+    @Override
+    public List<ProductRes> getProductPendingStatus() {
+        return productRepository.findByStatus(ProductStatus.PENDING)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public ProductRes approveProduct(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+
+        product.setStatus(ProductStatus.AVAILABLE);
+        product.setRejectReason(null);
+        Product saved = productRepository.save(product);
+
+        // Send notification
+
+        return productMapper.toResponse(saved);
+    }
+
+    @Override
+    public ProductRes rejectProduct(UUID id, String rejectReason) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+
+        if (rejectReason == null || rejectReason.isBlank()) {
+            throw new IllegalArgumentException("Reject reason is required.");
+        }
+
+        product.setStatus(ProductStatus.REJECTED);
+        product.setRejectReason(rejectReason);
+        Product saved = productRepository.save(product);
+
+        // Send notification
+
+        return productMapper.toResponse(saved);
+    }
+
+    @Override
+    public List<ProductRes> getMyRejectedProducts(UserDetails userDetails) {
+        return productRepository.findBySellerUserNameAndStatus(userDetails.getUsername(), ProductStatus.REJECTED)
+                .stream()
+                .map(productMapper::toResponse)
+                .toList();
     }
 }

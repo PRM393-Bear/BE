@@ -59,8 +59,6 @@ spring:
       max-request-size: 10MB
 
 app:
-  kafka:
-    enabled: true
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION}

@@ -1,28 +1,34 @@
-# Stage 1: Build the application
+# ==========================
+# Stage 1: Build
+# ==========================
 FROM maven:3.9.6-eclipse-temurin-21 AS build
+
 WORKDIR /app
 
-# Copy only the pom.xml first to cache dependencies
+# Copy pom.xml trước để tận dụng Docker cache
 COPY pom.xml .
 
-# Download dependencies (this layer will be cached unless pom.xml changes)
+# Download dependencies
 RUN mvn dependency:go-offline -B
 
-# Copy the source code
+# Copy source code
 COPY src ./src
 
-# Build the application, skipping tests
-RUN mvn clean package -DskipTests
+# Build project (không cần clean trong Docker)
+RUN mvn package -DskipTests
 
-# Stage 2: Run the application
+# ==========================
+# Stage 2: Runtime
+# ==========================
 FROM eclipse-temurin:21-jre
+
 WORKDIR /app
 
-# Copy the built jar file from the build stage
+# Copy file jar
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the default Spring Boot por
+# Spring Boot port
 EXPOSE 8080
 
-# Run the application
+# Chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "app.jar"]

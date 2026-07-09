@@ -1,24 +1,28 @@
 package com.example.PRM.repository;
 
 import com.example.PRM.entity.Product;
+import com.example.PRM.status_enum.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpecificationExecutor<Product> {
-    List<Product> findByCategoryAndPriceLessThanEqual(String category, Long price);
+    List<Product> findByCategoryNameAndPriceLessThanEqual(String categoryName, Long price);
 
     @Query("""
     SELECT p
     FROM Product p
-    WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    WHERE p.status = :status AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
        OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%'))
-       OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+       OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))
 """)
-    List<Product> searchByKeyword(@Param("keyword") String keyword);
+    List<Product> searchByKeyword(@Param("keyword") String keyword, @Param("status") ProductStatus status);
     List<Product> findBySellerUserId(UUID sellerId);
+    List<Product> findBySellerUserNameAndStatus(String userName, ProductStatus status);
+    List<Product> findByStatus(ProductStatus status);
 }
