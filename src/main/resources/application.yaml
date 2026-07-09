@@ -1,17 +1,5 @@
 spring:
-#  kafka:
-#    bootstrap-servers: localhost:9092
-#    producer:
-#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-#    consumer:
-#      group-id: audit-log-group
-#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-#      properties:
-#        spring.json.trusted.packages: "com.example.PRM.dto"
-  profiles:
-    active: dev
+
   application:
     name: PRM
 
@@ -90,3 +78,13 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   folder: prm/products
+
+logging:
+  level:
+     org.apache.kafka.clients: DEBUG
+     org.apache.kafka.common.network: DEBUG
+
+audit:
+  service:
+    base-url: ${AUDIT_SERVICE_URL}
+    api-key: ${AUDIT_SERVICE_API_KEY}
