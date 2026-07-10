@@ -238,4 +238,17 @@ public class OrderServiceImpl implements OrderService {
         }
 
     }
+
+    @Override
+    public Order updatePickupPhoto(UserDetails userDetails, UUID orderId, String photoUrl) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+
+        if (!order.getSeller().getUserName().equals(userDetails.getUsername())) {
+            throw new BadRequestException("You don't have permission to update this order's pickup photo");
+        }
+
+        order.setPickupPhotoUrl(photoUrl);
+        return orderRepository.save(order);
+    }
 }

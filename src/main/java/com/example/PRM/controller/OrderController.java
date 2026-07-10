@@ -80,4 +80,14 @@ public class OrderController {
             List<OrderRes> orders = orderService.getOrderHistory(userDetails, status);
             return ResponseEntity.ok(orders);
     }
+
+    @PutMapping("/{orderId}/pickup-photo")
+    public ResponseEntity<?> updatePickupPhoto(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable UUID orderId,
+                                               @RequestParam String photoUrl) {
+
+        orderService.updatePickupPhoto(userDetails, orderId, photoUrl);
+
+        return ResponseEntity.ok(new ApiResponse(200, "Pickup photo updated successfully."));
+    }
 }

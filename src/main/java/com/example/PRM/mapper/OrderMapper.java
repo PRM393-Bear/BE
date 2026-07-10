@@ -22,6 +22,7 @@ public class OrderMapper {
         res.setCreatedAt(order.getCreatedAt());
         res.setUpdatedAt(order.getUpdatedAt());
         res.setTrackingCode(order.getTrackingCode());
+        res.setPickupPhotoUrl(order.getPickupPhotoUrl());
         res.setDeliveryPhotoUrl(order.getDeliveryPhotoUrl());
 
         if (order.getBuyer() != null) {

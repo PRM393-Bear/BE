@@ -20,4 +20,5 @@ public interface OrderService {
     Order getOrderById(UserDetails userDetails, UUID orderId);
     List<OrderRes> getOrderHistory(UserDetails userDetails, OrderStatus status);
     void autoProcessCompleteOrder();
+    Order updatePickupPhoto(UserDetails userDetails, UUID orderId, String photoUrl);
 }

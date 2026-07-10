@@ -16,6 +16,7 @@ public class OrderRes {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String trackingCode;
+    private String pickupPhotoUrl;
     private String deliveryPhotoUrl;
 
     private UUID buyerId;

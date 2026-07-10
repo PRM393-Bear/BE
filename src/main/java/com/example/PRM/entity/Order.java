@@ -65,6 +65,9 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @Column(name = "pickup_photo_url", length = 500)
+    private String pickupPhotoUrl;
+
     @Column(name = "delivery_photo_url", length = 500)
     private String deliveryPhotoUrl;
 }
