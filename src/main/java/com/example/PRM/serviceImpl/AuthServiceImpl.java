@@ -83,6 +83,10 @@ public class AuthServiceImpl {
         if(!user.getIsVerified()){
             throw new BadRequestException("User must verify email before login!");
         }
+
+        if(user.getIsBlocked()){
+            throw new BadRequestException("User is blocked!");
+        }
         String accessToken = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));
