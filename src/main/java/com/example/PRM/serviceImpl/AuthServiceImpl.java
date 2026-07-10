@@ -56,6 +56,7 @@ public class AuthServiceImpl {
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .isVerified(false)
+                .isBlocked(false)
                 .build();
 
         userRepository.save(user);
