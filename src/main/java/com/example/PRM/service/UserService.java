@@ -35,6 +35,7 @@ public interface UserService {
 
     public List<UserRes> getAllUserByIsBannedAndUnbanned(boolean isBanned);
 
+    public void createStaff(UserReq userReq);
 
 
 

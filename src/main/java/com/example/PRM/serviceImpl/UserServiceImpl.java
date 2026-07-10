@@ -4,10 +4,12 @@ import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.dto.user.UserLogRes;
+import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.UserMapper;
+import com.example.PRM.repository.RoleRepository;
 import com.example.PRM.status_enum.OtpPurpose;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -35,10 +37,10 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final JavaMailSender mailSender;
     private final StringRedisTemplate redisTemplate;
+    private final RoleRepository roleRepository;
 
     private static final String OTP_PREFIX   = "otp:";
     private static final String TOKEN_PREFIX = "resetToken:";
-    private final AuditLogServiceImpl auditLogService;
 
 
 
@@ -394,4 +396,16 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findByIsBlocked(isBanned);
         return users.stream().map(userMapper::getInfo).collect(Collectors.toList());
     }
+    @Override
+    public void createStaff(UserReq userReq){
+        User staff = userMapper.toEntity(userReq);
+        Role role = roleRepository.findByRoleName(userReq.getRoleName())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        staff.setRole(role);
+        staff.setPassword(passwordEncoder.encode(userReq.getPassword()));
+        staff.setIsVerified(true);
+        staff.setIsBlocked(false);
+        userRepository.save(staff);
+    }
+
 }

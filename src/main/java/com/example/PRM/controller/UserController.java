@@ -167,4 +167,10 @@ public class UserController {
         }
         return ResponseEntity.ok("Unbanned user success");
     }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/staff")
+    public ResponseEntity<?> createStaff(@RequestBody UserReq userReq){
+        userService.createStaff(userReq);
+        return ResponseEntity.ok("Create staff success");
+    }
 }
