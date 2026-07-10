@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserAdminRes> getAllUserByActive(boolean active) {
-        List<User> users = userRepository.findByVerified(active);
+        List<User> users = userRepository.findByIsVerified(active);
         if (users != null && !users.isEmpty()) {
             return users.stream()
                     .map(userMapper::mapToUserAdminRes)
@@ -333,9 +333,8 @@ public class UserServiceImpl implements UserService {
                 User user = userRepository.findByEmail(email)
                         .orElseThrow(() ->
                                 new NotFoundException("User not found"));
-
-                user.setVerified(true);
-                userRepository.save(user);
+                    user.setIsVerified(true);
+                    userRepository.save(user);
 
                 return null;
             }
@@ -380,5 +379,20 @@ public class UserServiceImpl implements UserService {
 
         redisTemplate.delete(TOKEN_PREFIX + resetToken);
         return userMapper.toUserLogRes(user);
+    }
+
+    @Override
+    public boolean banAndUnbanUser(UUID userId, boolean active) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+        user.setIsVerified(active);
+        userRepository.save(user);
+        return active;
+    }
+
+    @Override
+    public List<UserRes> getAllUserByIsBannedAndUnbanned(boolean isBanned) {
+        List<User> users = userRepository.findByIsBlocked(isBanned);
+        return users.stream().map(userMapper::getInfo).collect(Collectors.toList());
     }
 }

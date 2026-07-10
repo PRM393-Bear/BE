@@ -73,19 +73,14 @@ public class AuthServiceImpl {
                             request.getUsername(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            User user = userRepository.findByUserName(request.getUsername())
-                    .orElseThrow(() -> new NotFoundException("User not found"));
-
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
-
-
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        if(!user.isVerified()){
+        if(!user.getIsVerified()){
             throw new BadRequestException("User must verify email before login!");
         }
         String accessToken = jwtUtil.generateToken(userDetails);

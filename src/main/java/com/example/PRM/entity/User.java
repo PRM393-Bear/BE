@@ -31,6 +31,7 @@ public class User {
     @JoinColumn(name = "roleId")
     private Role role;
 
-    private boolean isVerified;
+    private Boolean isVerified;
+    private Boolean isBlocked;
 
 }

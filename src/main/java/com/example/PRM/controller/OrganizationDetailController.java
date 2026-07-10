@@ -23,7 +23,8 @@ public class OrganizationDetailController {
 
     @PostMapping
     public ResponseEntity<String> createOrganizationDetail(
-            @RequestBody OrganizationDetailReq request, @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody OrganizationDetailReq request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         organizationDetailService.createOrganizationDetail(request, userDetails);
 
@@ -72,16 +73,19 @@ public class OrganizationDetailController {
     }
 
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> approveOrganization(@PathVariable UUID id) {
-        organizationDetailService.approveOrganization(id);
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<String> approveOrganization(@PathVariable UUID id,
+                                                      @AuthenticationPrincipal UserDetails userDetails) {
+        organizationDetailService.approveOrganization(id,userDetails);
         return ResponseEntity.ok("Organization approved successfully");
     }
 
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> rejectOrganization(@PathVariable UUID id) {
-        organizationDetailService.rejectOrganization(id);
+    @PreAuthorize("hasRole('STAFF')")
+    public ResponseEntity<String> rejectOrganization(@PathVariable UUID id,
+                                                     @RequestParam String reason,
+                                                     @AuthenticationPrincipal UserDetails userDetails) {
+        organizationDetailService.rejectOrganization(id,userDetails,reason);
         return ResponseEntity.ok("Organization rejected successfully");
     }
 }
