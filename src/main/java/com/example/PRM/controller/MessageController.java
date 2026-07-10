@@ -31,12 +31,20 @@ public class MessageController {
     // FE sẽ push tin nhắn vào /app/chat.send
     @MessageMapping("/chat.send")
     @Transactional
-    public void sendMessage(@Payload ChatMessageReq req, Authentication authentication) {
-        if (authentication == null) return;
+    public void sendMessage(@Payload ChatMessageReq req, java.security.Principal principal) {
+        System.out.println("====== [WebSocket] NHẬN ĐƯỢC TIN NHẮN TỪ CLIENT ======");
+        System.out.println("Nội dung: " + req.getContent());
+        
+        if (principal == null) {
+            System.out.println("LỖI: Principal (Người gửi) bị NULL. Có thể chưa xác thực JWT thành công!");
+            return;
+        }
 
+        Authentication authentication = (Authentication) principal;
         AuthDetails authDetails = (AuthDetails) authentication.getDetails();
-        User sender = userRepository.findByUserId(authDetails.getUserId()).orElseThrow();
-        User receiver = userRepository.findByUserId(req.getReceiverId()).orElseThrow();
+        User sender = userRepository.findByUserId(authDetails.getUserId()).orElseThrow(() -> new RuntimeException("Không tìm thấy Sender"));
+        User receiver = userRepository.findByUserId(req.getReceiverId()).orElseThrow(() -> new RuntimeException("Không tìm thấy Receiver UUID: " + req.getReceiverId()));
+
 
         // 1. Lấy hoặc tự động tạo phòng chat giữa 2 người
         ChatRoom room = chatRoomRepository.findRoomByUsers(sender, receiver)
