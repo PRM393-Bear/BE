@@ -382,12 +382,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean banAndUnbanUser(UUID userId, boolean active) {
+    public void banAndUnbanUser(UUID userId, boolean active) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
         user.setIsVerified(active);
         userRepository.save(user);
-        return active;
     }
 
     @Override
