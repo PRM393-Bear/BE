@@ -31,7 +31,7 @@ public interface UserService {
 
     public UserLogRes resetPassword(String resetToken, String newPassword, String confirmPasswordProductRes);
 
-    public boolean banAndUnbanUser(UUID userId, boolean active);
+    public void banAndUnbanUser(UUID userId, boolean active);
 
     public List<UserRes> getAllUserByIsBannedAndUnbanned(boolean isBanned);
 
