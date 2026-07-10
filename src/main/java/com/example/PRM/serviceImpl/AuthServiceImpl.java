@@ -36,8 +36,6 @@ public class AuthServiceImpl {
     private final UserServiceImpl userService;
     private final RefreshTokenServiceImpl refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final AuditLogServiceImpl auditLogService;
-    private final String entity = "AUTH";
 
     public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
