@@ -24,4 +24,5 @@ public interface ProductService {
     ProductRes approveProduct(UUID id);
     ProductRes rejectProduct(UUID id, String rejectReason);
     List<ProductRes> getMyRejectedProducts(UserDetails userDetails);
+    ProductRes unhideProduct(UUID id);
 }

@@ -6,6 +6,7 @@ import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
+import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.ProductMapper;
@@ -140,7 +141,6 @@ public class ProductServiceImpl implements ProductService {
         product.setColor(request.getColor());
         product.setImages(request.getImages());
         product.setAiTags(request.getAiTags());
-        product.setStatus(request.getStatus());
         product.setBrand(request.getBrand());
 
         if (request.getLifecycleGeneration() != null) {
@@ -168,6 +168,15 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Not found product with id: " + id));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!product.getSeller().getUserName().equals(username)) {
+            throw new ForbiddenException("You have no permission for this action");
+        }
+
+        if (product.getStatus() != ProductStatus.AVAILABLE) {
+            throw new BadRequestException("Only AVAILABLE products can be hidden");
+        }
 
         product.setStatus(ProductStatus.HIDDEN);
         Product saved = productRepository.save(product);
@@ -255,5 +264,25 @@ public class ProductServiceImpl implements ProductService {
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public ProductRes unhideProduct(UUID id) {
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Not found product with id: " + id));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!product.getSeller().getUserName().equals(username)) {
+            throw new ForbiddenException("You have no permission for this action");
+        }
+
+        if (product.getStatus() != ProductStatus.HIDDEN) {
+            throw new BadRequestException("Only HIDDEN products can be unhidden");
+        }
+
+        product.setStatus(ProductStatus.AVAILABLE);
+        Product saved = productRepository.save(product);
+        return productMapper.toResponse(saved);
     }
 }

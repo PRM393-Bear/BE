@@ -98,6 +98,23 @@ public class ProductController {
         return ResponseEntity.ok(hiddenProduct);
     }
 
+    @PutMapping("/unhide")
+    public ResponseEntity<ProductRes> unhideProduct(@RequestParam("productId") UUID id,
+                                                    HttpServletRequest request1) {
+        ProductRes unhiddenProduct = productService.unhideProduct(id);
+
+        auditLogService.log("UNHIDE_PRODUCT",
+                unhiddenProduct.getTitle(),
+                unhiddenProduct.getId().toString(),
+                "Seller unhide product successfully",
+                "SUCCESS",
+                unhiddenProduct.getSellerId(),
+                unhiddenProduct.getSellerName(),
+                request1
+        );
+        return ResponseEntity.ok(unhiddenProduct);
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<List<ProductRes>> filterProducts(ProductFilterReq filter) {
         List<ProductRes> results = productService.filterProducts(filter);
