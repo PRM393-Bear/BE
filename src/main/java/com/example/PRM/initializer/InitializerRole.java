@@ -22,6 +22,7 @@ public class InitializerRole implements CommandLineRunner {
         createRoleIfNotExists("ORGANIZATION", "Tổ chức");
         createRoleIfNotExists("MEMBER", "Người dùng thông thường");
         createRoleIfNotExists("GUEST", "Khách");
+
     }
 
     private void createRoleIfNotExists(String roleName, String description) {

@@ -36,8 +36,6 @@ public class AuthServiceImpl {
     private final UserServiceImpl userService;
     private final RefreshTokenServiceImpl refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final AuditLogServiceImpl auditLogService;
-    private final String entity = "AUTH";
 
     public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
@@ -58,6 +56,7 @@ public class AuthServiceImpl {
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .isVerified(false)
+                .isBlocked(false)
                 .build();
 
         userRepository.save(user);
@@ -73,20 +72,19 @@ public class AuthServiceImpl {
                             request.getUsername(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            User user = userRepository.findByUserName(request.getUsername())
-                    .orElseThrow(() -> new NotFoundException("User not found"));
-
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
-
-
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        if(!user.isVerified()){
+        if(!user.getIsVerified()){
             throw new BadRequestException("User must verify email before login!");
+        }
+
+        if(user.getIsBlocked()){
+            throw new BadRequestException("User is blocked!");
         }
         String accessToken = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)

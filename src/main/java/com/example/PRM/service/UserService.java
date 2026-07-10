@@ -28,8 +28,14 @@ public interface UserService {
     public void sendOtp(String email, OtpPurpose otpPurpose);
 
     public String verifyOtp(String email, String otp, OtpPurpose otpPurpose);
+
     public UserLogRes resetPassword(String resetToken, String newPassword, String confirmPasswordProductRes);
 
+    public void banAndUnbanUser(UUID userId, boolean active);
+
+    public List<UserRes> getAllUserByIsBannedAndUnbanned(boolean isBanned);
+
+    public void createStaff(UserReq userReq);
 
 
 

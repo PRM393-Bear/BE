@@ -16,7 +16,7 @@ public interface OrganizationDetailService {
 
     List<OrganizationDetailRes> getAllOrganizations();
     List<OrganizationDetailRes> getPendingOrganizations();
-    void approveOrganization(UUID organizationId);
-    void rejectOrganization(UUID organizationId);
+    void approveOrganization(UUID organizationId, UserDetails userDetails);
+    void rejectOrganization(UUID organizationId, UserDetails userDetails, String reason);
 
 }

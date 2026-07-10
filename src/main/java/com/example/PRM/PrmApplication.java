@@ -9,13 +9,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @SpringBootApplication(exclude = {
-		org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration.class
+        org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration.class
 })
 public class PrmApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PrmApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(PrmApplication.class, args);
+    }
 
     @Bean
     public org.springframework.web.client.RestClient.Builder restClientBuilder() {
