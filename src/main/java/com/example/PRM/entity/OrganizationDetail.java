@@ -9,6 +9,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +53,7 @@ public class OrganizationDetail {
     private List<String> verificationDocs;
 
     @Enumerated(EnumType.STRING)
-    private VerificationOrganizationStatus status = VerificationOrganizationStatus.PENDING;
+    private VerificationOrganizationStatus status;
 
     private Integer totalDonationReceived = 0;
 
@@ -60,5 +61,14 @@ public class OrganizationDetail {
     private List<Order> orders = new ArrayList<>();
 
     private String avtOrg;
+
+    private LocalDateTime submitAt;
+    private LocalDateTime approvedAt;
+    private String approvedBy;
+
+    private LocalDateTime rejectedAt;
+    private String rejectedReason;
+    private String rejectedBy;
+
 }
 

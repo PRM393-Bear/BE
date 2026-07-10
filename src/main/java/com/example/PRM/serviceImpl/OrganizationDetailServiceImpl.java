@@ -3,6 +3,7 @@ package com.example.PRM.serviceImpl;
 import com.example.PRM.dto.request.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
 import com.example.PRM.entity.OrganizationDetail;
+import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.example.PRM.exception.IllegalArgumentException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,7 +52,12 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         }
 
         OrganizationDetail organizationDetail = organizationDetailMapper.toEntity(organizationDetailReq);
-        organizationDetail.setUser(userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+        if(organizationDetailReq.getVerificationDocs() != null && !organizationDetailReq.getVerificationDocs().isEmpty()){
+            organizationDetail.setStatus(VerificationOrganizationStatus.PENDING);
+        }
+        organizationDetail.setUser(userRepository
+                .findByUserName(userDetails.getUsername())
+                .orElseThrow(()
                 -> new NotFoundException("User not found")));
         organizationDetailRepository.save(organizationDetail);
     }
@@ -112,24 +119,39 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     }
 
     @Override
-    public void approveOrganization(UUID organizationId) {
+    public void approveOrganization(UUID organizationId, UserDetails userDetails) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationId)
                 .orElseThrow(() -> new NotFoundException("Organization not found with id: " + organizationId));
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
             throw new IllegalArgumentException("Organization is not in pending status");
         }
+        User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+                -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
+        if(!user.getRole().getRoleName().equals("STAFF")){
+            throw new IllegalArgumentException("Only staff can approve organization");
+        }
         od.setStatus(VerificationOrganizationStatus.APPROVED);
+        od.setApprovedAt(LocalDateTime.now());
+        od.setApprovedBy(user.getUserId().toString());
         organizationDetailRepository.save(od);
     }
 
     @Override
-    public void rejectOrganization(UUID organizationId) {
+    public void rejectOrganization(UUID organizationId, UserDetails userDetails, String reason) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationId)
                 .orElseThrow(() -> new NotFoundException("Organization not found with id: " + organizationId));
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
             throw new BadRequestException("Organization is not in pending status");
         }
+        User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+                -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
+        if(!user.getRole().getRoleName().equals("STAFF")){
+            throw new IllegalArgumentException("Only staff can reject organization");
+        }
         od.setStatus(VerificationOrganizationStatus.REJECTED);
+        od.setRejectedAt(LocalDateTime.now());
+        od.setRejectedBy(user.getUserId().toString());
+        od.setRejectedReason(reason);
         organizationDetailRepository.save(od);
     }
 

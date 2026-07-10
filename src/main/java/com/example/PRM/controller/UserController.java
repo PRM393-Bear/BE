@@ -11,6 +11,7 @@ import com.example.PRM.util.AuthDetails;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -150,5 +151,20 @@ public class UserController {
     @GetMapping("/chart/by-status")
     public ResponseEntity<Map<String, Long>> getUserChartByStatus() {
         return ResponseEntity.ok(userService.getUserCountByStatus());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/list-banned")
+    public ResponseEntity<?> getListUserBannedOrUnBanned(@RequestParam boolean isBanned){
+        return ResponseEntity.ok(userService.getAllUserByIsBannedAndUnbanned(isBanned));
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/banned")
+    public ResponseEntity<?> bannedAndUnBanned(@RequestParam UUID userId, @RequestParam boolean isBanned){
+        userService.banAndUnbanUser(userId, isBanned);
+        if (isBanned) {
+            return ResponseEntity.ok("Banned user success");
+        }
+        return ResponseEntity.ok("Unbanned user success");
     }
 }

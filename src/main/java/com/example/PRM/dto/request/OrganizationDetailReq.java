@@ -40,6 +40,4 @@ public class OrganizationDetailReq {
     @Column(columnDefinition = "json")
     private List<String> verificationDocs;
 
-    private Boolean isVerified = false;
-
 }
