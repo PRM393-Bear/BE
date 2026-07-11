@@ -1,9 +1,9 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.DonationRequestCustomReq;
-import com.example.PRM.dto.request.DonationRequestReq;
-import com.example.PRM.dto.request.ReceivedReq;
-import com.example.PRM.dto.request.ShippingReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
+import com.example.PRM.dto.request.donationRequest.ReceivedReq;
+import com.example.PRM.dto.request.donationRequest.ShippingReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.dto.response.UploadRes;
 import com.example.PRM.entity.*;

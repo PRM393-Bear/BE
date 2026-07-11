@@ -1,6 +1,5 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.organizationDetail;
 
-import com.example.PRM.entity.User;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;

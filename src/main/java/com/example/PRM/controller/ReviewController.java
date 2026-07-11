@@ -1,6 +1,6 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.ReviewReq;
+import com.example.PRM.dto.request.review.ReviewReq;
 import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.service.ReviewService;
 import lombok.RequiredArgsConstructor;

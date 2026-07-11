@@ -1,8 +1,7 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.OrganizationDetailReq;
+import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;

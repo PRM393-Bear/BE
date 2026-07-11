@@ -1,6 +1,6 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.ShopReq;
+import com.example.PRM.dto.request.shop.ShopReq;
 import com.example.PRM.dto.response.ShopRes;
 import com.example.PRM.service.ShopService;
 import lombok.RequiredArgsConstructor;

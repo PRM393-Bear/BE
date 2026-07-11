@@ -1,6 +1,6 @@
 package com.example.PRM.mapper;
 
-import com.example.PRM.dto.request.DonationRequestCustomReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
 import com.example.PRM.dto.response.wardrobeItem.WardrobeItemLogRes;
 import com.example.PRM.dto.response.wardrobeItem.WardrobeItemRes;
 import com.example.PRM.entity.WardrobeItem;

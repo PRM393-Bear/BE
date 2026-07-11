@@ -1,6 +1,6 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.request.order.CreateOrderReq;
 import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.entity.Order;
 import com.example.PRM.status_enum.OrderStatus;

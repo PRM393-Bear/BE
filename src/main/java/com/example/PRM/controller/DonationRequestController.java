@@ -1,6 +1,6 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.*;
+import com.example.PRM.dto.request.donationRequest.*;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.entity.DonationRequest;
 import com.example.PRM.service.DonationRequestService;

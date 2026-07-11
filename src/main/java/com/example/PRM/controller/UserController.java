@@ -1,14 +1,14 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.service.AuditLogService;
+import com.example.PRM.service.EmailService;
 import com.example.PRM.service.UserService;
 import com.example.PRM.status_enum.OtpPurpose;
 import com.example.PRM.util.AuthDetails;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,10 +23,12 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
-    public UserController(UserService userService, AuditLogService auditLogService) {
+    public UserController(UserService userService, AuditLogService auditLogService, EmailService emailService) {
         this.userService = userService;
         this.auditLogService = auditLogService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/me")
@@ -77,7 +79,7 @@ public class UserController {
     @PostMapping("/forgot-password/send-otp")
     public ResponseEntity<?> sendOtp(@RequestParam String email,
                                      @RequestParam OtpPurpose otpPurpose){
-        userService.sendOtp(email, otpPurpose);
+        emailService.sendOtp(email, otpPurpose);
         return ResponseEntity.ok("OTP đã được gửi đến email " + email);
     }
 

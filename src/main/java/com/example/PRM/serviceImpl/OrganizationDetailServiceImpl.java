@@ -1,6 +1,6 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.OrganizationDetailReq;
+import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
 import com.example.PRM.entity.OrganizationDetail;
 import com.example.PRM.entity.User;

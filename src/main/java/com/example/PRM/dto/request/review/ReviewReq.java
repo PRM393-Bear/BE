@@ -1,4 +1,4 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.review;
 
 import lombok.Data;
 

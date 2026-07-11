@@ -1,9 +1,8 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.ProductFilterReq;
-import com.example.PRM.dto.request.ProductReq;
+import com.example.PRM.dto.request.product.ProductFilterReq;
+import com.example.PRM.dto.request.product.ProductReq;
 import com.example.PRM.dto.response.product.ProductRes;
-import com.example.PRM.status_enum.ProductStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;

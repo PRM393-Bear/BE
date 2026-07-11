@@ -1,7 +1,5 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.AddCartItemReq;
-import com.example.PRM.dto.response.CartItemRes;
 import com.example.PRM.dto.response.CartRes;
 import org.springframework.security.core.userdetails.UserDetails;
 

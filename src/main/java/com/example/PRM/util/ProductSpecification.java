@@ -1,6 +1,6 @@
 package com.example.PRM.util;
 
-import com.example.PRM.dto.request.ProductFilterReq;
+import com.example.PRM.dto.request.product.ProductFilterReq;
 import com.example.PRM.entity.Product;
 import com.example.PRM.status_enum.ProductStatus;
 import jakarta.persistence.criteria.Predicate;

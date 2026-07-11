@@ -1,7 +1,7 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.ProductFilterReq;
-import com.example.PRM.dto.request.ProductReq;
+import com.example.PRM.dto.request.product.ProductFilterReq;
+import com.example.PRM.dto.request.product.ProductReq;
 import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.service.AuditLogService;
