@@ -1,7 +1,6 @@
 package com.example.PRM.mapper;
 
-import com.example.PRM.dto.request.ProductReq;
-import com.example.PRM.dto.response.product.ProductRes;
+import com.example.PRM.dto.request.product.ProductReq;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;

@@ -1,7 +1,7 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.ProductFilterReq;
-import com.example.PRM.dto.request.ProductReq;
+import com.example.PRM.dto.request.product.ProductFilterReq;
+import com.example.PRM.dto.request.product.ProductReq;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;

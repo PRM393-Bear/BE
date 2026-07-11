@@ -1,7 +1,7 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.LoginReq;
-import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.request.user.LoginReq;
+import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.user.AuthRes;
 import com.example.PRM.dto.user.LoginLogRes;
 import com.example.PRM.dto.user.UserLogRes;

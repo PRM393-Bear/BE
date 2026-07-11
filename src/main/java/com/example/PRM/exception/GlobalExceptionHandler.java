@@ -10,7 +10,10 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import java.time.LocalDateTime;
-
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.access.AccessDeniedException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -118,5 +121,17 @@ public class GlobalExceptionHandler {
                         "Access Denied",
                         LocalDateTime.now()
                 ));
+    }
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponse> handleInternalAuthException(InternalAuthenticationServiceException ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof UsernameNotFoundException) {
+            return ResponseEntity.status(404).body(
+                    new ErrorResponse(404, cause.getMessage(), LocalDateTime.now())
+            );
+        }
+        return ResponseEntity.status(500).body(
+                new ErrorResponse(500, "Internal authentication error", LocalDateTime.now())
+        );
     }
 }

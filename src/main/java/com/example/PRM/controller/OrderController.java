@@ -1,6 +1,6 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.request.order.CreateOrderReq;
 import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.service.OrderService;

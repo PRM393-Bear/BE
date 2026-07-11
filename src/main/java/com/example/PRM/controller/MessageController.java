@@ -1,7 +1,7 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.ChatMessageReq;
-import com.example.PRM.dto.request.ChatReadReq;
+import com.example.PRM.dto.request.chat.ChatMessageReq;
+import com.example.PRM.dto.request.chat.ChatReadReq;
 import com.example.PRM.dto.response.ChatMessageRes;
 import com.example.PRM.entity.ChatMessage;
 import com.example.PRM.entity.ChatRoom;

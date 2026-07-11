@@ -1,6 +1,5 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.donationEvent;
 
-import com.example.PRM.entity.OrganizationDetail;
 import com.example.PRM.status_enum.EventStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

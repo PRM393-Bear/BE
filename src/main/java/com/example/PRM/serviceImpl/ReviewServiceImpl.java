@@ -1,6 +1,6 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.ReviewReq;
+import com.example.PRM.dto.request.review.ReviewReq;
 import com.example.PRM.entity.Order;
 import com.example.PRM.entity.ProductReview;
 import com.example.PRM.entity.User;

@@ -1,7 +1,7 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.DonationEventFilterReq;
-import com.example.PRM.dto.request.DonationEventReq;
+import com.example.PRM.dto.request.donationEvent.DonationEventFilterReq;
+import com.example.PRM.dto.request.donationEvent.DonationEventReq;
 import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
 import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.DonationEventService;

@@ -1,7 +1,7 @@
 package com.example.PRM.mapper;
 
-import com.example.PRM.dto.request.DonationRequestCustomReq;
-import com.example.PRM.dto.request.DonationRequestReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.entity.DonationRequest;
 import com.example.PRM.status_enum.DonationStatus;
