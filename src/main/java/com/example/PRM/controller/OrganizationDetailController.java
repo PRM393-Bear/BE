@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
 
 import java.util.List;
 import java.util.UUID;
@@ -87,5 +88,15 @@ public class OrganizationDetailController {
                                                      @AuthenticationPrincipal UserDetails userDetails) {
         organizationDetailService.rejectOrganization(id,userDetails,reason);
         return ResponseEntity.ok("Organization rejected successfully");
+    }
+
+    @GetMapping("/nearby")
+    public ResponseEntity<List<OrganizationDetailRes>> getNearbyOrganizations(
+            @RequestParam BigDecimal latitude,
+            @RequestParam BigDecimal longitude,
+            @RequestParam(defaultValue = "50.0") double radius) {
+
+        List<OrganizationDetailRes> response = organizationDetailService.getNearbyOrganizations(latitude, longitude, radius);
+        return ResponseEntity.ok(response);
     }
 }
