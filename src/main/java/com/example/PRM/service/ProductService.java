@@ -20,8 +20,8 @@ public interface ProductService {
     List<ProductRes> filterProducts(ProductFilterReq filter);
     ProductRes deleteProduct(UUID id);
     List<ProductRes> getProductPendingStatus();
-    ProductRes approveProduct(UUID id);
-    ProductRes rejectProduct(UUID id, String rejectReason);
+    void approveProduct(UUID id);
+    void rejectProduct(UUID id, String rejectReason);
     List<ProductRes> getMyRejectedProducts(UserDetails userDetails);
     ProductRes unhideProduct(UUID id);
 }

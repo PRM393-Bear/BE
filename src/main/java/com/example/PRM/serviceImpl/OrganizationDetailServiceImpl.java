@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.math.BigDecimal;
 
 @Service
 public class OrganizationDetailServiceImpl implements OrganizationDetailService {
@@ -153,6 +154,21 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         od.setRejectedBy(user.getUserId().toString());
         od.setRejectedReason(reason);
         organizationDetailRepository.save(od);
+    }
+
+    @Override
+    public List<OrganizationDetailRes> getNearbyOrganizations(BigDecimal latitude, BigDecimal longitude, double radius) {
+        if (latitude == null || longitude == null) {
+            throw new BadRequestException("Vĩ độ (latitude) và Kinh độ (longitude) không được để trống");
+        }
+
+        double searchRadius = radius > 0 ? radius : 50.0;
+
+        List<OrganizationDetail> nearbyOrgs = organizationDetailRepository.findNearbyOrganizations(latitude, longitude, searchRadius);
+
+        return nearbyOrgs.stream()
+                .map(organizationDetailMapper::toResponse)
+                .toList();
     }
 
 }
