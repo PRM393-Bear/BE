@@ -1,6 +1,6 @@
 package com.example.PRM.mapper;
 
-import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.dto.user.UserLogRes;

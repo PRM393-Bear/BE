@@ -1,6 +1,6 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.request.order.CreateOrderReq;
 import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.entity.Order;
 import com.example.PRM.entity.OrderItem;
@@ -237,5 +237,18 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
         }
 
+    }
+
+    @Override
+    public Order updatePickupPhoto(UserDetails userDetails, UUID orderId, String photoUrl) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+
+        if (!order.getSeller().getUserName().equals(userDetails.getUsername())) {
+            throw new BadRequestException("You don't have permission to update this order's pickup photo");
+        }
+
+        order.setPickupPhotoUrl(photoUrl);
+        return orderRepository.save(order);
     }
 }

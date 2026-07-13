@@ -1,6 +1,6 @@
 package com.example.PRM.controller;
 
-import com.example.PRM.dto.request.CreateOrderReq;
+import com.example.PRM.dto.request.order.CreateOrderReq;
 import com.example.PRM.dto.response.ApiResponse;
 import com.example.PRM.dto.response.OrderRes;
 import com.example.PRM.service.OrderService;
@@ -79,5 +79,15 @@ public class OrderController {
 
             List<OrderRes> orders = orderService.getOrderHistory(userDetails, status);
             return ResponseEntity.ok(orders);
+    }
+
+    @PutMapping("/{orderId}/pickup-photo")
+    public ResponseEntity<?> updatePickupPhoto(@AuthenticationPrincipal UserDetails userDetails,
+                                               @PathVariable UUID orderId,
+                                               @RequestParam String photoUrl) {
+
+        orderService.updatePickupPhoto(userDetails, orderId, photoUrl);
+
+        return ResponseEntity.ok(new ApiResponse(200, "Pickup photo updated successfully."));
     }
 }

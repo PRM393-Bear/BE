@@ -1,7 +1,7 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.ProductFilterReq;
-import com.example.PRM.dto.request.ProductReq;
+import com.example.PRM.dto.request.product.ProductFilterReq;
+import com.example.PRM.dto.request.product.ProductReq;
 import com.example.PRM.dto.response.product.ProductRes;
 import com.example.PRM.entity.Category;
 import com.example.PRM.entity.Product;
@@ -227,7 +227,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductRes approveProduct(UUID id) {
+    public void approveProduct(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
@@ -237,11 +237,11 @@ public class ProductServiceImpl implements ProductService {
 
         // Send notification
 
-        return productMapper.toResponse(saved);
+        productMapper.toResponse(saved);
     }
 
     @Override
-    public ProductRes rejectProduct(UUID id, String rejectReason) {
+    public void rejectProduct(UUID id, String rejectReason) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
 
@@ -255,7 +255,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Send notification
 
-        return productMapper.toResponse(saved);
+        productMapper.toResponse(saved);
     }
 
     @Override

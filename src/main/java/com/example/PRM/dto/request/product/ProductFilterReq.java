@@ -1,6 +1,5 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.product;
 
-import com.example.PRM.entity.Product;
 import com.example.PRM.status_enum.ProductType;
 import lombok.Data;
 

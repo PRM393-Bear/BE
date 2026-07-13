@@ -1,6 +1,5 @@
 package com.example.PRM.repository;
 
-import com.example.PRM.dto.request.UserReq;
 import com.example.PRM.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

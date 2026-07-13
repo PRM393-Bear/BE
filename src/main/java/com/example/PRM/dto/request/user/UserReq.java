@@ -1,6 +1,5 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.user;
 
-import com.example.PRM.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

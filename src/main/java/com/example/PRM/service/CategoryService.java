@@ -1,6 +1,6 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.CategoryReq;
+import com.example.PRM.dto.request.category.CategoryReq;
 import com.example.PRM.dto.response.CategoryRes;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.donationEvent;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

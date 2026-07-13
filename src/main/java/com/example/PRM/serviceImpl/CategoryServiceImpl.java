@@ -1,6 +1,6 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.CategoryReq;
+import com.example.PRM.dto.request.category.CategoryReq;
 import com.example.PRM.dto.response.CategoryRes;
 import com.example.PRM.entity.Category;
 import com.example.PRM.repository.CategoryRepository;

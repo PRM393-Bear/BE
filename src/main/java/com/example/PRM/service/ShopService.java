@@ -1,6 +1,6 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.ShopReq;
+import com.example.PRM.dto.request.shop.ShopReq;
 import com.example.PRM.dto.response.ShopRes;
 import org.springframework.security.core.userdetails.UserDetails;
 

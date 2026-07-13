@@ -1,6 +1,9 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.*;
+import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
+import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
+import com.example.PRM.dto.request.donationRequest.ReceivedReq;
+import com.example.PRM.dto.request.donationRequest.ShippingReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.entity.DonationRequest;
 import org.springframework.security.core.userdetails.UserDetails;

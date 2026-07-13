@@ -1,8 +1,7 @@
 package com.example.PRM.serviceImpl;
 
-import com.example.PRM.dto.request.LoginReq;
-import com.example.PRM.dto.request.UserReq;
-import com.example.PRM.dto.user.AuthRes;
+import com.example.PRM.dto.request.user.LoginReq;
+import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.user.LoginLogRes;
 import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.entity.RefreshToken;
@@ -11,6 +10,7 @@ import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.repository.RefreshTokenRepository;
+import com.example.PRM.service.EmailService;
 import com.example.PRM.status_enum.OtpPurpose;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +36,7 @@ public class AuthServiceImpl {
     private final UserServiceImpl userService;
     private final RefreshTokenServiceImpl refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
 
     public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
@@ -61,7 +62,7 @@ public class AuthServiceImpl {
 
         userRepository.save(user);
 
-        userService.sendOtp(user.getEmail(), OtpPurpose.REGISTER);
+        emailService.sendOtp(user.getEmail(), OtpPurpose.REGISTER);
         return new UserLogRes(user.getUserName(),user.getUserId());
     }
 
@@ -71,7 +72,7 @@ public class AuthServiceImpl {
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(), request.getPassword())
             );
-        } catch (BadCredentialsException e) {
+        } catch (NotFoundException e) {
             throw new NotFoundException("Sai tài khoản hoặc mật khẩu");
         }
 

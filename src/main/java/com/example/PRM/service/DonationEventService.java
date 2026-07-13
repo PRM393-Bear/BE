@@ -1,7 +1,7 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.DonationEventFilterReq;
-import com.example.PRM.dto.request.DonationEventReq;
+import com.example.PRM.dto.request.donationEvent.DonationEventFilterReq;
+import com.example.PRM.dto.request.donationEvent.DonationEventReq;
 import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
 import com.example.PRM.dto.response.donationEvent.DonationEventRes;
 import org.springframework.security.core.userdetails.UserDetails;

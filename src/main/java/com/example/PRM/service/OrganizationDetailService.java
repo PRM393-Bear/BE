@@ -1,9 +1,9 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.OrganizationDetailReq;
+import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.math.BigDecimal;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,10 +13,9 @@ public interface OrganizationDetailService {
     void updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq);
     void deleteOrganizationDetail(UUID organizationId, UserDetails userDetails);
     OrganizationDetailRes getOrganizationDetail(UUID organizationId);
-
     List<OrganizationDetailRes> getAllOrganizations();
     List<OrganizationDetailRes> getPendingOrganizations();
     void approveOrganization(UUID organizationId, UserDetails userDetails);
     void rejectOrganization(UUID organizationId, UserDetails userDetails, String reason);
-
+    List<OrganizationDetailRes> getNearbyOrganizations(BigDecimal latitude, BigDecimal longitude, double radius);
 }

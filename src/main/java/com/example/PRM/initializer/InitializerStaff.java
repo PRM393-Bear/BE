@@ -30,7 +30,7 @@ public class InitializerStaff implements CommandLineRunner {
                     .orElseThrow(() -> new RuntimeException("Role STAFF không tồn tại"));
 
             User admin = User.builder()
-                    .userName("staff")
+                    .userName("staff1")
                     .password(passwordEncoder.encode("staff123@"))
                     .fullName("Trần Thị Mỹ Hạnh")
                     .email("hanhhhe@fpt.com")

@@ -1,6 +1,6 @@
 package com.example.PRM.mapper;
 
-import com.example.PRM.dto.request.DonationEventReq;
+import com.example.PRM.dto.request.donationEvent.DonationEventReq;
 import com.example.PRM.dto.response.donationEvent.DonationEventLogRes;
 import com.example.PRM.dto.response.donationEvent.DonationEventRes;
 import com.example.PRM.entity.DonationEvent;

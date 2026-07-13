@@ -23,8 +23,8 @@ public class ProductReview {
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "transaction_id", nullable = false, unique = true)
-    private Transaction transaction;
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id")

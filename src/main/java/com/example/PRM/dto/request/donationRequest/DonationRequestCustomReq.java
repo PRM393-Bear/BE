@@ -1,4 +1,4 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.donationRequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,10 +10,14 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DonationRequestReq {
+public class DonationRequestCustomReq {
     private UUID donationEventId;
-
     private String description;
 
-    private UUID wardrobeItemId;
+    // WardrobeItem mới
+    private String itemName;
+    private String category;
+    private String condition;
+    private String conditionNote;
+    private MultipartFile image;
 }

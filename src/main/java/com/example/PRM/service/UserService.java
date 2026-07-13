@@ -1,12 +1,10 @@
 package com.example.PRM.service;
 
-import com.example.PRM.dto.request.UserReq;
+import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.response.UserAdminRes;
 import com.example.PRM.dto.response.UserRes;
 import com.example.PRM.dto.user.UserLogRes;
 import com.example.PRM.status_enum.OtpPurpose;
-import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -25,8 +23,6 @@ public interface UserService {
     Map<String, Long> getUserCountByRole();
     Map<String, Long> getUserCountByStatus();
     //--------------------------------------//
-    public void sendOtp(String email, OtpPurpose otpPurpose);
-
     public String verifyOtp(String email, String otp, OtpPurpose otpPurpose);
 
     public UserLogRes resetPassword(String resetToken, String newPassword, String confirmPasswordProductRes);

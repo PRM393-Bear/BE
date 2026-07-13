@@ -1,4 +1,4 @@
-package com.example.PRM.dto.request;
+package com.example.PRM.dto.request.shop;
 
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
