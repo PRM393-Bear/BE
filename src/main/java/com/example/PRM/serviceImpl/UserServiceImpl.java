@@ -234,7 +234,7 @@ public class UserServiceImpl implements UserService {
     public void banAndUnbanUser(UUID userId, boolean active) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
-        user.setIsVerified(active);
+        user.setIsBlocked(active);
         userRepository.save(user);
     }
 
