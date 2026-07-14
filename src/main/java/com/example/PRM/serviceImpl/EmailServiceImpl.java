@@ -401,4 +401,233 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Không thể gửi email thông báo mở khóa tài khoản", e);
         }
     }
+
+    @Override
+    public void sendApprovalEmail(String email) {
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("nguyenminhnguyen08112004@gmail.com");
+            helper.setTo(email);
+
+            String subject = "ECO - Tổ chức của bạn đã được phê duyệt";
+
+            String html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="
+            margin:0;
+            padding:0;
+            background:#f4f6f8;
+            font-family:Arial,sans-serif;
+        ">
+
+        <div style="
+            max-width:600px;
+            margin:40px auto;
+            background:white;
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        ">
+
+            <div style="
+                background:#2e7d32;
+                color:white;
+                text-align:center;
+                padding:24px;
+            ">
+                <h1 style="margin:0;">ECO</h1>
+                <p style="margin-top:8px;">
+                    Organization Approved
+                </p>
+            </div>
+
+            <div style="padding:32px;">
+
+                <h2 style="color:#333;">
+                    Xin chào,
+                </h2>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Chúc mừng! Tổ chức của bạn đã được xác minh và phê duyệt
+                    thành công. Bạn có thể bắt đầu sử dụng đầy đủ các tính năng
+                    dành cho tổ chức trên hệ thống ECO.
+                </p>
+
+                <div style="
+                    margin:30px 0;
+                    text-align:center;
+                ">
+                    <div style="
+                        display:inline-block;
+                        background:#e8f5e9;
+                        color:#2e7d32;
+                        font-size:18px;
+                        font-weight:bold;
+                        padding:16px 32px;
+                        border-radius:10px;
+                        border:2px dashed #2e7d32;
+                    ">
+                        Tổ chức đã được xác minh
+                    </div>
+                </div>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với
+                    bộ phận hỗ trợ của chúng tôi.
+                </p>
+
+            </div>
+
+            <div style="
+                background:#f8f9fa;
+                padding:20px;
+                text-align:center;
+                color:#888;
+                font-size:12px;
+            ">
+                © 2026 ECO. All rights reserved.
+            </div>
+
+        </div>
+
+        </body>
+        </html>
+        """;
+
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email phê duyệt tổ chức", e);
+        }
+    }
+
+    @Override
+    public void sendRejectEmail(String email, String reason) {
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("nguyenminhnguyen08112004@gmail.com");
+            helper.setTo(email);
+
+            String subject = "ECO - Tổ chức của bạn đã bị từ chối";
+
+            String html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="
+            margin:0;
+            padding:0;
+            background:#f4f6f8;
+            font-family:Arial,sans-serif;
+        ">
+
+        <div style="
+            max-width:600px;
+            margin:40px auto;
+            background:white;
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        ">
+
+            <div style="
+                background:#c62828;
+                color:white;
+                text-align:center;
+                padding:24px;
+            ">
+                <h1 style="margin:0;">ECO</h1>
+                <p style="margin-top:8px;">
+                    Organization Rejected
+                </p>
+            </div>
+
+            <div style="padding:32px;">
+
+                <h2 style="color:#333;">
+                    Xin chào,
+                </h2>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Rất tiếc, yêu cầu xác minh tổ chức của bạn đã bị từ chối.
+                    Dưới đây là lý do cụ thể:
+                </p>
+
+                <div style="
+                    margin:30px 0;
+                    text-align:center;
+                ">
+                    <div style="
+                        display:inline-block;
+                        background:#ffebee;
+                        color:#c62828;
+                        font-size:16px;
+                        font-weight:bold;
+                        padding:20px 30px;
+                        border-radius:10px;
+                        border:2px dashed #c62828;
+                        max-width:480px;
+                        word-wrap:break-word;
+                    ">
+                        %s
+                    </div>
+                </div>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Bạn có thể chỉnh sửa thông tin và gửi lại yêu cầu xác minh.
+                    Nếu cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi.
+                </p>
+
+            </div>
+
+            <div style="
+                background:#f8f9fa;
+                padding:20px;
+                text-align:center;
+                color:#888;
+                font-size:12px;
+            ">
+                © 2026 ECO. All rights reserved.
+            </div>
+
+        </div>
+
+        </body>
+        </html>
+        """.formatted(reason);
+
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email từ chối tổ chức", e);
+        }
+    }
 }

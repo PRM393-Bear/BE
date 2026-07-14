@@ -99,9 +99,10 @@ public class AuthServiceImpl {
 
         Role role = roleRepository.findByRoleName("ORGANIZATION").orElseThrow(() -> new NotFoundException("Organization not found with name : "));
         if(user.getRole().equals(role)){
-            OrganizationDetail od = organizationDetailRepository.findByUser_UserId(user.getUserId()).orElseThrow(()
-                    -> new NotFoundException("Organization detail not found"));
-            return new LoginLogRes(accessToken,refreshToken.getToken(), user.getUserName(), user.getUserId(),od.getStatus().toString(),od.getId().toString());
+            OrganizationDetail od = organizationDetailRepository.findByUser_UserId(user.getUserId()).orElse(null);
+            if(od != null){
+                return new LoginLogRes(accessToken,refreshToken.getToken(), user.getUserName(), user.getUserId(),od.getStatus().toString(),od.getId().toString());
+            }
         }
         return new LoginLogRes(accessToken, refreshToken.getToken(),user.getUserName(),user.getUserId(),null,null);
     }

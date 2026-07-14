@@ -25,11 +25,13 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     private final OrganizationDetailRepository organizationDetailRepository;
     private final OrganizationDetailMapper organizationDetailMapper;
     private final UserRepository userRepository;
+    private final EmailServiceImpl emailService;
 
-    public OrganizationDetailServiceImpl(OrganizationDetailRepository organizationDetailRepository, OrganizationDetailMapper organizationDetailMapper, UserRepository userRepository) {
+    public OrganizationDetailServiceImpl(OrganizationDetailRepository organizationDetailRepository, OrganizationDetailMapper organizationDetailMapper, UserRepository userRepository, EmailServiceImpl emailService) {
         this.organizationDetailRepository = organizationDetailRepository;
         this.organizationDetailMapper = organizationDetailMapper;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -125,15 +127,17 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
             throw new IllegalArgumentException("Organization is not in pending status");
         }
-        User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+        User staff = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
-        if(!user.getRole().getRoleName().equals("STAFF")){
+        if(!staff.getRole().getRoleName().equals("STAFF")){
             throw new IllegalArgumentException("Only staff can approve organization");
         }
         od.setStatus(VerificationOrganizationStatus.APPROVED);
         od.setApprovedAt(LocalDateTime.now());
-        od.setApprovedBy(user.getUserId().toString());
+        od.setApprovedBy(staff.getUserId().toString());
         organizationDetailRepository.save(od);
+
+        emailService.sendApprovalEmail(od.getUser().getEmail());
     }
 
     @Override
@@ -143,16 +147,18 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
             throw new BadRequestException("Organization is not in pending status");
         }
-        User user = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
+        User staff = userRepository.findByUserName(userDetails.getUsername()).orElseThrow(()
                 -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
-        if(!user.getRole().getRoleName().equals("STAFF")){
+        if(!staff.getRole().getRoleName().equals("STAFF")){
             throw new IllegalArgumentException("Only staff can reject organization");
         }
         od.setStatus(VerificationOrganizationStatus.REJECTED);
         od.setRejectedAt(LocalDateTime.now());
-        od.setRejectedBy(user.getUserId().toString());
+        od.setRejectedBy(staff.getUserId().toString());
         od.setRejectedReason(reason);
         organizationDetailRepository.save(od);
+
+        emailService.sendRejectEmail(od.getUser().getEmail(), reason);
     }
 
     @Override

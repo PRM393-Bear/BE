@@ -6,4 +6,6 @@ public interface EmailService {
     public void sendOtp(String email, OtpPurpose otpPurpose);
     public void sendBannedEmail(String email, String reason);
     public void sendUnbannedEmail(String email);
+    public void sendApprovalEmail(String email);
+    public void sendRejectEmail(String email, String reason);
 }
