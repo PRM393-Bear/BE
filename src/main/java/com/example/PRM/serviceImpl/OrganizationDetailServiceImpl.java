@@ -35,7 +35,7 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     }
 
     @Override
-    public void createOrganizationDetail(OrganizationDetailReq organizationDetailReq, UserDetails userDetails) {
+    public OrganizationDetailRes createOrganizationDetail(OrganizationDetailReq organizationDetailReq, UserDetails userDetails) {
 
         if(organizationDetailReq.getOrgName() == null || organizationDetailReq.getOrgName().isBlank()){
             throw new IllegalArgumentException("Organization name is required");
@@ -60,12 +60,14 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         organizationDetail.setUser(userRepository
                 .findByUserName(userDetails.getUsername())
                 .orElseThrow(()
-                -> new NotFoundException("User not found")));
+                        -> new NotFoundException("User not found")));
         organizationDetailRepository.save(organizationDetail);
+
+        return organizationDetailMapper.toResponse(organizationDetail);
     }
 
     @Override
-    public void updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq) {
+    public OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationDetailId).orElseThrow(()
                 -> new NotFoundException("Organization detail not found with id: " + organizationDetailId));
         if(organizationDetailReq.getOrgName() != null){
@@ -88,16 +90,23 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         }
         organizationDetailRepository.save(od);
 
+        return organizationDetailMapper.toResponse(od);
     }
 
     @Override
-    public void deleteOrganizationDetail(UUID organizationId, UserDetails userDetails) {
+    public OrganizationDetailRes deleteOrganizationDetail(UUID organizationId, UserDetails userDetails) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationId).orElseThrow(()
                 -> new NotFoundException("Organization detail not found with id: " + organizationId));
         if(!od.getUser().getUserName().equals(userDetails.getUsername())){
             throw new ForbiddenException("You are not authorized to delete this organization detail");
         }
+
+        // Map response TRƯỚC khi xóa, vì sau khi delete entity sẽ không còn dữ liệu để map
+        OrganizationDetailRes res = organizationDetailMapper.toResponse(od);
+
         organizationDetailRepository.delete(od);
+
+        return res;
     }
 
     @Override
@@ -124,7 +133,7 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     }
 
     @Override
-    public void approveOrganization(UUID organizationId, UserDetails userDetails) {
+    public OrganizationDetailRes approveOrganization(UUID organizationId, UserDetails userDetails) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationId)
                 .orElseThrow(() -> new NotFoundException("Organization not found with id: " + organizationId));
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
@@ -141,10 +150,12 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         organizationDetailRepository.save(od);
 
         emailService.sendApprovalEmail(od.getUser().getEmail());
+
+        return organizationDetailMapper.toResponse(od);
     }
 
     @Override
-    public void rejectOrganization(UUID organizationId, UserDetails userDetails, String reason) {
+    public OrganizationDetailRes rejectOrganization(UUID organizationId, UserDetails userDetails, String reason) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationId)
                 .orElseThrow(() -> new NotFoundException("Organization not found with id: " + organizationId));
         if(od.getStatus() != VerificationOrganizationStatus.PENDING){
@@ -162,6 +173,8 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         organizationDetailRepository.save(od);
 
         emailService.sendRejectEmail(od.getUser().getEmail(), reason);
+
+        return organizationDetailMapper.toResponse(od);
     }
 
     @Override
@@ -178,5 +191,4 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
                 .map(organizationDetailMapper::toResponse)
                 .toList();
     }
-
 }
