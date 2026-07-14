@@ -2,7 +2,9 @@ package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
+import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.OrganizationDetailService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +23,25 @@ import java.util.UUID;
 public class OrganizationDetailController {
 
     private final OrganizationDetailService organizationDetailService;
+    private final AuditLogService auditLogService;
 
     @PostMapping
     public ResponseEntity<String> createOrganizationDetail(
             @RequestBody OrganizationDetailReq request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
 
-        organizationDetailService.createOrganizationDetail(request, userDetails);
+        OrganizationDetailRes res = organizationDetailService.createOrganizationDetail(request, userDetails);
+
+        auditLogService.log("CREATE_ORGANIZATION_DETAIL_SUCCESS",
+                "ORGANIZATION_DETAIL",
+                res.getId().toString(),
+                "Organization detail created successfully",
+                "SUCCESS",
+                res.getUserId(),
+                userDetails.getUsername(),
+                httpRequest
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -37,18 +51,42 @@ public class OrganizationDetailController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateOrganizationDetail(
             @PathVariable UUID id,
-            @RequestBody OrganizationDetailReq request) {
+            @RequestBody OrganizationDetailReq request,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
 
-        organizationDetailService.updateOrganizationDetail(id, request);
+        OrganizationDetailRes res = organizationDetailService.updateOrganizationDetail(id, request);
+
+        auditLogService.log("UPDATE_ORGANIZATION_DETAIL_SUCCESS",
+                "ORGANIZATION_DETAIL",
+                id.toString(),
+                "Organization detail updated successfully",
+                "SUCCESS",
+                res.getUserId(),
+                userDetails.getUsername(),
+                httpRequest
+        );
 
         return ResponseEntity.ok("Organization detail updated successfully");
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteOrganizationDetail(
-            @PathVariable UUID id, @AuthenticationPrincipal UserDetails userDetails) {
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
 
-        organizationDetailService.deleteOrganizationDetail(id, userDetails);
+        OrganizationDetailRes res = organizationDetailService.deleteOrganizationDetail(id, userDetails);
+
+        auditLogService.log("DELETE_ORGANIZATION_DETAIL_SUCCESS",
+                "ORGANIZATION_DETAIL",
+                id.toString(),
+                "Organization detail deleted successfully",
+                "SUCCESS",
+                res.getUserId(),
+                userDetails.getUsername(),
+                httpRequest
+        );
 
         return ResponseEntity.ok("Organization detail deleted successfully");
     }
@@ -75,18 +113,46 @@ public class OrganizationDetailController {
 
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasRole('STAFF')")
-    public ResponseEntity<String> approveOrganization(@PathVariable UUID id,
-                                                      @AuthenticationPrincipal UserDetails userDetails) {
-        organizationDetailService.approveOrganization(id,userDetails);
+    public ResponseEntity<String> approveOrganization(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+
+        OrganizationDetailRes res = organizationDetailService.approveOrganization(id, userDetails);
+
+        auditLogService.log("APPROVE_ORGANIZATION_SUCCESS",
+                "ORGANIZATION_DETAIL",
+                id.toString(),
+                "Organization approved successfully",
+                "SUCCESS",
+                res.getUserId(),
+                userDetails.getUsername(),
+                httpRequest
+        );
+
         return ResponseEntity.ok("Organization approved successfully");
     }
 
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasRole('STAFF')")
-    public ResponseEntity<String> rejectOrganization(@PathVariable UUID id,
-                                                     @RequestParam String reason,
-                                                     @AuthenticationPrincipal UserDetails userDetails) {
-        organizationDetailService.rejectOrganization(id,userDetails,reason);
+    public ResponseEntity<String> rejectOrganization(
+            @PathVariable UUID id,
+            @RequestParam String reason,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpRequest) {
+
+        OrganizationDetailRes res = organizationDetailService.rejectOrganization(id, userDetails, reason);
+
+        auditLogService.log("REJECT_ORGANIZATION_SUCCESS",
+                "ORGANIZATION_DETAIL",
+                id.toString(),
+                "Organization rejected successfully, reason: " + reason,
+                "SUCCESS",
+                res.getUserId(),
+                userDetails.getUsername(),
+                httpRequest
+        );
+
         return ResponseEntity.ok("Organization rejected successfully");
     }
 
