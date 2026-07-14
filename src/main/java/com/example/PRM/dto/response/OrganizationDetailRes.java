@@ -33,4 +33,5 @@ public class OrganizationDetailRes {
     private UUID userId;
     private String userFullName;
     private String userEmail;
+    private String reason;
 }
