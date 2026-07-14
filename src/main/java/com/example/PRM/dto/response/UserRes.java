@@ -15,4 +15,5 @@ public class UserRes {
     String fullName;
     String phone;
     Role role;
+    String address;
 }

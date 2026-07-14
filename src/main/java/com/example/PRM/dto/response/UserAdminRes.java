@@ -18,4 +18,5 @@ public class UserAdminRes {
     private String logoUrl;
     private String phone;
     private Role role;
+    private String address;
 }
