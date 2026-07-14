@@ -77,6 +77,10 @@ public class UserServiceImpl implements UserService {
             user.setUserName(userReq.getUsername());
         }
 
+        if(userReq.getAddress() != null && !userReq.getAddress().isBlank()) {
+            user.setAddress(userReq.getAddress());
+        }
+
         userRepository.save(user);
     }
 

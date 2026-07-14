@@ -22,15 +22,13 @@ public class User {
     private String password;
     private String fullName;
     private String email;
-
     @Column(length = 255)
     private String logoUrl;
-
     private String phone;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "roleId")
     private Role role;
-
+    private String address;
     private Boolean isVerified;
     private Boolean isBlocked;
 
