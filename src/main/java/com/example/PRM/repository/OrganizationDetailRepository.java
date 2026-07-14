@@ -17,6 +17,8 @@ public interface OrganizationDetailRepository extends JpaRepository<Organization
     Optional<OrganizationDetail> findById(UUID organizationDetailId);
     Optional<OrganizationDetail> findByOrOrgName(String orgName);
 
+    Optional<OrganizationDetail> findByUser_UserId(UUID userUserId);
+
     List<OrganizationDetail> findByStatus(VerificationOrganizationStatus status);
     @Query(value = "SELECT * FROM organization_detail o WHERE " +
             "(6371 * acos(cos(radians(:latitude)) * cos(radians(o.latitude)) * " +
