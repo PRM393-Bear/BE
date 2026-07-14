@@ -16,6 +16,7 @@ public class OrganizationDetailMapper {
         res.setOrgName(od.getOrgName());
         res.setDescription(od.getDescription());
         res.setAddress(od.getAddress());
+        res.setWebsiteUrl(od.getWebsiteUrl());
         res.setLatitude(od.getLatitude());
         res.setLongitude(od.getLongitude());
         res.setAvtOrg(od.getAvtOrg());
@@ -42,6 +43,7 @@ public class OrganizationDetailMapper {
         OrganizationDetail od = new OrganizationDetail();
         od.setDescription(req.getDescription());
         od.setAddress(req.getAddress());
+        od.setWebsiteUrl(req.getWebsiteUrl());
         od.setLatitude(req.getLatitude());
         od.setLongitude(req.getLongitude());
         od.setOrgName(req.getOrgName());

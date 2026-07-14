@@ -38,6 +38,9 @@ public class OrganizationDetail {
     @Column(columnDefinition = "TEXT")
     private String address;
 
+    @Column(length = 255)
+    private String websiteUrl;
+
     @Column(precision = 15, scale = 8)
     private BigDecimal latitude;
 
