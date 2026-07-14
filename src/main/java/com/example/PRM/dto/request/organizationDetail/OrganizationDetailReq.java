@@ -25,6 +25,9 @@ public class OrganizationDetailReq {
     @Column(columnDefinition = "TEXT")
     private String address;
 
+    @Column(length = 255)
+    private String websiteUrl;
+
     @Column(precision = 10, scale = 8)
     private BigDecimal latitude;
 
