@@ -25,12 +25,12 @@ public class InitialzerAdmin implements CommandLineRunner{
     @Override
     public void run(String... args) {
         // Chỉ tạo nếu chưa có
-        if (!userRepository.existsByUserName("admin")) {
+        if (!userRepository.existsByUserName("admin1")) {
             Role adminRole = roleRepository.findByRoleName("ADMIN")
                     .orElseThrow(() -> new RuntimeException("Role ADMIN không tồn tại"));
 
             User admin = User.builder()
-                    .userName("admin")
+                    .userName("admin1")
                     .password(passwordEncoder.encode("admin123@"))
                     .fullName("Tống Ngọc Anh Tài")
                     .email("nguyennmse184571@fpt.com")

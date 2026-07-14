@@ -172,4 +172,233 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Không thể gửi email OTP", e);
         }
     }
+
+    @Override
+    public void sendBannedEmail(String email, String reason) {
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("nguyenminhnguyen08112004@gmail.com");
+            helper.setTo(email);
+
+            String subject = "ECO - Thông báo khóa tài khoản";
+
+            String html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="
+            margin:0;
+            padding:0;
+            background:#f4f6f8;
+            font-family:Arial,sans-serif;
+        ">
+
+        <div style="
+            max-width:600px;
+            margin:40px auto;
+            background:white;
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        ">
+
+            <div style="
+                background:#c62828;
+                color:white;
+                text-align:center;
+                padding:24px;
+            ">
+                <h1 style="margin:0;">ECO</h1>
+                <p style="margin-top:8px;">
+                    Account Suspension Notice
+                </p>
+            </div>
+
+            <div style="padding:32px;">
+
+                <h2 style="color:#333;">
+                    Xin chào,
+                </h2>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Tài khoản của bạn đã bị khóa do vi phạm điều khoản sử dụng của chúng tôi.
+                    Dưới đây là lý do cụ thể:
+                </p>
+
+                <div style="
+                    margin:30px 0;
+                    text-align:center;
+                ">
+                    <div style="
+                        display:inline-block;
+                        background:#ffebee;
+                        color:#c62828;
+                        font-size:16px;
+                        font-weight:bold;
+                        padding:20px 30px;
+                        border-radius:10px;
+                        border:2px dashed #c62828;
+                        max-width:480px;
+                        word-wrap:break-word;
+                    ">
+                        %s
+                    </div>
+                </div>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Nếu bạn cho rằng đây là sự nhầm lẫn, vui lòng liên hệ với bộ phận
+                    hỗ trợ của chúng tôi để được xem xét lại.
+                </p>
+
+            </div>
+
+            <div style="
+                background:#f8f9fa;
+                padding:20px;
+                text-align:center;
+                color:#888;
+                font-size:12px;
+            ">
+                © 2026 ECO. All rights reserved.
+            </div>
+
+        </div>
+
+        </body>
+        </html>
+        """.formatted(reason);
+
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email thông báo khóa tài khoản", e);
+        }
+    }
+    @Override
+    public void sendUnbannedEmail(String email) {
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom("nguyenminhnguyen08112004@gmail.com");
+            helper.setTo(email);
+
+            String subject = "ECO - Thông báo mở khóa tài khoản";
+
+            String html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="
+            margin:0;
+            padding:0;
+            background:#f4f6f8;
+            font-family:Arial,sans-serif;
+        ">
+
+        <div style="
+            max-width:600px;
+            margin:40px auto;
+            background:white;
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        ">
+
+            <div style="
+                background:#2e7d32;
+                color:white;
+                text-align:center;
+                padding:24px;
+            ">
+                <h1 style="margin:0;">ECO</h1>
+                <p style="margin-top:8px;">
+                    Account Restored
+                </p>
+            </div>
+
+            <div style="padding:32px;">
+
+                <h2 style="color:#333;">
+                    Xin chào,
+                </h2>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Tài khoản của bạn đã được mở khóa thành công. Bạn có thể
+                    đăng nhập và tiếp tục sử dụng các dịch vụ của chúng tôi
+                    như bình thường.
+                </p>
+
+                <div style="
+                    margin:30px 0;
+                    text-align:center;
+                ">
+                    <div style="
+                        display:inline-block;
+                        background:#e8f5e9;
+                        color:#2e7d32;
+                        font-size:18px;
+                        font-weight:bold;
+                        padding:16px 32px;
+                        border-radius:10px;
+                        border:2px dashed #2e7d32;
+                    ">
+                        Tài khoản đã được kích hoạt lại
+                    </div>
+                </div>
+
+                <p style="
+                    color:#555;
+                    line-height:1.6;
+                ">
+                    Vui lòng tuân thủ điều khoản sử dụng để tránh bị khóa
+                    tài khoản trong tương lai. Nếu bạn có bất kỳ thắc mắc nào,
+                    hãy liên hệ với bộ phận hỗ trợ của chúng tôi.
+                </p>
+
+            </div>
+
+            <div style="
+                background:#f8f9fa;
+                padding:20px;
+                text-align:center;
+                color:#888;
+                font-size:12px;
+            ">
+                © 2026 ECO. All rights reserved.
+            </div>
+
+        </div>
+
+        </body>
+        </html>
+        """;
+
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Không thể gửi email thông báo mở khóa tài khoản", e);
+        }
+    }
 }

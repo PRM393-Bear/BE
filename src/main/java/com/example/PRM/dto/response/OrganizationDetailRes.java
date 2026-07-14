@@ -20,6 +20,7 @@ public class OrganizationDetailRes {
     private String orgName;
     private String description;
     private String address;
+    private String websiteUrl;
     private BigDecimal latitude;
     private BigDecimal longitude;
     private String avtOrg;
