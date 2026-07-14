@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrganizationDetailService {
-    void createOrganizationDetail(OrganizationDetailReq organizationDetailReq, UserDetails userDetails);
-    void updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq);
-    void deleteOrganizationDetail(UUID organizationId, UserDetails userDetails);
+    OrganizationDetailRes createOrganizationDetail(OrganizationDetailReq organizationDetailReq, UserDetails userDetails);
+    OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq);
+    OrganizationDetailRes deleteOrganizationDetail(UUID organizationId, UserDetails userDetails);
     OrganizationDetailRes getOrganizationDetail(UUID organizationId);
     List<OrganizationDetailRes> getAllOrganizations();
     List<OrganizationDetailRes> getPendingOrganizations();
-    void approveOrganization(UUID organizationId, UserDetails userDetails);
-    void rejectOrganization(UUID organizationId, UserDetails userDetails, String reason);
+    OrganizationDetailRes approveOrganization(UUID organizationId, UserDetails userDetails);
+    OrganizationDetailRes rejectOrganization(UUID organizationId, UserDetails userDetails, String reason);
     List<OrganizationDetailRes> getNearbyOrganizations(BigDecimal latitude, BigDecimal longitude, double radius);
 }
