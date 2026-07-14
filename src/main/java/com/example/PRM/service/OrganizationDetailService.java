@@ -2,6 +2,7 @@ package com.example.PRM.service;
 
 import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
 import com.example.PRM.dto.response.OrganizationDetailRes;
+import com.example.PRM.entity.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.math.BigDecimal;
 

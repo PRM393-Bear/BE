@@ -13,4 +13,6 @@ public class LoginLogRes {
     private String refreshToken;
     private String username;
     private UUID userId;
+    private String organizationStatus = null;
+    private String organizationId;
 }
