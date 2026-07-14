@@ -16,6 +16,7 @@ public class UserMapper {
         staff.setPhone(user.getPhone());
         staff.setUserName(user.getUsername());
         staff.setFullName(user.getFullName());
+        staff.setAddress(user.getAddress());
         return staff;
     }
 
@@ -29,6 +30,7 @@ public class UserMapper {
         uAR.setLogoUrl(user.getLogoUrl());
         uAR.setRole(user.getRole());
         uAR.setUserId(user.getUserId());
+        uAR.setAddress(user.getAddress());
 
         return uAR;
     }
@@ -39,6 +41,7 @@ public class UserMapper {
         userRes.setPhone(user.getPhone());
         userRes.setFullName(user.getFullName());
         userRes.setRole(user.getRole());
+        userRes.setAddress(user.getAddress());
         return userRes;
     }
 

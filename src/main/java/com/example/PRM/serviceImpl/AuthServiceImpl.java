@@ -56,6 +56,7 @@ public class AuthServiceImpl {
                 .role(role)
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
+                .address(request.getAddress())
                 .isVerified(false)
                 .isBlocked(false)
                 .build();
