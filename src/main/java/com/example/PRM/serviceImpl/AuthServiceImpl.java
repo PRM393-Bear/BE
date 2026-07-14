@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import com.example.PRM.repository.RoleRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.util.JwtUtil;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class AuthServiceImpl {
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
 
+    @Transactional
     public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new BadRequestException("Username đã tồn tại");
