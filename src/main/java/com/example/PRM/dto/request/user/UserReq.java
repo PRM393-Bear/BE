@@ -14,4 +14,5 @@ public class UserReq {
     private String fullName;
     private String phone;
     private String roleName;
+    private String address;
 }
