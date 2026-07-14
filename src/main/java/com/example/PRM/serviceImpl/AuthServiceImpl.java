@@ -4,11 +4,13 @@ import com.example.PRM.dto.request.user.LoginReq;
 import com.example.PRM.dto.request.user.UserReq;
 import com.example.PRM.dto.user.LoginLogRes;
 import com.example.PRM.dto.user.UserLogRes;
+import com.example.PRM.entity.OrganizationDetail;
 import com.example.PRM.entity.RefreshToken;
 import com.example.PRM.entity.Role;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
+import com.example.PRM.repository.OrganizationDetailRepository;
 import com.example.PRM.repository.RefreshTokenRepository;
 import com.example.PRM.service.EmailService;
 import com.example.PRM.status_enum.OtpPurpose;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import com.example.PRM.repository.RoleRepository;
 import com.example.PRM.repository.UserRepository;
 import com.example.PRM.util.JwtUtil;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +40,9 @@ public class AuthServiceImpl {
     private final RefreshTokenServiceImpl refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
+    private final OrganizationDetailRepository organizationDetailRepository;
 
+    @Transactional
     public UserLogRes registerForMember(UserReq request) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new BadRequestException("Username đã tồn tại");
@@ -92,7 +97,12 @@ public class AuthServiceImpl {
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> refreshTokenService.createRefreshToken(user));
 
-
-        return new LoginLogRes(accessToken, refreshToken.getToken(),user.getUserName(),user.getUserId());
+        Role role = roleRepository.findByRoleName("ORGANIZATION").orElseThrow(() -> new NotFoundException("Organization not found with name : "));
+        if(user.getRole().equals(role)){
+            OrganizationDetail od = organizationDetailRepository.findByUser_UserId(user.getUserId()).orElseThrow(()
+                    -> new NotFoundException("Organization detail not found"));
+            return new LoginLogRes(accessToken,refreshToken.getToken(), user.getUserName(), user.getUserId(),od.getStatus().toString(),od.getId().toString());
+        }
+        return new LoginLogRes(accessToken, refreshToken.getToken(),user.getUserName(),user.getUserId(),null,null);
     }
 }
