@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final JavaMailSender mailSender;
     private final StringRedisTemplate redisTemplate;
     private final RoleRepository roleRepository;
+    private final EmailServiceImpl emailService;
 
     private static final String OTP_PREFIX   = "otp:";
     private static final String TOKEN_PREFIX = "resetToken:";
@@ -235,11 +236,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void banAndUnbanUser(UUID userId, boolean active) {
+    public void banAndUnbanUser(UUID userId, boolean active, String reason) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        String roleName = user.getRole().getRoleName();
+
+        if (!roleName.equals("MEMBER") && !roleName.equals("ORGANIZATION")) {
+            throw new BadRequestException("Can not ban or unban this user!");
+        }
+
         user.setIsBlocked(active);
         userRepository.save(user);
+
+        if (active) {
+            emailService.sendBannedEmail(user.getEmail(), reason);
+        } else {
+            emailService.sendUnbannedEmail(user.getEmail());
+        }
     }
 
     @Override
