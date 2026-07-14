@@ -73,6 +73,9 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         if(organizationDetailReq.getAddress() != null){
             od.setAddress(organizationDetailReq.getAddress());
         }
+        if(organizationDetailReq.getWebsiteUrl() != null){
+            od.setWebsiteUrl(organizationDetailReq.getWebsiteUrl());
+        }
         if(organizationDetailReq.getDescription() != null){
             od.setDescription(organizationDetailReq.getDescription());
         }

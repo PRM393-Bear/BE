@@ -11,17 +11,19 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.PRM.mapper.CategoryMapper;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     @Override
     public List<CategoryRes> getAllCategories() {
         return categoryRepository.findAll().stream()
-                .map(this::mapToRes)
+                .map(categoryMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -29,7 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryRes getCategoryById(UUID id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
-        return mapToRes(category);
+        return categoryMapper.toResponse(category);
     }
 
     @Override
@@ -37,11 +39,8 @@ public class CategoryServiceImpl implements CategoryService {
         if (categoryRepository.existsByName(request.getName())) {
             throw new RuntimeException("Category name already exists");
         }
-        Category category = Category.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .build();
-        return mapToRes(categoryRepository.save(category));
+        Category category = categoryMapper.toEntity(request);
+        return categoryMapper.toResponse(categoryRepository.save(category));
     }
 
     @Override
@@ -52,7 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
 
-        return mapToRes(categoryRepository.save(category));
+        return categoryMapper.toResponse(categoryRepository.save(category));
     }
 
     @Override
@@ -61,13 +60,5 @@ public class CategoryServiceImpl implements CategoryService {
             throw new RuntimeException("Category not found");
         }
         categoryRepository.deleteById(id);
-    }
-
-    private CategoryRes mapToRes(Category category) {
-        return CategoryRes.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .description(category.getDescription())
-                .build();
     }
 }
