@@ -162,8 +162,10 @@ public class UserController {
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/banned")
-    public ResponseEntity<?> bannedAndUnBanned(@RequestParam UUID userId, @RequestParam boolean isBanned){
-        userService.banAndUnbanUser(userId, isBanned);
+    public ResponseEntity<?> bannedAndUnBanned(@RequestParam UUID userId,
+                                               @RequestParam boolean isBanned,
+                                               @RequestParam String reason){
+        userService.banAndUnbanUser(userId, isBanned, reason);
         if (isBanned) {
             return ResponseEntity.ok("Banned user success");
         }
