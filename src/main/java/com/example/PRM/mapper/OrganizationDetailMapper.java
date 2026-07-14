@@ -20,6 +20,7 @@ public class OrganizationDetailMapper {
         res.setLatitude(od.getLatitude());
         res.setLongitude(od.getLongitude());
         res.setAvtOrg(od.getAvtOrg());
+        res.setReason(od.getRejectedReason());
 
         // Field mới từ OrganizationDetail
         res.setId(od.getId());
