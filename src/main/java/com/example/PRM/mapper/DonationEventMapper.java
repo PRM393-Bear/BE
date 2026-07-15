@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class DonationEventMapper {
     public DonationEventRes toResponse(DonationEvent donationEvent){
         DonationEventRes donationEventRes = new DonationEventRes();
+        donationEventRes.setId(donationEvent.getId());
         donationEventRes.setTitle(donationEvent.getTitle());
         donationEventRes.setDescription(donationEvent.getDescription());
         donationEventRes.setAcceptedTypes(donationEvent.getAcceptedTypes());

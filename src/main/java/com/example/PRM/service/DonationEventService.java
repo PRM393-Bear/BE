@@ -15,5 +15,6 @@ public interface DonationEventService {
     public DonationEventLogRes deleteDonationEvent(UUID donationEventId,UserDetails userDetails);
     public List<DonationEventRes> getAllDonationEvents();
     public List<DonationEventRes> getAllByFilter(DonationEventFilterReq donationEventFilterReq);
+    public List<DonationEventRes> getAllByOrgId(UUID orgId);
 
 }

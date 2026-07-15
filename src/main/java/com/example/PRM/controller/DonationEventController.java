@@ -79,6 +79,13 @@ public class DonationEventController {
         return ResponseEntity.ok("Donation event updated successfully");
     }
 
+    @GetMapping("/{orgId}")
+    public ResponseEntity<?> getDonationEvent(
+            @PathVariable UUID orgId
+    ) {
+        return ResponseEntity.ok(donationEventService.getAllByOrgId(orgId));
+    }
+
     @GetMapping
     public ResponseEntity<?> getAllDonationEvents() {
 
