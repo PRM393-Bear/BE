@@ -37,6 +37,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
     private final NotificationAdminServiceImpl notificationAdminService;
     private final UploadServiceImpl uploadService;
     private final WardrobeItemMapper wardrobeItemMapper;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     public DonationRequestServiceImpl(
             DonationRequestRepository donationRequestRepository,
@@ -47,7 +48,8 @@ public class DonationRequestServiceImpl implements DonationRequestService {
             UserRepository userRepository,
             NotificationAdminServiceImpl notificationAdminService,
             UploadServiceImpl uploadService,
-            WardrobeItemMapper wardrobeItemMapper) {
+            WardrobeItemMapper wardrobeItemMapper,
+            org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.donationRequestRepository    = donationRequestRepository;
         this.donationEventRepository      = donationEventRepository;
         this.wardrobeItemRepository       = wardrobeItemRepository;
@@ -57,6 +59,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         this.notificationAdminService     = notificationAdminService;
         this.uploadService                = uploadService;
         this.wardrobeItemMapper           = wardrobeItemMapper;
+        this.eventPublisher               = eventPublisher;
     }
 
     // ─────────────────────────────────────────
@@ -153,6 +156,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setAcceptedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
 
+        eventPublisher.publishEvent(new com.example.PRM.event.DonationNotificationEvent(
+                this,
+                donationRequest.getUser().getUserId(),
+                "Yêu cầu quyên góp được chấp nhận",
+                "Yêu cầu quyên góp của bạn đã được tổ chức chấp nhận."
+        ));
+
         return donationRequest;
     }
 
@@ -175,6 +185,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setRejectedReason(reason);
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        eventPublisher.publishEvent(new com.example.PRM.event.DonationNotificationEvent(
+                this,
+                donationRequest.getUser().getUserId(),
+                "Yêu cầu quyên góp bị từ chối",
+                "Yêu cầu quyên góp của bạn đã bị từ chối. Lý do: " + reason
+        ));
 
         return donationRequest;
     }
@@ -249,6 +266,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setReceiptProofUrl(uploadRes.getUrl());
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+
+        eventPublisher.publishEvent(new com.example.PRM.event.DonationNotificationEvent(
+                this,
+                donationRequest.getUser().getUserId(),
+                "Quyên góp đã được nhận",
+                "Tổ chức đã nhận được món đồ quyên góp của bạn. Cảm ơn bạn rất nhiều!"
+        ));
 
         return donationRequest;
     }
