@@ -156,6 +156,12 @@ public class DonationEventServiceImpl implements DonationEventService {
                 .toList();
     }
 
+    @Override
+    public List<DonationEventRes> getAllByOrgId(UUID orgId) {
+        List<DonationEvent> lists = donationEventRepository.findByOrganizationDetail_Id(orgId);
+        return lists.stream().map(donationEventMapper::toResponse).toList();
+    }
+
     private void validateDistanceFilter(
             DonationEventFilterReq req) {
 
