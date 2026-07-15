@@ -1,5 +1,6 @@
 package com.example.PRM.dto.response.wardrobeItem;
 
+import com.example.PRM.status_enum.WardrobeStatus;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,4 +18,6 @@ public class WardrobeItemRes {
 
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+
+    private WardrobeStatus status;
 }

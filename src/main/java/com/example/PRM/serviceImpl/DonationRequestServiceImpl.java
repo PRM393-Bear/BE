@@ -8,6 +8,7 @@ import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.dto.response.UploadRes;
 import com.example.PRM.dto.response.donationRequest.DonationRequestResponse;
 import com.example.PRM.entity.*;
+import com.example.PRM.event.DonationNotificationEvent;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.DonationRequestMapper;
@@ -282,7 +283,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
 
-        eventPublisher.publishEvent(new com.example.PRM.event.DonationNotificationEvent(
+        eventPublisher.publishEvent(new DonationNotificationEvent(
                 this,
                 donationRequest.getUser().getUserId(),
                 "Quyên góp đã được nhận",
