@@ -1,7 +1,7 @@
 package com.example.PRM.serviceImpl;
 
 import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
-import com.example.PRM.dto.response.OrganizationDetailRes;
+import com.example.PRM.dto.response.org.OrganizationDetailRes;
 import com.example.PRM.entity.OrganizationDetail;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
@@ -190,5 +190,14 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         return nearbyOrgs.stream()
                 .map(organizationDetailMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    public OrganizationDetailRes getOrganizationDetailByUserId(UserDetails userDetails) {
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
+        OrganizationDetail od = organizationDetailRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new NotFoundException("Organization detail not found for user: " + user.getUserName()));
+        return organizationDetailMapper.toResponse(od);
     }
 }

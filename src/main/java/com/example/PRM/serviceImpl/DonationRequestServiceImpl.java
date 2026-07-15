@@ -425,4 +425,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         }
         return donationRequest.stream().map(donationRequestMapper::toResponse).toList();
     }
+
+    @Override
+    public List<DonationRequestResponse> getAllDonationRequestsFromUser(UserDetails userDetails) {
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        List<DonationRequest> lists = donationRequestRepository.findByUser_UserId(user.getUserId());
+        return lists.stream().map(donationRequestMapper::toResponse).toList();
+    }
+
 }

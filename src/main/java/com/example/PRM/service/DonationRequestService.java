@@ -39,4 +39,7 @@ public interface DonationRequestService {
     List<DonationPendingResponse> getPendingDonations(UserDetails userDetails);
 
     List<DonationRequestResponse> getAllDonationRequestsFromOrganizationId(UUID organizationId);
+
+    List<DonationRequestResponse> getAllDonationRequestsFromUser(UserDetails userDetails);
+
 }
