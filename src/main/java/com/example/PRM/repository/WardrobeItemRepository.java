@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface WardrobeItemRepository extends JpaRepository<WardrobeItem, Long> {
+public interface WardrobeItemRepository extends JpaRepository<WardrobeItem, UUID> {
     Optional<WardrobeItem> findById(UUID wardrobeItemId);
     Optional<WardrobeItem> findByName(String name);
 }
