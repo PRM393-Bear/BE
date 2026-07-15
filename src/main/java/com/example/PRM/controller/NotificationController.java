@@ -4,6 +4,8 @@ import com.example.PRM.entity.Notification;
 import com.example.PRM.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,9 +18,9 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Notification>> getNotifications(@PathVariable UUID userId) {
-        return ResponseEntity.ok(notificationService.getUserNotifications(userId));
+    @GetMapping("/my-notifications")
+    public ResponseEntity<List<Notification>> getMyNotifications(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(notificationService.getMyNotifications(userDetails));
     }
 
     @PutMapping("/{id}/read")

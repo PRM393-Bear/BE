@@ -42,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final NotificationService notificationService;
     private final OrderMapper orderMapper;
     private final AuditLogServiceImpl auditLogService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -77,12 +78,12 @@ public class OrderServiceImpl implements OrderService {
         String title = "Đơn hàng mới!";
         String message = "Bạn vừa nhận được một đơn đặt hàng mới từ người dùng " + buyer.getFullName() + ".";
 
-        notificationService.sendNotification(
+        eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                this,
                 order.getSeller().getUserId(),
                 title,
-                message,
-                "ORDER"
-        );
+                message
+        ));
 
         return orderRepository.save(order);
     }
@@ -100,12 +101,12 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.PROCESSING);
 
-        notificationService.sendNotification(
+        eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                this,
                 order.getBuyer().getUserId(),
                 "Đơn hàng đã được xác nhận",
-                "Người bán đã xác nhận đơn hàng của bạn.",
-                "ORDER"
-        );
+                "Người bán đã xác nhận đơn hàng của bạn."
+        ));
 
         return orderRepository.save(order);
     }
@@ -126,12 +127,12 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(OrderStatus.SHIPPING);
             order.setTrackingCode(trackingCode);
 
-            notificationService.sendNotification(
+            eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                    this,
                     order.getBuyer().getUserId(),
                     "Đơn hàng đang được giao",
-                    "Đơn hàng của bạn đang được giao với mã vận đơn: " + trackingCode,
-                    "ORDER"
-            );
+                    "Đơn hàng của bạn đang được giao với mã vận đơn: " + trackingCode
+            ));
 
             return orderRepository.save(order);
         } else {
@@ -164,6 +165,13 @@ public class OrderServiceImpl implements OrderService {
             for(OrderItem item : order.getOrderItems()) {
                 wardrobeItemService.createWardrobeItem(userDetails, item.getProduct().getId());
             }
+
+            eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                    this,
+                    order.getSeller().getUserId(),
+                    "Đơn hàng đã được nhận",
+                    "Người mua đã xác nhận nhận được đơn hàng của bạn."
+            ));
 
         } else  {
             throw new BadRequestException("The order is not in the SHIPPING status.");
@@ -235,6 +243,20 @@ public class OrderServiceImpl implements OrderService {
                 wardrobeItemService.createWardrobeItem(mockUserDetails, item.getProduct().getId());
             }
             orderRepository.save(order);
+
+            eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                    this,
+                    order.getBuyer().getUserId(),
+                    "Đơn hàng hoàn tất",
+                    "Đơn hàng của bạn đã được hệ thống tự động hoàn tất do quá hạn."
+            ));
+
+            eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+                    this,
+                    order.getSeller().getUserId(),
+                    "Đơn hàng hoàn tất",
+                    "Đơn hàng của bạn đã được hệ thống tự động hoàn tất."
+            ));
         }
 
     }
