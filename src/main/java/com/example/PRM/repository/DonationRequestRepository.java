@@ -29,5 +29,6 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
     );
     List<DonationRequest> findByOrganizationDetail_Id(UUID organizationId);
     List<DonationRequest> findByUser_UserId(UUID userId);
+    List<DonationRequest> findByStatusAndUpdatedAtBefore(DonationStatus status, LocalDateTime updatedBefore);
 
 }

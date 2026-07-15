@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +19,6 @@ public class WardrobeItemRes {
 
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+
+    private UUID itemId;
 }

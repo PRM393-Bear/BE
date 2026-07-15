@@ -78,4 +78,6 @@ public class DonationRequest {
 
     private LocalDateTime completedAt;
 
+    private LocalDateTime ReminderSentAt;
+
 }
