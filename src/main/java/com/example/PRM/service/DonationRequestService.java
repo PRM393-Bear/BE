@@ -5,6 +5,7 @@ import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
 import com.example.PRM.dto.request.donationRequest.ReceivedReq;
 import com.example.PRM.dto.request.donationRequest.ShippingReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
+import com.example.PRM.dto.response.donationRequest.DonationRequestResponse;
 import com.example.PRM.entity.DonationRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -36,4 +37,6 @@ public interface DonationRequestService {
     DonationRequest assignOrganization(UUID donationRequestId, UUID organizationId);
 
     List<DonationPendingResponse> getPendingDonations(UserDetails userDetails);
+
+    List<DonationRequestResponse> getAllDonationRequestsFromOrganizationId(UUID organizationId);
 }
