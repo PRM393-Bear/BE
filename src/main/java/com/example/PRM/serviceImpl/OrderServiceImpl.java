@@ -6,6 +6,7 @@ import com.example.PRM.entity.Order;
 import com.example.PRM.entity.OrderItem;
 import com.example.PRM.entity.Product;
 import com.example.PRM.entity.User;
+import com.example.PRM.event.OrderNotificationEvent;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.ForbiddenException;
 import com.example.PRM.exception.NotFoundException;
@@ -101,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.PROCESSING);
 
-        eventPublisher.publishEvent(new com.example.PRM.event.OrderNotificationEvent(
+        eventPublisher.publishEvent(new OrderNotificationEvent(
                 this,
                 order.getBuyer().getUserId(),
                 "Đơn hàng đã được xác nhận",
