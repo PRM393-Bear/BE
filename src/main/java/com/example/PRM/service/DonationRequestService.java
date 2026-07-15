@@ -42,4 +42,6 @@ public interface DonationRequestService {
 
     List<DonationRequestResponse> getAllDonationRequestsFromUser(UserDetails userDetails);
 
+    void autoCheckReceivedDonations();
+
 }
