@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface OrganizationDetailRepository extends JpaRepository<OrganizationDetail,Long> {
+public interface OrganizationDetailRepository extends JpaRepository<OrganizationDetail,UUID> {
     Optional<OrganizationDetail> findById(UUID organizationDetailId);
     Optional<OrganizationDetail> findByOrOrgName(String orgName);
 
