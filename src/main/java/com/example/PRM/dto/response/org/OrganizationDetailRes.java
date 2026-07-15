@@ -1,7 +1,6 @@
-package com.example.PRM.dto.response;
+package com.example.PRM.dto.response.org;
 
 import com.example.PRM.status_enum.VerificationOrganizationStatus;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

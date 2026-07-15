@@ -274,4 +274,9 @@ public class DonationRequestController {
     public ResponseEntity<?> getDonations(@PathVariable UUID orgId) {
         return ResponseEntity.ok(donationRequestService.getAllDonationRequestsFromOrganizationId(orgId));
     }
+
+    @GetMapping("/my-member")
+    public ResponseEntity<?> getMember(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(donationRequestService.getAllDonationRequestsFromUser(userDetails));
+    }
 }
