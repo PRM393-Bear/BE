@@ -35,6 +35,9 @@ public class CommunityPost {
 
     private OffsetDateTime createdAt;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isHidden;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = OffsetDateTime.now();
