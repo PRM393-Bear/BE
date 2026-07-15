@@ -12,6 +12,7 @@ import com.example.PRM.mapper.DonationEventMapper;
 import com.example.PRM.repository.DonationEventRepository;
 import com.example.PRM.repository.OrganizationDetailRepository;
 import com.example.PRM.service.DonationEventService;
+import com.example.PRM.status_enum.EventStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -161,6 +162,58 @@ public class DonationEventServiceImpl implements DonationEventService {
         List<DonationEvent> lists = donationEventRepository.findByOrganizationDetail_Id(orgId);
         return lists.stream().map(donationEventMapper::toResponse).toList();
     }
+
+    @Override
+    public DonationEventLogRes cancelDonationEvent(UUID donationEventId, UserDetails userDetails) {
+        DonationEvent event = donationEventRepository.findById(donationEventId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Không tìm thấy donation event với id: " + donationEventId));
+
+        if (event.getStatus() == EventStatus.COMPLETED || event.getStatus() == EventStatus.CANCELLED) {
+            throw new IllegalStateException(
+                    "Không thể hủy sự kiện đang ở trạng thái " + event.getStatus());
+        }
+
+        event.setStatus(EventStatus.CANCELLED);
+        donationEventRepository.save(event);
+
+        return donationEventMapper.toResponseLog(event);
+    }
+
+    @Override
+    public DonationEventLogRes completeDonationEvent(UUID donationEventId, UserDetails userDetails) {
+        DonationEvent event = donationEventRepository.findById(donationEventId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Không tìm thấy donation event với id: " + donationEventId));
+
+        if (event.getStatus() != EventStatus.ONGOING) {
+            throw new IllegalStateException(
+                    "Chỉ có thể hoàn thành sự kiện đang ONGOING, hiện tại: " + event.getStatus());
+        }
+
+        event.setStatus(EventStatus.COMPLETED);
+        donationEventRepository.save(event);
+
+        return donationEventMapper.toResponseLog(event);
+    }
+
+    @Override
+    public DonationEventLogRes ongoingDonationEvent(UUID donationEventId, UserDetails userDetails) {
+        DonationEvent event = donationEventRepository.findById(donationEventId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Không tìm thấy donation event với id: " + donationEventId));
+
+        if (event.getStatus() != EventStatus.UPCOMING) {
+            throw new IllegalStateException(
+                    "Chỉ có thể bắt đầu sự kiện đang UPCOMING, hiện tại: " + event.getStatus());
+        }
+
+        event.setStatus(EventStatus.ONGOING);
+        donationEventRepository.save(event);
+
+        return donationEventMapper.toResponseLog(event);
+    }
+
 
     private void validateDistanceFilter(
             DonationEventFilterReq req) {

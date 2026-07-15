@@ -124,4 +124,63 @@ public class DonationEventController {
         );
         return ResponseEntity.ok("Donation event deleted successfully");
     }
+    @PatchMapping("/{donationEventId}/cancel")
+    public ResponseEntity<?> cancelDonationEvent(
+            @PathVariable UUID donationEventId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
+
+        DonationEventLogRes res = donationEventService.cancelDonationEvent(donationEventId, userDetails);
+        auditLogService.log(
+                "CANCEL_DONATION_EVENT",
+                "DonationEvent",
+                donationEventId.toString(),
+                "Organization cancelled donation event: " + res.getDonationEventName(),
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
+        return ResponseEntity.ok(res);
+    }
+
+    @PatchMapping("/{donationEventId}/complete")
+    public ResponseEntity<?> completeDonationEvent(
+            @PathVariable UUID donationEventId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
+
+        DonationEventLogRes res = donationEventService.completeDonationEvent(donationEventId, userDetails);
+        auditLogService.log(
+                "COMPLETE_DONATION_EVENT",
+                "DonationEvent",
+                donationEventId.toString(),
+                "Organization completed donation event: " + res.getDonationEventName(),
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
+        return ResponseEntity.ok(res);
+    }
+
+    @PatchMapping("/{donationEventId}/ongoing")
+    public ResponseEntity<?> ongoingDonationEvent(
+            @PathVariable UUID donationEventId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request) {
+
+        DonationEventLogRes res = donationEventService.ongoingDonationEvent(donationEventId, userDetails);
+        auditLogService.log(
+                "ONGOING_DONATION_EVENT",
+                "DonationEvent",
+                donationEventId.toString(),
+                "Organization started donation event: " + res.getDonationEventName(),
+                "SUCCESS",
+                res.getUserId(),
+                res.getUsername(),
+                request
+        );
+        return ResponseEntity.ok(res);
+    }
 }
