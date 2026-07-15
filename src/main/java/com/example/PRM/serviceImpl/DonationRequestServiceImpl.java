@@ -287,6 +287,11 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
+        DonationEvent de = donationRequest.getDonationEvent();
+        Integer current = de.getCurrentQuantity();
+        de.setCurrentQuantity(current + donationRequest.getItems().size());
+        donationEventRepository.save(de);
+
         switch (donationRequest.getStatus()) {
             case RECEIVED -> {
                 donationRequest.setStatus(DonationStatus.COMPLETED);
