@@ -6,6 +6,7 @@ import com.example.PRM.dto.request.donationRequest.ReceivedReq;
 import com.example.PRM.dto.request.donationRequest.ShippingReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.dto.response.UploadRes;
+import com.example.PRM.dto.response.donationRequest.DonationRequestResponse;
 import com.example.PRM.entity.*;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
@@ -371,5 +372,14 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         }
 
         return lists.stream().map(donationRequestMapper::toPendingResponse).toList();
+    }
+
+    @Override
+    public List<DonationRequestResponse> getAllDonationRequestsFromOrganizationId(UUID organizationId) {
+        List<DonationRequest> donationRequest = donationRequestRepository.findByOrganizationDetail_Id(organizationId);
+        if (donationRequest.isEmpty()) {
+            throw new NotFoundException("No donation requests found for the organization");
+        }
+        return donationRequest.stream().map(donationRequestMapper::toResponse).toList();
     }
 }

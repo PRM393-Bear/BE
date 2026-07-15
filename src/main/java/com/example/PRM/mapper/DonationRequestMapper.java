@@ -3,6 +3,7 @@ package com.example.PRM.mapper;
 import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
 import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
 import com.example.PRM.dto.response.DonationPendingResponse;
+import com.example.PRM.dto.response.donationRequest.DonationRequestResponse;
 import com.example.PRM.entity.DonationRequest;
 import com.example.PRM.status_enum.DonationStatus;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,24 @@ public class DonationRequestMapper {
         donationPendingResponse.setDescription(donationRequest.getDescription());
         donationPendingResponse.setId(donationRequest.getId());
         donationPendingResponse.setUsername(donationRequest.getUser().getUserName());
+        if(donationRequest.getDonationEvent() != null) {
+            donationPendingResponse.setEventName(donationRequest.getDonationEvent().getTitle());
+        }else {
+            donationPendingResponse.setEventName(null);
+        }
+        donationPendingResponse.setOrganizationName(donationRequest.getOrganizationDetail().getOrgName());
+        return donationPendingResponse;
+    }
+
+    public DonationRequestResponse toResponse(DonationRequest donationRequest){
+        DonationRequestResponse donationPendingResponse = new DonationRequestResponse();
+        donationPendingResponse.setTrackingCode(donationRequest.getTrackingCode());
+        donationPendingResponse.setCreatedAt(donationRequest.getCreatedAt());
+        donationPendingResponse.setDescription(donationRequest.getDescription());
+        donationPendingResponse.setId(donationRequest.getId());
+        donationPendingResponse.setUsername(donationRequest.getUser().getUserName());
+        donationPendingResponse.setStatus(donationRequest.getStatus());
+        donationPendingResponse.setImages(donationRequest.getImages());
         if(donationRequest.getDonationEvent() != null) {
             donationPendingResponse.setEventName(donationRequest.getDonationEvent().getTitle());
         }else {

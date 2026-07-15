@@ -269,4 +269,9 @@ public class DonationRequestController {
         List<DonationPendingResponse> lists = donationRequestService.getPendingDonations(userDetails);
         return ResponseEntity.ok(lists);
     }
+
+    @GetMapping("/my-organization/{orgId}")
+    public ResponseEntity<?> getDonations(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(donationRequestService.getAllDonationRequestsFromOrganizationId(orgId));
+    }
 }

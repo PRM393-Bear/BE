@@ -27,5 +27,6 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
             DonationStatus status,
             LocalDateTime deadline
     );
+    List<DonationRequest> findByOrganizationDetail_Id(UUID organizationId);
 
 }
