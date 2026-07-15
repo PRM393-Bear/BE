@@ -22,6 +22,10 @@ public class DonationEventMapper {
         donationEventRes.setBannerUrl(donationEvent.getBannerUrl());
         donationEventRes.setStatus(donationEvent.getStatus());
         donationEventRes.setTargetQuantity(donationEvent.getTargetQuantity());
+        donationEventRes.setOrganizationDetailId(donationEvent.getOrganizationDetail().getId());
+        donationEventRes.setOrgName(donationEvent.getOrganizationDetail().getOrgName());
+        donationEventRes.setAvtOrg(donationEvent.getOrganizationDetail().getAvtOrg());
+        donationEventRes.setCurrentQuantity(donationEvent.getCurrentQuantity());
         return donationEventRes;
     }
 
