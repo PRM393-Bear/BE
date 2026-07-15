@@ -51,4 +51,9 @@ public class DonationEventRes {
 
     @Column(columnDefinition = "TEXT")
     private String bannerUrl;
+
+    private UUID organizationDetailId;
+    private String orgName;
+    private String avtOrg;
+    private Integer currentQuantity;
 }

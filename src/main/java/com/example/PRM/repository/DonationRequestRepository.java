@@ -28,5 +28,6 @@ public interface DonationRequestRepository extends JpaRepository<DonationRequest
             LocalDateTime deadline
     );
     List<DonationRequest> findByOrganizationDetail_Id(UUID organizationId);
+    List<DonationRequest> findByUser_UserId(UUID userId);
 
 }

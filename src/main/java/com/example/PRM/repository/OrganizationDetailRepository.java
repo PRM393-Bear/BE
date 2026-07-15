@@ -13,11 +13,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface OrganizationDetailRepository extends JpaRepository<OrganizationDetail,Long> {
+public interface OrganizationDetailRepository extends JpaRepository<OrganizationDetail,UUID> {
     Optional<OrganizationDetail> findById(UUID organizationDetailId);
     Optional<OrganizationDetail> findByOrOrgName(String orgName);
-
-    Optional<OrganizationDetail> findByUser_UserId(UUID userUserId);
+    Optional<OrganizationDetail> findByUser_UserId(UUID UserId);
 
     List<OrganizationDetail> findByStatus(VerificationOrganizationStatus status);
     @Query(value = "SELECT * FROM organization_detail o WHERE " +

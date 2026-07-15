@@ -1,8 +1,7 @@
 package com.example.PRM.service;
 
 import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
-import com.example.PRM.dto.response.OrganizationDetailRes;
-import com.example.PRM.entity.User;
+import com.example.PRM.dto.response.org.OrganizationDetailRes;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.math.BigDecimal;
 
@@ -19,4 +18,5 @@ public interface OrganizationDetailService {
     OrganizationDetailRes approveOrganization(UUID organizationId, UserDetails userDetails);
     OrganizationDetailRes rejectOrganization(UUID organizationId, UserDetails userDetails, String reason);
     List<OrganizationDetailRes> getNearbyOrganizations(BigDecimal latitude, BigDecimal longitude, double radius);
+    OrganizationDetailRes getOrganizationDetailByUserId(UserDetails userDetails);
 }

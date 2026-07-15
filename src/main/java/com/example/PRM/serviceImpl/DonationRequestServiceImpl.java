@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -68,6 +70,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
     // ─────────────────────────────────────────
 
     @Override
+    @Transactional
     public DonationRequest createDonationRequest(DonationRequestReq donationRequestReq,
                                                  UserDetails userDetails) {
         DonationRequest donationRequest = donationRequestMapper.toEntity(donationRequestReq);
@@ -78,23 +81,34 @@ public class DonationRequestServiceImpl implements DonationRequestService {
                         "Donation event not found with id: " + donationRequestReq.getDonationEventId()));
         donationRequest.setDonationEvent(de);
 
-        WardrobeItem wi = wardrobeItemRepository.findById(donationRequestReq.getWardrobeItemId())
-                .orElseThrow(() -> new NotFoundException(
-                        "Wardrobe item not found with id: " + donationRequestReq.getWardrobeItemId()));
-
-        if (wi.getStatus() != WardrobeStatus.OWNED) {
-            throw new BadRequestException("Wardrobe item is not owned by the user");
-        }
-        if (!wi.getUser().getUserName().equals(userDetails.getUsername())) {
-            throw new BadRequestException("User is not the owner of the wardrobe item");
+        List<UUID> ids = donationRequestReq.getWardrobeItemIds();
+        if (ids == null || ids.isEmpty()) {
+            throw new BadRequestException("Danh sách wardrobe item không được rỗng");
         }
 
-        donationRequest.setUser(wi.getUser());
-        wi.setStatus(WardrobeStatus.LISTED);
-        donationRequest.getItems().add(wi);
+        List<WardrobeItem> items = wardrobeItemRepository.findAllById(ids);
+        if (items.size() != ids.size()) {
+            Set<UUID> foundIds = items.stream().map(WardrobeItem::getId).collect(Collectors.toSet());
+            List<UUID> missingIds = ids.stream().filter(id -> !foundIds.contains(id)).toList();
+            throw new NotFoundException("Không tìm thấy wardrobe item: " + missingIds);
+        }
+
+        for (WardrobeItem item : items) {
+            if (item.getStatus() != WardrobeStatus.OWNED) {
+                throw new BadRequestException("Wardrobe item " + item.getId() + " is not owned by the user");
+            }
+            if (!item.getUser().getUserName().equals(userDetails.getUsername())) {
+                throw new BadRequestException("User is not the owner of wardrobe item " + item.getId());
+            }
+            donationRequest.getItems().add(item);
+            item.setDonationRequest(donationRequest);
+            item.setStatus(WardrobeStatus.LISTED);
+        }
+
+        donationRequest.setUser(items.get(0).getUser());
         donationRequest.setOrganizationDetail(de.getOrganizationDetail());
         donationRequest.setCreatedAt(LocalDateTime.now());
-        donationRequestRepository.save(donationRequest);
+        donationRequestRepository.save(donationRequest); // cascade lo cả items
 
         return donationRequest;
     }
@@ -287,6 +301,11 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         DonationRequest donationRequest = donationRequestRepository.findById(donationRequestId)
                 .orElseThrow(() -> new NotFoundException("Donation request not found"));
 
+        DonationEvent de = donationRequest.getDonationEvent();
+        Integer current = de.getCurrentQuantity();
+        de.setCurrentQuantity(current + donationRequest.getItems().size());
+        donationEventRepository.save(de);
+
         switch (donationRequest.getStatus()) {
             case RECEIVED -> {
                 donationRequest.setStatus(DonationStatus.COMPLETED);
@@ -406,4 +425,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         }
         return donationRequest.stream().map(donationRequestMapper::toResponse).toList();
     }
+
+    @Override
+    public List<DonationRequestResponse> getAllDonationRequestsFromUser(UserDetails userDetails) {
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        List<DonationRequest> lists = donationRequestRepository.findByUser_UserId(user.getUserId());
+        return lists.stream().map(donationRequestMapper::toResponse).toList();
+    }
+
 }

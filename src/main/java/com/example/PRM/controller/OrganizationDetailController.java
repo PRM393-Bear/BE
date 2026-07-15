@@ -1,7 +1,7 @@
 package com.example.PRM.controller;
 
 import com.example.PRM.dto.request.organizationDetail.OrganizationDetailReq;
-import com.example.PRM.dto.response.OrganizationDetailRes;
+import com.example.PRM.dto.response.org.OrganizationDetailRes;
 import com.example.PRM.service.AuditLogService;
 import com.example.PRM.service.OrganizationDetailService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -164,5 +164,9 @@ public class OrganizationDetailController {
 
         List<OrganizationDetailRes> response = organizationDetailService.getNearbyOrganizations(latitude, longitude, radius);
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("/my-profile/")
+    public ResponseEntity<?> getMyOrganizationDetail(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(organizationDetailService.getOrganizationDetailByUserId(userDetails));
     }
 }
