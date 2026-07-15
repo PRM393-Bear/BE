@@ -30,6 +30,10 @@ public class PostComment {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private PostComment parentComment;
+
     private OffsetDateTime createdAt;
 
     @PrePersist

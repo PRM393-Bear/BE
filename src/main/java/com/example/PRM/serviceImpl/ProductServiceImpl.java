@@ -35,6 +35,7 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final AuditLogServiceImpl auditLogService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     public ProductRes getProductById(UUID id) {
@@ -45,7 +46,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductRes> getAllProducts() {
-        return productRepository.findAll()
+        return productRepository.findByStatus(ProductStatus.AVAILABLE)
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
@@ -235,7 +236,12 @@ public class ProductServiceImpl implements ProductService {
         product.setRejectReason(null);
         Product saved = productRepository.save(product);
 
-        // Send notification
+        eventPublisher.publishEvent(new com.example.PRM.event.ProductNotificationEvent(
+                this,
+                product.getSeller().getUserId(),
+                "Sản phẩm đã được duyệt",
+                "Sản phẩm '" + product.getTitle() + "' của bạn đã được quản trị viên duyệt và hiện đang hiển thị trên sàn."
+        ));
 
         productMapper.toResponse(saved);
     }
@@ -253,7 +259,12 @@ public class ProductServiceImpl implements ProductService {
         product.setRejectReason(rejectReason);
         Product saved = productRepository.save(product);
 
-        // Send notification
+        eventPublisher.publishEvent(new com.example.PRM.event.ProductNotificationEvent(
+                this,
+                product.getSeller().getUserId(),
+                "Sản phẩm bị từ chối",
+                "Sản phẩm '" + product.getTitle() + "' của bạn đã bị từ chối duyệt. Lý do: " + rejectReason
+        ));
 
         productMapper.toResponse(saved);
     }
