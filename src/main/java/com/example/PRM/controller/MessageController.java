@@ -27,6 +27,7 @@ public class MessageController {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     // FE sẽ push tin nhắn vào /app/chat.send
     @MessageMapping("/chat.send")
@@ -76,6 +77,14 @@ public class MessageController {
         // 4. Bắn luồng WebSocket thời gian thực tới CẢ 2 người bằng UserName (vì Spring STOMP nhận diện User qua Principal Name)
         messagingTemplate.convertAndSendToUser(sender.getUserName(), "/queue/messages", res);
         messagingTemplate.convertAndSendToUser(receiver.getUserName(), "/queue/messages", res);
+
+        // 5. Bắn luồng thông báo WebSocket (không lưu DB)
+        eventPublisher.publishEvent(new com.example.PRM.event.ChatNotificationEvent(
+                this,
+                receiver.getUserId(),
+                "Tin nhắn mới",
+                "Bạn có tin nhắn mới từ " + sender.getFullName()
+        ));
     }
 
     // FE sẽ push tín hiệu đã đọc vào /app/chat.read
