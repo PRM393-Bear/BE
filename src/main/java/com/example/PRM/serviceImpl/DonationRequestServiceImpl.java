@@ -271,7 +271,7 @@ public class DonationRequestServiceImpl implements DonationRequestService {
             throw new BadRequestException("User is not the owner of the donation request");
         }
 
-        if (donationRequest.getStatus() != DonationStatus.SHIPPED) {
+        if (donationRequest.getStatus() != DonationStatus.SHIPPED && donationRequest.getStatus() != DonationStatus.SHIPPING) {
             throw new BadRequestException("Only shipped donation can be marked as received");
         }
 
@@ -433,6 +433,32 @@ public class DonationRequestServiceImpl implements DonationRequestService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
         List<DonationRequest> lists = donationRequestRepository.findByUser_UserId(user.getUserId());
         return lists.stream().map(donationRequestMapper::toResponse).toList();
+    }
+
+    @Override
+    @Scheduled(cron = "0 00 12 * * *")
+    public void autoCheckReceivedDonations() {
+        System.out.println("=== SCHEDULE AUTO RUNNING ===");
+        List<DonationRequest> lists = donationRequestRepository
+                .findByStatusAndUpdatedAtBefore(DonationStatus.SHIPPING, LocalDateTime.now().minusDays(10));
+
+        for (DonationRequest dr : lists) {
+            // chỉ gửi nếu chưa từng nhắc, hoặc đã nhắc quá lâu rồi (ví dụ 3 ngày trước)
+            if (dr.getReminderSentAt() == null
+                    || dr.getReminderSentAt().isBefore(LocalDateTime.now().minusDays(3))) {
+
+                eventPublisher.publishEvent(new com.example.PRM.event.DonationNotificationEvent(
+                        this,
+                        dr.getUser().getUserId(),
+                        "Yêu cầu quyên góp đang được xử lý",
+                        "Yêu cầu quyên góp của bạn đang được giải quyết do lượng quyên góp hiện tại khá nhiều. Cảm ơn bạn đã kiên nhẫn chờ đợi!"
+                ));
+                System.out.println("Notification successfully sent for donation request: " + dr.getId());
+
+                dr.setReminderSentAt(LocalDateTime.now());
+                donationRequestRepository.save(dr);
+            }
+        }
     }
 
 }

@@ -26,6 +26,7 @@ public class OrganizationDetailController {
     private final AuditLogService auditLogService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ORGANIZATION')")
     public ResponseEntity<String> createOrganizationDetail(
             @RequestBody OrganizationDetailReq request,
             @AuthenticationPrincipal UserDetails userDetails,
