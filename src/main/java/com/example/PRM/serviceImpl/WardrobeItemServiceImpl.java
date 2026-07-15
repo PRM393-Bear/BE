@@ -59,7 +59,9 @@ public class WardrobeItemServiceImpl implements WardrobeItemService {
 
     @Override
     public List<WardrobeItemRes> getWardrobeItems(UserDetails userDetails) {
-        return wardrobeItemRepository.findAll()
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new NotFoundException("User not found with userName: " + userDetails.getUsername()));
+        return wardrobeItemRepository.findByUser_UserId(user.getUserId())
                 .stream()
                 .map(wardrobeItemMapper::toResponse)
                 .toList();
