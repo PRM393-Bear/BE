@@ -67,9 +67,12 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     }
 
     @Override
-    public OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq) {
+    public OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq, UserDetails userDetails) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationDetailId).orElseThrow(()
                 -> new NotFoundException("Organization detail not found with id: " + organizationDetailId));
+        if(!od.getUser().getUserName().equals(userDetails.getUsername())){
+            throw new ForbiddenException("You are not authorized to update this organization detail");
+        }
         if(organizationDetailReq.getOrgName() != null){
             od.setOrgName(organizationDetailReq.getOrgName());
         }
@@ -87,6 +90,15 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         }
         if(organizationDetailReq.getLongitude() != null && organizationDetailReq.getLongitude().compareTo(BigDecimal.ZERO) > 0){
             od.setLongitude(organizationDetailReq.getLongitude());
+        }
+        if(organizationDetailReq.getVerificationDocs() != null && !organizationDetailReq.getVerificationDocs().isEmpty()){
+            od.setVerificationDocs(organizationDetailReq.getVerificationDocs());
+        }
+        if(organizationDetailReq.getAvtOrg() != null){
+            od.setAvtOrg(organizationDetailReq.getAvtOrg());
+        }
+        if(organizationDetailReq.getAcceptedTypes() != null && !organizationDetailReq.getAcceptedTypes().isEmpty()){
+            od.setAcceptedTypes(organizationDetailReq.getAcceptedTypes());
         }
         organizationDetailRepository.save(od);
 

@@ -56,7 +56,7 @@ public class OrganizationDetailController {
             @AuthenticationPrincipal UserDetails userDetails,
             HttpServletRequest httpRequest) {
 
-        OrganizationDetailRes res = organizationDetailService.updateOrganizationDetail(id, request);
+        OrganizationDetailRes res = organizationDetailService.updateOrganizationDetail(id, request, userDetails);
 
         auditLogService.log("UPDATE_ORGANIZATION_DETAIL_SUCCESS",
                 "ORGANIZATION_DETAIL",

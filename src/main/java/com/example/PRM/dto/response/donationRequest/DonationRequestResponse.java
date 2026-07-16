@@ -1,6 +1,7 @@
 package com.example.PRM.dto.response.donationRequest;
 
 import com.example.PRM.status_enum.DonationStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,9 @@ public class DonationRequestResponse {
 
     private List<String> images = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
     private DonationStatus status;
+
+    private String shippingProofUrl;
+
+    private String receiptProofUrl;
 }
