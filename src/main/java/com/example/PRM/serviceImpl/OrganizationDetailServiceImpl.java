@@ -67,9 +67,12 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
     }
 
     @Override
-    public OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq) {
+    public OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq, UserDetails userDetails) {
         OrganizationDetail od = organizationDetailRepository.findById(organizationDetailId).orElseThrow(()
                 -> new NotFoundException("Organization detail not found with id: " + organizationDetailId));
+        if(!od.getUser().getUserName().equals(userDetails.getUsername())){
+            throw new ForbiddenException("You are not authorized to update this organization detail");
+        }
         if(organizationDetailReq.getOrgName() != null){
             od.setOrgName(organizationDetailReq.getOrgName());
         }

@@ -24,5 +24,4 @@ public class WardrobeItemRes {
     private WardrobeStatus status;
     private UUID itemId;
 
-    private WardrobeStatus status;
 }

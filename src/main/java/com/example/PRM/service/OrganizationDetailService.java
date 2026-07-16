@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface OrganizationDetailService {
     OrganizationDetailRes createOrganizationDetail(OrganizationDetailReq organizationDetailReq, UserDetails userDetails);
-    OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq);
+    OrganizationDetailRes updateOrganizationDetail(UUID organizationDetailId, OrganizationDetailReq organizationDetailReq, UserDetails userDetails);
     OrganizationDetailRes deleteOrganizationDetail(UUID organizationId, UserDetails userDetails);
     OrganizationDetailRes getOrganizationDetail(UUID organizationId);
     List<OrganizationDetailRes> getAllOrganizations();
