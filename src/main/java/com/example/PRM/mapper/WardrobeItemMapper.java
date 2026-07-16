@@ -20,6 +20,7 @@ public class WardrobeItemMapper {
         wardrobeItemRes.setName(wardrobeItem.getName());
         wardrobeItemRes.setImageUrl(wardrobeItem.getImageUrl());
         wardrobeItemRes.setItemId(wardrobeItem.getId());
+        wardrobeItemRes.setStatus(wardrobeItem.getStatus());
         return wardrobeItemRes;
     }
 
