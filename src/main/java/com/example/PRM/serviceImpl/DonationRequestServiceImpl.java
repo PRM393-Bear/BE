@@ -282,6 +282,13 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         donationRequest.setReceiptProofUrl(uploadRes.getUrl());
         donationRequest.setUpdatedAt(LocalDateTime.now());
         donationRequestRepository.save(donationRequest);
+        DonationEvent de = donationRequest.getDonationEvent();
+        de.setCurrentQuantity(de.getCurrentQuantity() + donationRequest.getItems().size());
+        donationEventRepository.save(de);
+        for (WardrobeItem item : donationRequest.getItems()) {
+            item.setStatus(WardrobeStatus.DONATED);
+            wardrobeItemRepository.save(item);
+        }
 
         eventPublisher.publishEvent(new DonationNotificationEvent(
                 this,
