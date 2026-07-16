@@ -66,7 +66,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             restTemplate.postForEntity(auditServiceBaseUrl + "/api/audit-logs", httpEntity, Void.class);
 
         } catch (Exception e) {
-            log.error("Failed to send audit log to audit-service", e);
+            log.error("Failed to send audit log to audit-service: {}", e.getMessage());
         }
     }
 
