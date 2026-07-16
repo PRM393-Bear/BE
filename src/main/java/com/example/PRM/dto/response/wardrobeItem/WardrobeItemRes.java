@@ -21,6 +21,7 @@ public class WardrobeItemRes {
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
+    private WardrobeStatus status;
     private UUID itemId;
 
     private WardrobeStatus status;
