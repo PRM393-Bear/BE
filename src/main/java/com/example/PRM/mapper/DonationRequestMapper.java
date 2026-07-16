@@ -55,6 +55,8 @@ public class DonationRequestMapper {
         donationPendingResponse.setUsername(donationRequest.getUser().getUserName());
         donationPendingResponse.setStatus(donationRequest.getStatus());
         donationPendingResponse.setImages(donationRequest.getImages());
+        donationPendingResponse.setReceiptProofUrl(donationRequest.getReceiptProofUrl() != null ? donationRequest.getReceiptProofUrl() : "");
+        donationPendingResponse.setShippingProofUrl(donationRequest.getShippingProofUrl() != null ? donationRequest.getShippingProofUrl() : "");
         if(donationRequest.getDonationEvent() != null) {
             donationPendingResponse.setEventName(donationRequest.getDonationEvent().getTitle());
         }else {
