@@ -88,6 +88,15 @@ public class OrganizationDetailServiceImpl implements OrganizationDetailService 
         if(organizationDetailReq.getLongitude() != null && organizationDetailReq.getLongitude().compareTo(BigDecimal.ZERO) > 0){
             od.setLongitude(organizationDetailReq.getLongitude());
         }
+        if(organizationDetailReq.getVerificationDocs() != null && !organizationDetailReq.getVerificationDocs().isEmpty()){
+            od.setVerificationDocs(organizationDetailReq.getVerificationDocs());
+        }
+        if(organizationDetailReq.getAvtOrg() != null){
+            od.setAvtOrg(organizationDetailReq.getAvtOrg());
+        }
+        if(organizationDetailReq.getAcceptedTypes() != null && !organizationDetailReq.getAcceptedTypes().isEmpty()){
+            od.setAcceptedTypes(organizationDetailReq.getAcceptedTypes());
+        }
         organizationDetailRepository.save(od);
 
         return organizationDetailMapper.toResponse(od);
