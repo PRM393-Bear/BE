@@ -15,6 +15,8 @@ import com.example.PRM.repository.CommunityPostRepository;
 import com.example.PRM.repository.PostCommentRepository;
 import com.example.PRM.repository.PostLikeRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.repository.DonationEventRepository;
+import com.example.PRM.entity.DonationEvent;
 import com.example.PRM.service.CommunityPostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,6 +38,7 @@ public class CommunityPostServiceImpl implements CommunityPostService {
     private final PostCommentRepository postCommentRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final DonationEventRepository donationEventRepository;
 
     @Override
     @Transactional
@@ -51,6 +54,12 @@ public class CommunityPostServiceImpl implements CommunityPostService {
         post.setUser(user);
         post.setContent(req.getContent());
         post.setImages(req.getImages());
+
+        if (req.getDonationEventId() != null) {
+            DonationEvent de = donationEventRepository.findById(req.getDonationEventId())
+                    .orElseThrow(() -> new NotFoundException("Donation event not found"));
+            post.setDonationEvent(de);
+        }
 
         CommunityPost savedPost = communityPostRepository.save(post);
         return mapToPostRes(savedPost, user);
@@ -71,6 +80,14 @@ public class CommunityPostServiceImpl implements CommunityPostService {
 
         post.setContent(req.getContent());
         post.setImages(req.getImages());
+
+        if (req.getDonationEventId() != null) {
+            DonationEvent de = donationEventRepository.findById(req.getDonationEventId())
+                    .orElseThrow(() -> new NotFoundException("Donation event not found"));
+            post.setDonationEvent(de);
+        } else {
+            post.setDonationEvent(null);
+        }
 
         CommunityPost savedPost = communityPostRepository.save(post);
         return mapToPostRes(savedPost, user);
@@ -244,6 +261,8 @@ public class CommunityPostServiceImpl implements CommunityPostService {
                 .commentCount(commentCount)
                 .isLikedByMe(isLikedByMe)
                 .isHidden(post.isHidden())
+                .donationEventId(post.getDonationEvent() != null ? post.getDonationEvent().getId() : null)
+                .donationEventTitle(post.getDonationEvent() != null ? post.getDonationEvent().getTitle() : null)
                 .build();
     }
     

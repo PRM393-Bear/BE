@@ -7,4 +7,5 @@ import java.util.List;
 public class CommunityPostReq {
     private String content;
     private List<String> images;
+    private java.util.UUID donationEventId;
 }

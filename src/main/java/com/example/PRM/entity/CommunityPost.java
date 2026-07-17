@@ -38,6 +38,10 @@ public class CommunityPost {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isHidden;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "donation_event_id")
+    private DonationEvent donationEvent;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = OffsetDateTime.now();
