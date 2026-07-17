@@ -181,35 +181,30 @@ public class UserServiceImpl implements UserService {
 
         redisTemplate.delete(key);
 
-        switch (purpose) {
+        if (purpose == OtpPurpose.REGISTER) {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() ->
+                            new NotFoundException("User not found"));
+            user.setIsVerified(true);
+            userRepository.save(user);
 
-            case REGISTER -> {
-                User user = userRepository.findByEmail(email)
-                        .orElseThrow(() ->
-                                new NotFoundException("User not found"));
-                    user.setIsVerified(true);
-                    userRepository.save(user);
-
-                return null;
-            }
-
-            case FORGOT_PASSWORD -> {
-                String resetToken = UUID.randomUUID().toString();
-
-                redisTemplate.opsForValue().set(
-                        "resetToken:" + resetToken,
-                        email,
-                        10,
-                        TimeUnit.MINUTES
-                );
-
-                return resetToken;
-            }
-
-            default -> {
-                return null;
-            }
+            return null;
         }
+
+        if (purpose == OtpPurpose.FORGOT_PASSWORD) {
+            String resetToken = UUID.randomUUID().toString();
+
+            redisTemplate.opsForValue().set(
+                    "resetToken:" + resetToken,
+                    email,
+                    10,
+                    TimeUnit.MINUTES
+            );
+
+            return resetToken;
+        }
+
+        throw new IllegalStateException("Unsupported OtpPurpose: " + purpose);
     }
 
     @Override

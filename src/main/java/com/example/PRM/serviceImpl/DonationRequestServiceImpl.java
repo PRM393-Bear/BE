@@ -16,6 +16,7 @@ import com.example.PRM.mapper.WardrobeItemMapper;
 import com.example.PRM.repository.*;
 import com.example.PRM.service.DonationRequestService;
 import com.example.PRM.status_enum.DonationStatus;
+import com.example.PRM.status_enum.EventStatus;
 import com.example.PRM.status_enum.WardrobeStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -82,6 +83,10 @@ public class DonationRequestServiceImpl implements DonationRequestService {
                         "Donation event not found with id: " + donationRequestReq.getDonationEventId()));
         donationRequest.setDonationEvent(de);
 
+        if (de.getStatus() == EventStatus.CANCELLED || de.getStatus() == EventStatus.COMPLETED) {
+            throw new BadRequestException("Chiến dịch này đã đóng, không thể đăng ký quyên góp");
+        }
+
         List<UUID> ids = donationRequestReq.getWardrobeItemIds();
         if (ids == null || ids.isEmpty()) {
             throw new BadRequestException("Danh sách wardrobe item không được rỗng");
@@ -135,6 +140,10 @@ public class DonationRequestServiceImpl implements DonationRequestService {
         DonationEvent donationEvent = donationEventRepository
                 .findById(donationRequestReq.getDonationEventId())
                 .orElseThrow(() -> new NotFoundException("Donation event not found"));
+
+        if (donationEvent.getStatus() == EventStatus.CANCELLED || donationEvent.getStatus() == EventStatus.COMPLETED) {
+            throw new BadRequestException("Chiến dịch này đã đóng, không thể đăng ký quyên góp");
+        }
 
         DonationRequest donationRequest = donationRequestMapper.toEntity(donationRequestReq);
         donationRequest.setDonationEvent(donationEvent);

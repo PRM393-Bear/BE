@@ -144,6 +144,82 @@ class UploadServiceImplTest {
     }
 
     @Test
+    void uploadImage_filenameEndsWithJpg_isAccepted() throws IOException {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/octet-stream");
+        when(file.getOriginalFilename()).thenReturn("photo.jpg");
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(properties.getFolder()).thenReturn("wardrobe");
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), any())).thenReturn(Map.of(
+                "secure_url", "http://cloudinary.com/photo.jpg",
+                "public_id", "wardrobe/photo"
+        ));
+
+        UploadRes result = uploadService.uploadImage(file, "john.doe");
+
+        assertEquals("http://cloudinary.com/photo.jpg", result.getUrl());
+    }
+
+    @Test
+    void uploadImage_filenameEndsWithPng_isAccepted() throws IOException {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/octet-stream");
+        when(file.getOriginalFilename()).thenReturn("photo.png");
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(properties.getFolder()).thenReturn("wardrobe");
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), any())).thenReturn(Map.of(
+                "secure_url", "http://cloudinary.com/photo.png",
+                "public_id", "wardrobe/photo"
+        ));
+
+        UploadRes result = uploadService.uploadImage(file, "john.doe");
+
+        assertEquals("http://cloudinary.com/photo.png", result.getUrl());
+    }
+
+    @Test
+    void uploadImage_filenameEndsWithWebp_isAccepted() throws IOException {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/octet-stream");
+        when(file.getOriginalFilename()).thenReturn("photo.webp");
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(properties.getFolder()).thenReturn("wardrobe");
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), any())).thenReturn(Map.of(
+                "secure_url", "http://cloudinary.com/photo.webp",
+                "public_id", "wardrobe/photo"
+        ));
+
+        UploadRes result = uploadService.uploadImage(file, "john.doe");
+
+        assertEquals("http://cloudinary.com/photo.webp", result.getUrl());
+    }
+
+    @Test
+    void uploadImage_filenameEndsWithGif_isAccepted() throws IOException {
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/octet-stream");
+        when(file.getOriginalFilename()).thenReturn("photo.gif");
+        when(file.getSize()).thenReturn(1024L);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(properties.getFolder()).thenReturn("wardrobe");
+        when(cloudinary.uploader()).thenReturn(uploader);
+        when(uploader.upload(any(), any())).thenReturn(Map.of(
+                "secure_url", "http://cloudinary.com/photo.gif",
+                "public_id", "wardrobe/photo"
+        ));
+
+        UploadRes result = uploadService.uploadImage(file, "john.doe");
+
+        assertEquals("http://cloudinary.com/photo.gif", result.getUrl());
+    }
+
+    @Test
     void uploadImage_nullContentTypeAndNullFilename_isRejected() {
         when(file.isEmpty()).thenReturn(false);
         when(file.getContentType()).thenReturn(null);
