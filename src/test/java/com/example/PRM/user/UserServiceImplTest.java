@@ -169,7 +169,31 @@ class UserServiceImplTest {
     }
 
     @Test
-    void updateUserById_allFieldsNullOrBlank_leavesFieldsUnchanged() {
+    void updateUserById_allFieldsNull_leavesFieldsUnchanged() {
+        when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
+
+        String originalUserName = user.getUserName();
+        String originalEmail = user.getEmail();
+
+        UserReq req = new UserReq();
+        req.setFullName(null);
+        req.setEmail(null);
+        req.setPhone(null);
+        req.setUsername(null);
+        req.setAddress(null);
+
+        userService.updateUserById(userId, req);
+
+        assertNull(user.getFullName());
+        assertEquals(originalEmail, user.getEmail());
+        assertNull(user.getPhone());
+        assertEquals(originalUserName, user.getUserName());
+        assertNull(user.getAddress());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateUserById_allFieldsBlank_leavesFieldsUnchanged() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
 
         String originalUserName = user.getUserName();
@@ -177,9 +201,9 @@ class UserServiceImplTest {
 
         UserReq req = new UserReq();
         req.setFullName("   ");
-        req.setEmail(null);
-        req.setPhone("");
-        req.setUsername(null);
+        req.setEmail("");
+        req.setPhone("   ");
+        req.setUsername("");
         req.setAddress("   ");
 
         userService.updateUserById(userId, req);
@@ -470,6 +494,18 @@ class UserServiceImplTest {
     // the code can never execute it. If you later add another OtpPurpose value,
     // add a test here exercising it through the default branch.
 
+    @Test
+    void verifyOtp_unsupportedPurpose_throwsIllegalStateException() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn("123456");
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> userService.verifyOtp("john@example.com", "123456", null));
+
+        assertTrue(ex.getMessage().contains("Unsupported OtpPurpose"));
+        verify(userRepository, never()).save(any());
+    }
+
     // ---------------------------------------------------------------
     // resetPassword
     // ---------------------------------------------------------------
@@ -553,6 +589,20 @@ class UserServiceImplTest {
         verify(userRepository).save(user);
         verify(emailService).sendUnbannedEmail(user.getEmail());
         verify(emailService, never()).sendBannedEmail(anyString(), anyString());
+    }
+
+    @Test
+    void banAndUnbanUser_organizationRole_isAllowed() {
+        Role orgRole = new Role();
+        orgRole.setRoleName("ORGANIZATION");
+        user.setRole(orgRole);
+        when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
+
+        userService.banAndUnbanUser(userId, true, "violation");
+
+        assertTrue(user.getIsBlocked());
+        verify(userRepository).save(user);
+        verify(emailService).sendBannedEmail(user.getEmail(), "violation");
     }
 
     @Test
