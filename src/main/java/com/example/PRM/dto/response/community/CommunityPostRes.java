@@ -24,4 +24,6 @@ public class CommunityPostRes {
     private long commentCount;
     private boolean isLikedByMe;
     private boolean isHidden;
+    private UUID donationEventId;
+    private String donationEventTitle;
 }
