@@ -16,4 +16,5 @@ public class ReviewRes {
     private Short rating;
     private String comment;
     private OffsetDateTime createdAt;
+    private String productTitle;
 }
