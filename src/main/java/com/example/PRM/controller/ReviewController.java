@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -18,8 +19,13 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<?> createReview(@AuthenticationPrincipal UserDetails userDetails,
-                                          @RequestBody ReviewReq req) {
+                                          @Valid @RequestBody ReviewReq req) {
         reviewService.createReview(userDetails, req);
         return ResponseEntity.ok(new ApiResponse(200, "Cảm ơn bạn đã đánh giá đơn hàng!"));
+    }
+
+    @GetMapping("/seller")
+    public ResponseEntity<?> getReviewsForSeller(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(reviewService.getReviewsForSeller(userDetails));
     }
 }
