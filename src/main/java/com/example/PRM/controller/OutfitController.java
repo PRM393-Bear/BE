@@ -1,12 +1,11 @@
 package com.example.PRM.controller;
 
+import com.example.PRM.dto.request.outfit.OutfitRequest;
 import com.example.PRM.service.OutfitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/outfit")
@@ -15,20 +14,12 @@ public class OutfitController {
 
     private final OutfitService outfitService;
 
-    @GetMapping
+    @PostMapping
     public ResponseEntity<?> getOutfits(
             Authentication authentication,
+            @RequestBody OutfitRequest body,
             @RequestParam(defaultValue = "3") int maxOutfits
     ) {
-        return outfitService.getOutfits(authentication, maxOutfits);
-    }
-
-    @PostMapping("/occasion")
-    public ResponseEntity<?> getOutfitsByOccasion(
-            Authentication authentication,
-            @RequestBody Map<String, String> body,
-            @RequestParam(defaultValue = "3") int maxOutfits
-    ) {
-        return outfitService.getOutfitsByOccasion(authentication, body, maxOutfits);
+        return outfitService.getOutfits(authentication, body.getMessage(), maxOutfits);
     }
 }
