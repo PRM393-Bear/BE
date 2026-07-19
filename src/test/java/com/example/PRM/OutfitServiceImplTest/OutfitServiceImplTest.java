@@ -1,10 +1,12 @@
-package com.example.PRM.serviceImpl;
+package com.example.PRM.OutfitServiceImplTest;
 
 import com.example.PRM.service.UploadService;
+import com.example.PRM.serviceImpl.OutfitServiceImpl;
 import com.example.PRM.util.AuthDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,72 +45,113 @@ class OutfitServiceImplTest {
     void setUp() {
         userId = UUID.randomUUID();
         AuthDetails authDetails = new AuthDetails(userId);
-        
+
         authentication = new UsernamePasswordAuthenticationToken("testuser", "password");
         authentication.setDetails(authDetails);
     }
+
+    // ─────────────────────────────────────────
+    // getOutfits — success, message present
+    // ─────────────────────────────────────────
 
     @Test
     void getOutfits_ShouldReturnResponse_WhenServiceIsSuccessful() {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("success", true);
-        
-        ResponseEntity<Map> mockResponse = ResponseEntity.ok(responseBody);
-        when(restTemplate.getForEntity(anyString(), eq(Map.class))).thenReturn(mockResponse);
 
-        ResponseEntity<?> response = outfitService.getOutfits(authentication, 5);
+        ResponseEntity<Map> mockResponse = ResponseEntity.ok(responseBody);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(mockResponse);
+
+        ResponseEntity<?> response = outfitService.getOutfits(authentication, "gợi ý đồ đi biển", 5);
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCode().value());
         assertEquals(responseBody, response.getBody());
     }
 
+    // ─────────────────────────────────────────
+    // getOutfits — verify URL & body construction
+    // ─────────────────────────────────────────
+
+    @Test
+    void getOutfits_ShouldBuildCorrectUrlAndBody_WhenMessageProvided() {
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        ResponseEntity<Map> mockResponse = ResponseEntity.ok(responseBody);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(restTemplate.postForEntity(urlCaptor.capture(), entityCaptor.capture(), eq(Map.class)))
+                .thenReturn(mockResponse);
+
+        outfitService.getOutfits(authentication, "gợi ý đồ đi biển", 5);
+
+        String capturedUrl = urlCaptor.getValue();
+        assertEquals(true, capturedUrl.contains("/wardrobe/" + userId + "/outfits"));
+        assertEquals(true, capturedUrl.contains("max_outfits=5"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> capturedBody = (Map<String, Object>) entityCaptor.getValue().getBody();
+        assertNotNull(capturedBody);
+        assertEquals("gợi ý đồ đi biển", capturedBody.get("message"));
+    }
+
+    // ─────────────────────────────────────────
+    // getOutfits — message null -> fallback thành chuỗi rỗng
+    // ─────────────────────────────────────────
+
+    @Test
+    void getOutfits_ShouldFallbackMessageToEmptyString_WhenMessageIsNull() {
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("success", true);
+        ResponseEntity<Map> mockResponse = ResponseEntity.ok(responseBody);
+
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(restTemplate.postForEntity(anyString(), entityCaptor.capture(), eq(Map.class)))
+                .thenReturn(mockResponse);
+
+        ResponseEntity<?> response = outfitService.getOutfits(authentication, null, 3);
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> capturedBody = (Map<String, Object>) entityCaptor.getValue().getBody();
+        assertEquals("", capturedBody.get("message"));
+    }
+
+    // ─────────────────────────────────────────
+    // getOutfits — exception
+    // ─────────────────────────────────────────
+
     @Test
     void getOutfits_ShouldReturnErrorResponse_WhenServiceThrowsException() {
-        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("Connection timeout"));
 
-        ResponseEntity<?> response = outfitService.getOutfits(authentication, 5);
+        ResponseEntity<?> response = outfitService.getOutfits(authentication, "gợi ý đồ đi biển", 5);
 
         assertNotNull(response);
         assertEquals(500, response.getStatusCode().value());
-        
+
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
         assertEquals("AI service lỗi: Connection timeout", body.get("error"));
     }
 
     @Test
-    void getOutfitsByOccasion_ShouldReturnResponse_WhenServiceIsSuccessful() {
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("message", "gợi ý đồ đi biển");
-
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("success", true);
-        
-        ResponseEntity<Map> mockResponse = ResponseEntity.ok(responseBody);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class))).thenReturn(mockResponse);
-
-        ResponseEntity<?> response = outfitService.getOutfitsByOccasion(authentication, requestBody, 5);
-
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(responseBody, response.getBody());
-    }
-
-    @Test
-    void getOutfitsByOccasion_ShouldReturnErrorResponse_WhenServiceThrowsException() {
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("message", "gợi ý đồ đi biển");
-
+    void getOutfits_ShouldReturnErrorResponse_WhenServiceThrowsException_AndMessageIsNull() {
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("Connection timeout"));
 
-        ResponseEntity<?> response = outfitService.getOutfitsByOccasion(authentication, requestBody, 5);
+        ResponseEntity<?> response = outfitService.getOutfits(authentication, null, 5);
 
         assertNotNull(response);
         assertEquals(500, response.getStatusCode().value());
-        
+
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertNotNull(body);
         assertEquals("AI service lỗi: Connection timeout", body.get("error"));

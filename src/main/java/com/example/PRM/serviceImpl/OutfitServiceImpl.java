@@ -34,45 +34,28 @@ public class OutfitServiceImpl implements OutfitService {
         return details.getUserId();
     }
 
-    private String getUsername(Authentication authentication) {
-        return authentication.getName();
-    }
+    // ─────────────────────────────────────────
+    // Phối đồ — 1 API duy nhất, dựa trên message
+    // POST /api/wardrobe/{user_id}/outfits
+    // Body: {"message": "..."}
+    // ─────────────────────────────────────────
 
     @Override
-    public ResponseEntity<?> getOutfits(Authentication authentication, int maxOutfits) {
+    public ResponseEntity<?> getOutfits(
+            Authentication authentication,
+            String message,
+            int maxOutfits
+    ) {
         UUID userId = getUserId(authentication);
         String url  = AI_BASE_URL + "/wardrobe/" + userId + "/outfits?max_outfits=" + maxOutfits;
 
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(Map.of("error", "AI service lỗi: " + e.getMessage()));
-        }
-    }
-
-    // ─────────────────────────────────────────
-    // 2. Phối đồ theo dịp
-    // POST /api/outfit/occasion
-    // Body: {"message": "gợi ý đồ đi biển"}
-    // ─────────────────────────────────────────
-
-    @Override
-    public ResponseEntity<?> getOutfitsByOccasion(
-            Authentication authentication,
-            Map<String, String> body,
-            int maxOutfits
-    ) {
-        UUID userId = getUserId(authentication);
-        String url  = AI_BASE_URL + "/wardrobe/" + userId
-                + "/outfits/occasion?max_outfits=" + maxOutfits;
-
-        try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
 
+            Map<String, Object> body = Map.of("message", message == null ? "" : message);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
             return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
