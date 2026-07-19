@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface DonationEventRepository extends JpaRepository<DonationEvent, Long> {
+public interface DonationEventRepository extends JpaRepository<DonationEvent, UUID> {
     Optional<DonationEvent> findByTitle(String title);
     Optional<DonationEvent> findById(UUID donationEventId);
     List<DonationEvent> findByOrganizationDetail_Id(UUID organizationId);

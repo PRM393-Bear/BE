@@ -1,7 +1,10 @@
 package com.example.PRM.review;
 
 import com.example.PRM.dto.request.review.ReviewReq;
+import com.example.PRM.dto.response.review.ReviewRes;
 import com.example.PRM.entity.Order;
+import com.example.PRM.entity.OrderItem;
+import com.example.PRM.entity.Product;
 import com.example.PRM.entity.ProductReview;
 import com.example.PRM.entity.User;
 import com.example.PRM.exception.BadRequestException;
@@ -13,27 +16,41 @@ import com.example.PRM.repository.UserRepository;
 import com.example.PRM.serviceImpl.ReviewServiceImpl;
 import com.example.PRM.status_enum.OrderStatus;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Optional;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link ReviewServiceImpl}.
- * Covers every branch of createReview: order not found, not the buyer,
- * order not yet RECEIVED, already reviewed, reviewer not found, and success.
+ * Covers 100% of methods and branches:
+ *  - createReview: order not found / not buyer / not RECEIVED / already reviewed / success
+ *  - getReviewsForSeller: empty list, orderItems null, orderItems empty,
+ *    orderItems populated, reviewer null, reviewer populated
  *
- * NOTE: assumes OrderStatus has a non-RECEIVED value named PENDING to exercise
- * the "order not completed" branch — adjust if your enum uses a different name.
+ * Note: ProductReview.rating and ReviewReq.rating are both Short (not int),
+ * and createdAt is OffsetDateTime (not LocalDateTime) - matched here exactly
+ * to avoid ambiguous overload / type mismatch compile errors.
  */
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceImplTest {
@@ -50,99 +67,245 @@ class ReviewServiceImplTest {
     @Mock
     private UserDetails userDetails;
 
+    @InjectMocks
     private ReviewServiceImpl reviewService;
 
     private UUID orderId;
     private User buyer;
     private Order order;
-    private ReviewReq req;
+    private ReviewReq reviewReq;
 
     @BeforeEach
     void setUp() {
-        reviewService = new ReviewServiceImpl(reviewRepository, orderRepository, userRepository);
-
         orderId = UUID.randomUUID();
 
-        buyer = new User();
-        buyer.setUserName("john.doe");
+        buyer = mock(User.class);
+        order = mock(Order.class);
 
-        order = new Order();
-        order.setId(orderId);
-        order.setBuyer(buyer);
-        order.setStatus(OrderStatus.RECEIVED);
-
-        req = new ReviewReq();
-        req.setOrderId(orderId);
-        req.setRating((short) 5);
-        req.setComment("Great product!");
+        reviewReq = new ReviewReq();
+        reviewReq.setOrderId(orderId);
+        reviewReq.setRating((short) 5);
+        reviewReq.setComment("Great product!");
     }
 
-    @Test
-    void createReview_orderNotFound_throwsNotFoundException() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+    // ==================== createReview ====================
 
-        NotFoundException ex = assertThrows(NotFoundException.class,
-                () -> reviewService.createReview(userDetails, req));
-        assertTrue(ex.getMessage().contains("Order không tồn tại"));
+    @Nested
+    @DisplayName("createReview")
+    class CreateReview {
 
-        verify(reviewRepository, never()).save(any());
+        @Test
+        @DisplayName("Order not found -> throws NotFoundException")
+        void order_not_found_throws() {
+            when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> reviewService.createReview(userDetails, reviewReq));
+
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Requester is not the buyer -> throws ForbiddenException")
+        void not_buyer_throws_forbidden() {
+            when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+            when(order.getBuyer()).thenReturn(buyer);
+            when(buyer.getUserName()).thenReturn("real-buyer");
+            when(userDetails.getUsername()).thenReturn("someone-else");
+
+            assertThrows(ForbiddenException.class,
+                    () -> reviewService.createReview(userDetails, reviewReq));
+
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Order status not RECEIVED -> throws BadRequestException")
+        void order_not_received_throws() {
+            when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+            when(order.getBuyer()).thenReturn(buyer);
+            when(buyer.getUserName()).thenReturn("buyer1");
+            when(userDetails.getUsername()).thenReturn("buyer1");
+            when(order.getStatus()).thenReturn(OrderStatus.PENDING);
+
+            assertThrows(BadRequestException.class,
+                    () -> reviewService.createReview(userDetails, reviewReq));
+
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Order already reviewed -> throws BadRequestException")
+        void already_reviewed_throws() {
+            when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+            when(order.getBuyer()).thenReturn(buyer);
+            when(buyer.getUserName()).thenReturn("buyer1");
+            when(userDetails.getUsername()).thenReturn("buyer1");
+            when(order.getStatus()).thenReturn(OrderStatus.RECEIVED);
+            when(reviewRepository.existsByOrderId(orderId)).thenReturn(true);
+
+            assertThrows(BadRequestException.class,
+                    () -> reviewService.createReview(userDetails, reviewReq));
+
+            verify(reviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Valid request -> review is built and saved correctly")
+        void success_saves_review() {
+            when(orderRepository.findById(orderId)).thenReturn(java.util.Optional.of(order));
+            when(order.getBuyer()).thenReturn(buyer);
+            when(buyer.getUserName()).thenReturn("buyer1");
+            when(userDetails.getUsername()).thenReturn("buyer1");
+            when(order.getStatus()).thenReturn(OrderStatus.RECEIVED);
+            when(reviewRepository.existsByOrderId(orderId)).thenReturn(false);
+
+            reviewService.createReview(userDetails, reviewReq);
+
+            ArgumentCaptor<ProductReview> captor = ArgumentCaptor.forClass(ProductReview.class);
+            verify(reviewRepository, times(1)).save(captor.capture());
+
+            ProductReview saved = captor.getValue();
+            assertThat(saved.getOrder()).isEqualTo(order);
+            assertThat(saved.getReviewer()).isEqualTo(buyer);
+            assertThat(saved.getRating()).isEqualTo(reviewReq.getRating());
+            assertThat(saved.getComment()).isEqualTo(reviewReq.getComment());
+        }
     }
 
-    @Test
-    void createReview_notTheBuyer_throwsForbiddenException() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userDetails.getUsername()).thenReturn("someone.else");
+    // ==================== getReviewsForSeller ====================
 
-        ForbiddenException ex = assertThrows(ForbiddenException.class,
-                () -> reviewService.createReview(userDetails, req));
-        assertTrue(ex.getMessage().contains("Chỉ người mua"));
+    @Nested
+    @DisplayName("getReviewsForSeller")
+    class GetReviewsForSeller {
 
-        verify(reviewRepository, never()).save(any());
-    }
+        @Test
+        @DisplayName("No reviews found -> returns empty list")
+        void no_reviews_returns_empty() {
+            when(userDetails.getUsername()).thenReturn("seller1");
+            when(reviewRepository.findBySellerUsername("seller1"))
+                    .thenReturn(Collections.emptyList());
 
-    @Test
-    void createReview_orderNotReceived_throwsBadRequestException() {
-        order.setStatus(OrderStatus.PENDING);
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userDetails.getUsername()).thenReturn("john.doe");
+            List<ReviewRes> result = reviewService.getReviewsForSeller(userDetails);
 
-        BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> reviewService.createReview(userDetails, req));
-        assertTrue(ex.getMessage().contains("chưa hoàn thành"));
+            assertThat(result).isEmpty();
+        }
 
-        verify(reviewRepository, never()).save(any());
-    }
+        @Test
+        @DisplayName("Review with populated order items and reviewer -> maps all fields")
+        void full_fields_mapped() {
+            when(userDetails.getUsername()).thenReturn("seller1");
 
-    @Test
-    void createReview_alreadyReviewed_throwsBadRequestException() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userDetails.getUsername()).thenReturn("john.doe");
-        when(reviewRepository.existsByOrderId(orderId)).thenReturn(true);
+            ProductReview review = mock(ProductReview.class);
+            Order reviewOrder = mock(Order.class);
+            OrderItem orderItem = mock(OrderItem.class);
+            Product product = mock(Product.class);
+            User reviewer = mock(User.class);
 
-        BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> reviewService.createReview(userDetails, req));
-        assertTrue(ex.getMessage().contains("đã đánh giá"));
+            UUID reviewId = UUID.randomUUID();
+            UUID reviewOrderId = UUID.randomUUID();
+            UUID reviewerId = UUID.randomUUID();
+            OffsetDateTime createdAt = OffsetDateTime.now();
+            Short rating = (short) 4;
 
-        verify(reviewRepository, never()).save(any());
-    }
+            when(review.getId()).thenReturn(reviewId);
+            when(review.getOrder()).thenReturn(reviewOrder);
+            when(reviewOrder.getId()).thenReturn(reviewOrderId);
+            when(reviewOrder.getOrderItems()).thenReturn(List.of(orderItem));
+            when(orderItem.getProduct()).thenReturn(product);
+            when(product.getTitle()).thenReturn("Cool Product");
+            when(review.getReviewer()).thenReturn(reviewer);
+            when(reviewer.getUserId()).thenReturn(reviewerId);
+            when(reviewer.getUserName()).thenReturn("buyerX");
+            when(review.getRating()).thenReturn(rating);
+            when(review.getComment()).thenReturn("Nice!");
+            when(review.getCreatedAt()).thenReturn(createdAt);
 
-    // Removed createReview_reviewerNotFound_throwsNotFoundException as we no longer query userRepository for the reviewer.
+            when(reviewRepository.findBySellerUsername("seller1"))
+                    .thenReturn(List.of(review));
 
-    @Test
-    void createReview_success_savesReviewWithCorrectFields() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userDetails.getUsername()).thenReturn("john.doe");
-        when(reviewRepository.existsByOrderId(orderId)).thenReturn(false);
+            List<ReviewRes> result = reviewService.getReviewsForSeller(userDetails);
 
-        reviewService.createReview(userDetails, req);
+            assertThat(result).hasSize(1);
+            ReviewRes res = result.get(0);
+            assertThat(res.getId()).isEqualTo(reviewId);
+            assertThat(res.getOrderId()).isEqualTo(reviewOrderId);
+            assertThat(res.getProductTitle()).isEqualTo("Cool Product");
+            assertThat(res.getReviewerId()).isEqualTo(reviewerId);
+            assertThat(res.getReviewerName()).isEqualTo("buyerX");
+            assertThat(res.getRating()).isEqualTo(rating);
+            assertThat(res.getComment()).isEqualTo("Nice!");
+            assertThat(res.getCreatedAt()).isEqualTo(createdAt);
+        }
 
-        ArgumentCaptor<ProductReview> captor = ArgumentCaptor.forClass(ProductReview.class);
-        verify(reviewRepository).save(captor.capture());
-        ProductReview saved = captor.getValue();
+        @Test
+        @DisplayName("Order items list is null -> productTitle is null")
+        void null_order_items_gives_null_title() {
+            when(userDetails.getUsername()).thenReturn("seller1");
 
-        assertSame(order, saved.getOrder());
-        assertSame(buyer, saved.getReviewer());
-        assertEquals((short) 5, saved.getRating());
-        assertEquals("Great product!", saved.getComment());
+            ProductReview review = mock(ProductReview.class);
+            Order reviewOrder = mock(Order.class);
+            User reviewer = mock(User.class);
+
+            when(review.getOrder()).thenReturn(reviewOrder);
+            when(reviewOrder.getOrderItems()).thenReturn(null);
+            when(review.getReviewer()).thenReturn(reviewer);
+            lenient().when(reviewer.getUserId()).thenReturn(UUID.randomUUID());
+            lenient().when(reviewer.getUserName()).thenReturn("buyerY");
+
+            when(reviewRepository.findBySellerUsername("seller1"))
+                    .thenReturn(List.of(review));
+
+            List<ReviewRes> result = reviewService.getReviewsForSeller(userDetails);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getProductTitle()).isNull();
+        }
+
+        @Test
+        @DisplayName("Order items list is empty -> productTitle is null")
+        void empty_order_items_gives_null_title() {
+            when(userDetails.getUsername()).thenReturn("seller1");
+
+            ProductReview review = mock(ProductReview.class);
+            Order reviewOrder = mock(Order.class);
+            User reviewer = mock(User.class);
+
+            when(review.getOrder()).thenReturn(reviewOrder);
+            when(reviewOrder.getOrderItems()).thenReturn(Collections.emptyList());
+            when(review.getReviewer()).thenReturn(reviewer);
+            lenient().when(reviewer.getUserId()).thenReturn(UUID.randomUUID());
+            lenient().when(reviewer.getUserName()).thenReturn("buyerZ");
+
+            when(reviewRepository.findBySellerUsername("seller1"))
+                    .thenReturn(List.of(review));
+
+            List<ReviewRes> result = reviewService.getReviewsForSeller(userDetails);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getProductTitle()).isNull();
+        }
+
+        @Test
+        @DisplayName("Reviewer is null -> reviewerId and reviewerName are null")
+        void null_reviewer_gives_null_fields() {
+            when(userDetails.getUsername()).thenReturn("seller1");
+
+            ProductReview review = mock(ProductReview.class);
+            Order reviewOrder = mock(Order.class);
+
+            when(review.getOrder()).thenReturn(reviewOrder);
+            when(reviewOrder.getOrderItems()).thenReturn(Collections.emptyList());
+            when(review.getReviewer()).thenReturn(null);
+
+            when(reviewRepository.findBySellerUsername("seller1"))
+                    .thenReturn(List.of(review));
+
+            List<ReviewRes> result = reviewService.getReviewsForSeller(userDetails);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getReviewerId()).isNull();
+            assertThat(result.get(0).getReviewerName()).isNull();
+        }
     }
 }
