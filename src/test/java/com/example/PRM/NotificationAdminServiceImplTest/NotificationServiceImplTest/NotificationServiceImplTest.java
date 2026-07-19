@@ -1,9 +1,10 @@
-package com.example.PRM.serviceImpl;
+package com.example.PRM.NotificationAdminServiceImplTest.NotificationServiceImplTest;
 
 import com.example.PRM.entity.Notification;
 import com.example.PRM.entity.User;
 import com.example.PRM.repository.NotificationRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.serviceImpl.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

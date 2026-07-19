@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface DonationRequestRepository extends JpaRepository<DonationRequest, Long> {
+public interface DonationRequestRepository extends JpaRepository<DonationRequest, UUID> {
     Optional<DonationRequest> findById(UUID donationRequestId);
 
     @Query("""

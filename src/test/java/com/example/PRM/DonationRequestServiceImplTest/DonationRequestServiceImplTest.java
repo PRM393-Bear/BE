@@ -1,4 +1,4 @@
-package com.example.PRM.serviceImpl;
+package com.example.PRM.DonationRequestServiceImplTest;
 
 import com.example.PRM.dto.request.donationRequest.DonationRequestCustomReq;
 import com.example.PRM.dto.request.donationRequest.DonationRequestReq;
@@ -8,36 +8,46 @@ import com.example.PRM.dto.response.DonationPendingResponse;
 import com.example.PRM.dto.response.UploadRes;
 import com.example.PRM.dto.response.donationRequest.DonationRequestResponse;
 import com.example.PRM.entity.*;
+import com.example.PRM.event.DonationNotificationEvent;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.DonationRequestMapper;
 import com.example.PRM.mapper.WardrobeItemMapper;
 import com.example.PRM.repository.*;
+import com.example.PRM.serviceImpl.DonationRequestServiceImpl;
+import com.example.PRM.serviceImpl.NotificationAdminServiceImpl;
+import com.example.PRM.serviceImpl.UploadServiceImpl;
 import com.example.PRM.status_enum.DonationStatus;
 import com.example.PRM.status_enum.EventStatus;
 import com.example.PRM.status_enum.WardrobeStatus;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit test cho DonationRequestServiceImpl.
+ * <p>
+ * GIẢ ĐỊNH: BadRequestException và NotFoundException là RuntimeException với
+ * constructor nhận 1 tham số String message (đúng theo cách chúng được dùng
+ * xuyên suốt code nguồn). Nếu thực tế khác, cần chỉnh lại các dòng ném lỗi.
+ */
 @ExtendWith(MockitoExtension.class)
 class DonationRequestServiceImplTest {
-
-    @InjectMocks
-    private DonationRequestServiceImpl donationRequestService;
 
     @Mock private DonationRequestRepository donationRequestRepository;
     @Mock private DonationEventRepository donationEventRepository;
@@ -51,671 +61,985 @@ class DonationRequestServiceImplTest {
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UserDetails userDetails;
 
-    private User user;
-    private User orgUser;
-    private OrganizationDetail orgDetail;
-    private DonationEvent donationEvent;
-    private WardrobeItem item;
-    private UUID donationEventId;
-    private UUID wardrobeItemId;
-    private UUID donationRequestId;
-    private DonationRequest donationRequest;
+    private DonationRequestServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        donationEventId = UUID.randomUUID();
-        wardrobeItemId = UUID.randomUUID();
-        donationRequestId = UUID.randomUUID();
-
-        user = new User();
-        user.setUserId(UUID.randomUUID());
-        user.setUserName("donorUser");
-
-        orgUser = new User();
-        orgUser.setUserId(UUID.randomUUID());
-        orgUser.setUserName("orgUser");
-
-        orgDetail = new OrganizationDetail();
-        orgDetail.setId(UUID.randomUUID());
-        orgDetail.setUser(orgUser);
-
-        donationEvent = new DonationEvent();
-        donationEvent.setId(donationEventId);
-        donationEvent.setOrganizationDetail(orgDetail);
-        donationEvent.setCurrentQuantity(0);
-        donationEvent.setStatus(EventStatus.ONGOING);
-
-        item = new WardrobeItem();
-        item.setId(wardrobeItemId);
-        item.setStatus(WardrobeStatus.OWNED);
-        item.setUser(user);
-
-        donationRequest = new DonationRequest();
-        donationRequest.setId(donationRequestId);
-        donationRequest.setUser(user);
-        donationRequest.setOrganizationDetail(orgDetail);
-        donationRequest.setDonationEvent(donationEvent);
-        donationRequest.setItems(new ArrayList<>(Collections.singletonList(item)));
-        donationRequest.setImages(new ArrayList<>());
-        donationRequest.setStatus(DonationStatus.PENDING);
-        donationRequest.setCreatedAt(LocalDateTime.now());
+        service = new DonationRequestServiceImpl(
+                donationRequestRepository, donationEventRepository, wardrobeItemRepository,
+                organizationDetailRepository, donationRequestMapper, userRepository,
+                notificationAdminService, uploadService, wardrobeItemMapper, eventPublisher);
     }
 
-    // CREATE
-    @Test
-    void createDonationRequest_ShouldCreate_WhenValid() {
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        req.setWardrobeItemIds(Collections.singletonList(wardrobeItemId));
+    // ==================== helpers ====================
 
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-        when(wardrobeItemRepository.findAllById(any())).thenReturn(Collections.singletonList(item));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-
-        DonationRequest result = donationRequestService.createDonationRequest(req, userDetails);
-
-        assertNotNull(result);
-        assertEquals(DonationStatus.PENDING, result.getStatus());
-        assertEquals(WardrobeStatus.LISTED, item.getStatus());
-        verify(donationRequestRepository, times(1)).save(any(DonationRequest.class));
+    private User buildUser(String username) {
+        User u = new User();
+        u.setUserId(UUID.randomUUID());
+        u.setUserName(username);
+        return u;
     }
 
-    @Test
-    void createDonationRequest_ShouldThrowBadRequest_WhenItemNotOwned() {
-        item.setStatus(WardrobeStatus.DONATED); 
-        
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        req.setWardrobeItemIds(Collections.singletonList(wardrobeItemId));
-
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-        when(wardrobeItemRepository.findAllById(any())).thenReturn(Collections.singletonList(item));
-
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+    private OrganizationDetail buildOrg(User orgUser) {
+        OrganizationDetail od = new OrganizationDetail();
+        od.setId(UUID.randomUUID());
+        od.setUser(orgUser);
+        od.setOrgName("Org " + orgUser.getUserName());
+        return od;
     }
 
-    @Test
-    void createDonationRequest_ShouldThrowNotFound_WhenEventNotFound() {
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+    private DonationEvent buildEvent(EventStatus status, OrganizationDetail org) {
+        DonationEvent de = new DonationEvent();
+        de.setId(UUID.randomUUID());
+        de.setStatus(status);
+        de.setOrganizationDetail(org);
+        de.setCurrentQuantity(0);
+        de.setTitle("Event");
+        return de;
     }
 
-    @Test
-    void createDonationRequest_ShouldThrowBadRequest_WhenEventClosed() {
-        donationEvent.setStatus(EventStatus.COMPLETED);
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
-
-        donationEvent.setStatus(EventStatus.CANCELLED);
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+    private WardrobeItem buildItem(User owner, WardrobeStatus status) {
+        WardrobeItem wi = new WardrobeItem();
+        wi.setId(UUID.randomUUID());
+        wi.setUser(owner);
+        wi.setStatus(status);
+        return wi;
     }
 
-    @Test
-    void createDonationRequest_ShouldThrowBadRequest_WhenIdsNullOrEmpty() {
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        req.setWardrobeItemIds(Collections.emptyList());
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
-        
-        req.setWardrobeItemIds(null);
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
-    }
-
-    @Test
-    void createDonationRequest_ShouldThrowNotFound_WhenMissingItems() {
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        req.setWardrobeItemIds(Arrays.asList(wardrobeItemId, UUID.randomUUID()));
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-        when(wardrobeItemRepository.findAllById(any())).thenReturn(Collections.singletonList(item));
-
-        assertThrows(NotFoundException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
-    }
-
-    @Test
-    void createDonationRequest_ShouldThrowBadRequest_WhenUserNotOwner() {
-        User anotherUser = new User();
-        anotherUser.setUserName("anotherUser");
-        item.setUser(anotherUser);
-        DonationRequestReq req = new DonationRequestReq();
-        req.setDonationEventId(donationEventId);
-        req.setWardrobeItemIds(Collections.singletonList(wardrobeItemId));
-        when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-        when(wardrobeItemRepository.findAllById(any())).thenReturn(Collections.singletonList(item));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
-    }
-
-    // CREATE CUSTOM
-    @Test
-    void createCustom_ShouldCreate_WhenValid() {
-        DonationRequestCustomReq req = new DonationRequestCustomReq();
-        req.setDonationEventId(donationEventId);
-        MultipartFile mockImage = mock(MultipartFile.class);
-        req.setImage(mockImage);
-
-        UploadRes uploadRes = new UploadRes("http://image.url", "publicId");
-
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        when(userRepository.findByUserName("donorUser")).thenReturn(Optional.of(user));
-        when(uploadService.uploadImage(mockImage, "donorUser")).thenReturn(uploadRes);
-        when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
-        
+    private DonationRequest buildDonationRequest(User user, OrganizationDetail org, DonationStatus status) {
         DonationRequest dr = new DonationRequest();
-        dr.setImages(new ArrayList<>());
-        dr.setItems(new ArrayList<>());
-        when(donationRequestMapper.toEntity(req)).thenReturn(dr);
-
-        DonationRequest result = donationRequestService.createDonationRequest(req, userDetails);
-
-        assertNotNull(result);
-        assertEquals(DonationStatus.PENDING, result.getStatus());
-        verify(donationRequestRepository, times(1)).save(any(DonationRequest.class));
-        verify(wardrobeItemRepository, times(1)).save(any(WardrobeItem.class));
+        dr.setId(UUID.randomUUID());
+        dr.setUser(user);
+        dr.setOrganizationDetail(org);
+        dr.setStatus(status);
+        return dr;
     }
 
-    @Test
-    void createCustom_ShouldThrowNotFound_WhenUserNotFound() {
-        DonationRequestCustomReq req = new DonationRequestCustomReq();
-        when(userDetails.getUsername()).thenReturn("unknown");
-        when(userRepository.findByUserName("unknown")).thenReturn(Optional.empty());
+    // ==================== createDonationRequest(DonationRequestReq) ====================
 
-        assertThrows(NotFoundException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+    @Nested
+    class CreateDonationRequestReq {
+
+        @Test
+        void success() {
+            User user = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("orgOwner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+
+            UUID itemId = UUID.randomUUID();
+            WardrobeItem item = buildItem(user, WardrobeStatus.OWNED);
+
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(itemId));
+            DonationRequest mapped = new DonationRequest();
+
+            when(donationRequestMapper.toEntity(req)).thenReturn(mapped);
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+            when(wardrobeItemRepository.findAllById(List.of(itemId))).thenReturn(List.of(item));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            DonationRequest result = service.createDonationRequest(req, userDetails);
+
+            assertEquals(DonationStatus.PENDING, result.getStatus());
+            assertEquals(user, result.getUser());
+            assertEquals(org, result.getOrganizationDetail());
+            assertEquals(WardrobeStatus.LISTED, item.getStatus());
+            assertSame(mapped, item.getDonationRequest());
+            verify(donationRequestRepository).save(mapped);
+        }
+
+        @Test
+        void eventNotFound_throwsNotFound() {
+            DonationRequestReq req = new DonationRequestReq(UUID.randomUUID(), "desc", List.of(UUID.randomUUID()));
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(req.getDonationEventId())).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void eventCancelled_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.CANCELLED, org);
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(UUID.randomUUID()));
+
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void eventCompleted_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.COMPLETED, org);
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(UUID.randomUUID()));
+
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void nullItemIds_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", null);
+
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void emptyItemIds_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of());
+
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void someItemsMissing_throwsNotFound() {
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            UUID id1 = UUID.randomUUID();
+            UUID id2 = UUID.randomUUID();
+            WardrobeItem found = buildItem(buildUser("alice"), WardrobeStatus.OWNED);
+            found.setId(id1);
+
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(id1, id2));
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+            when(wardrobeItemRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(found));
+
+            assertThrows(NotFoundException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void itemNotOwned_throwsBadRequest() {
+            User user = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            UUID itemId = UUID.randomUUID();
+            WardrobeItem item = buildItem(user, WardrobeStatus.SOLD);
+
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(itemId));
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+            when(wardrobeItemRepository.findAllById(List.of(itemId))).thenReturn(List.of(item));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void itemNotOwnedByCallingUser_throwsBadRequest() {
+            User owner = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("orgOwner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            UUID itemId = UUID.randomUUID();
+            WardrobeItem item = buildItem(owner, WardrobeStatus.OWNED);
+
+            DonationRequestReq req = new DonationRequestReq(event.getId(), "desc", List.of(itemId));
+            when(donationRequestMapper.toEntity(req)).thenReturn(new DonationRequest());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+            when(wardrobeItemRepository.findAllById(List.of(itemId))).thenReturn(List.of(item));
+            when(userDetails.getUsername()).thenReturn("bob");
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
     }
 
-    @Test
-    void createCustom_ShouldThrowNotFound_WhenEventNotFound() {
-        DonationRequestCustomReq req = new DonationRequestCustomReq();
-        req.setDonationEventId(donationEventId);
-        MultipartFile mockImage = mock(MultipartFile.class);
-        req.setImage(mockImage);
+    // ==================== createDonationRequest(DonationRequestCustomReq) ====================
 
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        when(userRepository.findByUserName("donorUser")).thenReturn(Optional.of(user));
-        when(uploadService.uploadImage(any(), any())).thenReturn(new UploadRes("url", "publicId"));
-        when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
+    @Nested
+    class CreateDonationRequestCustomReq {
 
-        assertThrows(NotFoundException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+        @Test
+        void success() {
+            User user = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            DonationRequestCustomReq req = new DonationRequestCustomReq(
+                    event.getId(), "desc", "item", "cat", "new", "note", null);
+
+            UploadRes uploadRes = new UploadRes("http://img", "pub1");
+            WardrobeItem mappedItem = new WardrobeItem();
+            DonationRequest mappedRequest = new DonationRequest();
+            mappedRequest.setImages(new ArrayList<>());
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(uploadService.uploadImage(req.getImage(), "alice")).thenReturn(uploadRes);
+            when(wardrobeItemMapper.toEntity(req)).thenReturn(mappedItem);
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+            when(donationRequestMapper.toEntity(req)).thenReturn(mappedRequest);
+
+            DonationRequest result = service.createDonationRequest(req, userDetails);
+
+            assertEquals(DonationStatus.PENDING, result.getStatus());
+            assertEquals(user, result.getUser());
+            assertEquals(org, result.getOrganizationDetail());
+            assertTrue(result.getImages().contains("http://img"));
+            assertTrue(result.getItems().contains(mappedItem));
+            assertEquals("http://img", mappedItem.getImageUrl());
+            verify(wardrobeItemRepository).save(mappedItem);
+            verify(donationRequestRepository).save(mappedRequest);
+        }
+
+        @Test
+        void userNotFound_throwsNotFound() {
+            DonationRequestCustomReq req = new DonationRequestCustomReq(
+                    UUID.randomUUID(), "desc", "item", "cat", "new", "note", null);
+            when(userDetails.getUsername()).thenReturn("ghost");
+            when(userRepository.findByUserName("ghost")).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void eventNotFound_throwsNotFound() {
+            User user = buildUser("alice");
+            DonationRequestCustomReq req = new DonationRequestCustomReq(
+                    UUID.randomUUID(), "desc", "item", "cat", "new", "note", null);
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(uploadService.uploadImage(any(), eq("alice"))).thenReturn(new UploadRes("url", "id"));
+            when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
+            when(donationEventRepository.findById(req.getDonationEventId())).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void eventCancelled_throwsBadRequest() {
+            User user = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.CANCELLED, org);
+            DonationRequestCustomReq req = new DonationRequestCustomReq(
+                    event.getId(), "desc", "item", "cat", "new", "note", null);
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(uploadService.uploadImage(any(), eq("alice"))).thenReturn(new UploadRes("url", "id"));
+            when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
+
+        @Test
+        void eventCompleted_throwsBadRequest() {
+            User user = buildUser("alice");
+            OrganizationDetail org = buildOrg(buildUser("owner"));
+            DonationEvent event = buildEvent(EventStatus.COMPLETED, org);
+            DonationRequestCustomReq req = new DonationRequestCustomReq(
+                    event.getId(), "desc", "item", "cat", "new", "note", null);
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(uploadService.uploadImage(any(), eq("alice"))).thenReturn(new UploadRes("url", "id"));
+            when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
+            when(donationEventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+
+            assertThrows(BadRequestException.class, () -> service.createDonationRequest(req, userDetails));
+        }
     }
 
-    @Test
-    void createCustom_ShouldThrowBadRequest_WhenEventClosed() {
-        DonationRequestCustomReq req = new DonationRequestCustomReq();
-        req.setDonationEventId(donationEventId);
-        MultipartFile mockImage = mock(MultipartFile.class);
-        req.setImage(mockImage);
-        donationEvent.setStatus(EventStatus.CANCELLED);
+    // ==================== accept ====================
 
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        when(userRepository.findByUserName("donorUser")).thenReturn(Optional.of(user));
-        when(uploadService.uploadImage(any(), any())).thenReturn(new UploadRes("url", "publicId"));
-        when(wardrobeItemMapper.toEntity(req)).thenReturn(new WardrobeItem());
-        when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+    @Nested
+    class Accept {
 
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+        @Test
+        void success() {
+            User orgOwner = buildUser("org1");
+            OrganizationDetail org = buildOrg(orgOwner);
+            User donor = buildUser("alice");
+            DonationRequest dr = buildDonationRequest(donor, org, DonationStatus.PENDING);
 
-        donationEvent.setStatus(EventStatus.COMPLETED);
-        assertThrows(BadRequestException.class, () -> donationRequestService.createDonationRequest(req, userDetails));
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+
+            DonationRequest result = service.accept(dr.getId(), userDetails);
+
+            assertEquals(DonationStatus.ACCEPTED, result.getStatus());
+            assertNotNull(result.getAcceptedAt());
+            verify(donationRequestRepository).save(dr);
+            verify(eventPublisher).publishEvent(any(DonationNotificationEvent.class));
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.accept(id, userDetails));
+        }
+
+        @Test
+        void notOrgOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("hacker");
+
+            assertThrows(BadRequestException.class, () -> service.accept(dr.getId(), userDetails));
+        }
+
+        @Test
+        void notPending_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+
+            assertThrows(BadRequestException.class, () -> service.accept(dr.getId(), userDetails));
+        }
     }
 
-    // ACCEPT
-    @Test
-    void accept_ShouldAccept_WhenOrganizationMatches() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
+    // ==================== reject ====================
 
-        DonationRequest result = donationRequestService.accept(donationRequestId, userDetails);
+    @Nested
+    class Reject {
 
-        assertNotNull(result);
-        assertEquals(DonationStatus.ACCEPTED, result.getStatus());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(eventPublisher, times(1)).publishEvent(any());
+        @Test
+        void success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+
+            DonationRequest result = service.reject(dr.getId(), "khong hop le", userDetails);
+
+            assertEquals(DonationStatus.REJECTED, result.getStatus());
+            assertEquals("khong hop le", result.getRejectedReason());
+            assertNotNull(result.getUpdatedAt());
+            verify(donationRequestRepository).save(dr);
+            verify(eventPublisher).publishEvent(any(DonationNotificationEvent.class));
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.reject(id, "reason", userDetails));
+        }
+
+        @Test
+        void notOrgOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("hacker");
+
+            assertThrows(BadRequestException.class, () -> service.reject(dr.getId(), "reason", userDetails));
+        }
+
+        @Test
+        void notPending_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.REJECTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+
+            assertThrows(BadRequestException.class, () -> service.reject(dr.getId(), "reason", userDetails));
+        }
     }
 
-    @Test
-    void accept_ShouldThrowBadRequest_WhenUserIsNotOrganization() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("wrongOrgUser");
+    // ==================== shipping ====================
 
-        assertThrows(BadRequestException.class, () -> donationRequestService.accept(donationRequestId, userDetails));
+    @Nested
+    class Shipping {
+
+        @Test
+        void success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            DonationRequest result = service.shipping(dr.getId(), userDetails);
+
+            assertEquals(DonationStatus.SHIPPING, result.getStatus());
+            assertNotNull(result.getUpdatedAt());
+            verify(donationRequestRepository).save(dr);
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.shipping(id, userDetails));
+        }
+
+        @Test
+        void notOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("bob");
+
+            assertThrows(BadRequestException.class, () -> service.shipping(dr.getId(), userDetails));
+        }
+
+        @Test
+        void notAccepted_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            assertThrows(BadRequestException.class, () -> service.shipping(dr.getId(), userDetails));
+        }
     }
 
-    @Test
-    void accept_ShouldThrowNotFound_WhenRequestNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.accept(donationRequestId, userDetails));
+    // ==================== shipped ====================
+
+    @Nested
+    class Shipped {
+
+        private ShippingReq req() {
+            return new ShippingReq("TRACK123", null);
+        }
+
+        @Test
+        void success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPING);
+            ShippingReq req = req();
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(uploadService.uploadImage(req.getShippingProofFile(), "alice"))
+                    .thenReturn(new UploadRes("proof-url", "id"));
+
+            DonationRequest result = service.shipped(dr.getId(), req, userDetails);
+
+            assertEquals(DonationStatus.SHIPPED, result.getStatus());
+            assertEquals("TRACK123", result.getTrackingCode());
+            assertEquals("proof-url", result.getShippingProofUrl());
+            assertNotNull(result.getShippedAt());
+            verify(donationRequestRepository).save(dr);
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.shipped(id, req(), userDetails));
+        }
+
+        @Test
+        void notOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("bob");
+
+            assertThrows(BadRequestException.class, () -> service.shipped(dr.getId(), req(), userDetails));
+        }
+
+        @Test
+        void notShipping_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            assertThrows(BadRequestException.class, () -> service.shipped(dr.getId(), req(), userDetails));
+        }
     }
 
-    @Test
-    void accept_ShouldThrowBadRequest_WhenNotPending() {
-        donationRequest.setStatus(DonationStatus.ACCEPTED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
+    // ==================== received ====================
 
-        assertThrows(BadRequestException.class, () -> donationRequestService.accept(donationRequestId, userDetails));
+    @Nested
+    class Received {
+
+        private ReceivedReq req() {
+            return new ReceivedReq(null);
+        }
+
+        @Test
+        void successFromShipped() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            event.setCurrentQuantity(2);
+            dr.setDonationEvent(event);
+            WardrobeItem item = buildItem(buildUser("alice"), WardrobeStatus.LISTED);
+            dr.getItems().add(item);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+            when(uploadService.uploadImage(any(), eq("org1"))).thenReturn(new UploadRes("receipt-url", "id"));
+
+            DonationRequest result = service.received(dr.getId(), req(), userDetails);
+
+            assertEquals(DonationStatus.RECEIVED, result.getStatus());
+            assertEquals("receipt-url", result.getReceiptProofUrl());
+            assertEquals(3, event.getCurrentQuantity());
+            assertEquals(WardrobeStatus.DONATED, item.getStatus());
+            verify(donationRequestRepository).save(dr);
+            verify(donationEventRepository).save(event);
+            verify(wardrobeItemRepository).save(item);
+            verify(eventPublisher).publishEvent(any(DonationNotificationEvent.class));
+        }
+
+        @Test
+        void successFromShipping() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPING);
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            dr.setDonationEvent(event);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+            when(uploadService.uploadImage(any(), eq("org1"))).thenReturn(new UploadRes("receipt-url", "id"));
+
+            DonationRequest result = service.received(dr.getId(), req(), userDetails);
+
+            assertEquals(DonationStatus.RECEIVED, result.getStatus());
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.received(id, req(), userDetails));
+        }
+
+        @Test
+        void notOrgOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("hacker");
+
+            assertThrows(BadRequestException.class, () -> service.received(dr.getId(), req(), userDetails));
+        }
+
+        @Test
+        void invalidStatus_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("org1");
+
+            assertThrows(BadRequestException.class, () -> service.received(dr.getId(), req(), userDetails));
+        }
     }
 
-    // REJECT
-    @Test
-    void reject_ShouldReject_WhenOrganizationMatches() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
+    // ==================== completed ====================
 
-        DonationRequest result = donationRequestService.reject(donationRequestId, "Not needed", userDetails);
+    @Nested
+    class Completed {
 
-        assertNotNull(result);
-        assertEquals(DonationStatus.REJECTED, result.getStatus());
-        assertEquals("Not needed", result.getRejectedReason());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(eventPublisher, times(1)).publishEvent(any());
+        @Test
+        void fromReceived_success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.RECEIVED);
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            event.setCurrentQuantity(1);
+            dr.setDonationEvent(event);
+            WardrobeItem item = buildItem(buildUser("alice"), WardrobeStatus.LISTED);
+            dr.getItems().add(item);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            DonationRequest result = service.completed(dr.getId());
+
+            assertEquals(DonationStatus.COMPLETED, result.getStatus());
+            assertNotNull(result.getCompletedAt());
+            assertEquals(WardrobeStatus.DONATED, item.getStatus());
+            assertEquals(2, event.getCurrentQuantity());
+            verify(donationRequestRepository).save(dr);
+            verify(wardrobeItemRepository).save(item);
+        }
+
+        @Test
+        void fromShipped_after10Days_success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+            dr.setShippedAt(LocalDateTime.now().minusDays(11));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            dr.setDonationEvent(event);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            DonationRequest result = service.completed(dr.getId());
+
+            assertEquals(DonationStatus.COMPLETED, result.getStatus());
+            verify(donationRequestRepository).save(dr);
+        }
+
+        @Test
+        void fromShipped_shippedAtNull_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+            dr.setShippedAt(null);
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            dr.setDonationEvent(event);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            assertThrows(BadRequestException.class, () -> service.completed(dr.getId()));
+        }
+
+        @Test
+        void fromShipped_before10Days_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+            dr.setShippedAt(LocalDateTime.now().minusDays(1));
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            dr.setDonationEvent(event);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            assertThrows(BadRequestException.class, () -> service.completed(dr.getId()));
+        }
+
+        @Test
+        void invalidStatus_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+            DonationEvent event = buildEvent(EventStatus.ONGOING, org);
+            dr.setDonationEvent(event);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            assertThrows(BadRequestException.class, () -> service.completed(dr.getId()));
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.completed(id));
+        }
     }
 
-    @Test
-    void reject_ShouldThrowNotFound_WhenRequestNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.reject(donationRequestId, "No", userDetails));
+    // ==================== cancel ====================
+
+    @Nested
+    class Cancel {
+
+        @Test
+        void fromPending_success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            DonationRequest result = service.cancel(dr.getId(), "doi y", userDetails);
+
+            assertEquals(DonationStatus.CANCELLED, result.getStatus());
+            assertEquals("doi y", result.getCancelReason());
+            assertNotNull(result.getCanceledAt());
+            verify(donationRequestRepository).save(dr);
+        }
+
+        @Test
+        void fromAccepted_success() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            DonationRequest result = service.cancel(dr.getId(), "doi y", userDetails);
+
+            assertEquals(DonationStatus.CANCELLED, result.getStatus());
+        }
+
+        @Test
+        void notFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.cancel(id, "reason", userDetails));
+        }
+
+        @Test
+        void notOwner_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("bob");
+
+            assertThrows(BadRequestException.class, () -> service.cancel(dr.getId(), "reason", userDetails));
+        }
+
+        @Test
+        void invalidStatus_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.SHIPPED);
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(userDetails.getUsername()).thenReturn("alice");
+
+            assertThrows(BadRequestException.class, () -> service.cancel(dr.getId(), "reason", userDetails));
+        }
     }
 
-    @Test
-    void reject_ShouldThrowBadRequest_WhenUserNotOrg() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("wrongUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.reject(donationRequestId, "No", userDetails));
+    // ==================== assignOrganization ====================
+
+    @Nested
+    class AssignOrganization {
+
+        @Test
+        void success() {
+            OrganizationDetail oldOrg = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), oldOrg, DonationStatus.PENDING);
+            dr.setCreatedAt(LocalDateTime.now().minusDays(6));
+            OrganizationDetail newOrg = buildOrg(buildUser("org2"));
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(organizationDetailRepository.findById(newOrg.getId())).thenReturn(Optional.of(newOrg));
+
+            DonationRequest result = service.assignOrganization(dr.getId(), newOrg.getId());
+
+            assertEquals(newOrg, result.getOrganizationDetail());
+            assertNotNull(result.getUpdatedAt());
+            verify(donationRequestRepository).save(dr);
+        }
+
+        @Test
+        void donationNotFound_throwsNotFound() {
+            UUID id = UUID.randomUUID();
+            when(donationRequestRepository.findById(id)).thenReturn(Optional.empty());
+            assertThrows(NotFoundException.class, () -> service.assignOrganization(id, UUID.randomUUID()));
+        }
+
+        @Test
+        void notPending_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.ACCEPTED);
+            dr.setCreatedAt(LocalDateTime.now().minusDays(6));
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            assertThrows(BadRequestException.class,
+                    () -> service.assignOrganization(dr.getId(), UUID.randomUUID()));
+        }
+
+        @Test
+        void notOldEnough_throwsBadRequest() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+            dr.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+
+            assertThrows(BadRequestException.class,
+                    () -> service.assignOrganization(dr.getId(), UUID.randomUUID()));
+        }
+
+        @Test
+        void organizationNotFound_throwsNotFound() {
+            OrganizationDetail org = buildOrg(buildUser("org1"));
+            DonationRequest dr = buildDonationRequest(buildUser("alice"), org, DonationStatus.PENDING);
+            dr.setCreatedAt(LocalDateTime.now().minusDays(6));
+            UUID newOrgId = UUID.randomUUID();
+
+            when(donationRequestRepository.findById(dr.getId())).thenReturn(Optional.of(dr));
+            when(organizationDetailRepository.findById(newOrgId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> service.assignOrganization(dr.getId(), newOrgId));
+        }
     }
 
-    @Test
-    void reject_ShouldThrowBadRequest_WhenNotPending() {
-        donationRequest.setStatus(DonationStatus.SHIPPED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.reject(donationRequestId, "No", userDetails));
-    }
-
-    // SHIPPING
-    @Test
-    void shipping_ShouldUpdateStatusToShipping_WhenUserIsDonor() {
-        donationRequest.setStatus(DonationStatus.ACCEPTED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-
-        DonationRequest result = donationRequestService.shipping(donationRequestId, userDetails);
-
-        assertNotNull(result);
-        assertEquals(DonationStatus.SHIPPING, result.getStatus());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-    }
+    // ==================== checkPendingDonations ====================
 
     @Test
-    void shipping_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.shipping(donationRequestId, userDetails));
-    }
-
-    @Test
-    void shipping_ShouldThrowBadRequest_WhenUserNotOwner() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("otherUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.shipping(donationRequestId, userDetails));
-    }
-
-    @Test
-    void shipping_ShouldThrowBadRequest_WhenNotAccepted() {
-        donationRequest.setStatus(DonationStatus.PENDING);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.shipping(donationRequestId, userDetails));
-    }
-
-    // SHIPPED
-    @Test
-    void shipped_ShouldUpdateStatus_WhenValid() {
-        donationRequest.setStatus(DonationStatus.SHIPPING);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-
-        ShippingReq req = new ShippingReq();
-        req.setTrackingCode("TR123");
-        MultipartFile mockFile = mock(MultipartFile.class);
-        req.setShippingProofFile(mockFile);
-        UploadRes upRes = new UploadRes("url", "publicId");
-        when(uploadService.uploadImage(mockFile, "donorUser")).thenReturn(upRes);
-
-        DonationRequest result = donationRequestService.shipped(donationRequestId, req, userDetails);
-
-        assertEquals(DonationStatus.SHIPPED, result.getStatus());
-        assertEquals("TR123", result.getTrackingCode());
-        assertEquals("url", result.getShippingProofUrl());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-    }
-
-    @Test
-    void shipped_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.shipped(donationRequestId, new ShippingReq(), userDetails));
-    }
-
-    @Test
-    void shipped_ShouldThrowBadRequest_WhenUserNotOwner() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("otherUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.shipped(donationRequestId, new ShippingReq(), userDetails));
-    }
-
-    @Test
-    void shipped_ShouldThrowBadRequest_WhenNotShipping() {
-        donationRequest.setStatus(DonationStatus.ACCEPTED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.shipped(donationRequestId, new ShippingReq(), userDetails));
-    }
-
-    // RECEIVED
-    @Test
-    void received_ShouldUpdateStatus_WhenValid() {
-        donationRequest.setStatus(DonationStatus.SHIPPED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
-
-        ReceivedReq req = new ReceivedReq();
-        MultipartFile mockFile = mock(MultipartFile.class);
-        req.setReceiptProofFile(mockFile);
-        UploadRes upRes = new UploadRes("url", "publicId");
-        when(uploadService.uploadImage(mockFile, "orgUser")).thenReturn(upRes);
-
-        DonationRequest result = donationRequestService.received(donationRequestId, req, userDetails);
-
-        assertEquals(DonationStatus.RECEIVED, result.getStatus());
-        assertEquals("url", result.getReceiptProofUrl());
-        assertEquals(WardrobeStatus.DONATED, item.getStatus());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(donationEventRepository, times(1)).save(donationEvent);
-        verify(wardrobeItemRepository, times(1)).save(any(WardrobeItem.class));
-        verify(eventPublisher, times(1)).publishEvent(any());
-    }
-
-    @Test
-    void received_ShouldUpdateStatus_WhenStatusIsShipping() {
-        donationRequest.setStatus(DonationStatus.SHIPPING);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
-
-        ReceivedReq req = new ReceivedReq();
-        MultipartFile mockFile = mock(MultipartFile.class);
-        req.setReceiptProofFile(mockFile);
-        UploadRes upRes = new UploadRes("url", "publicId");
-        when(uploadService.uploadImage(mockFile, "orgUser")).thenReturn(upRes);
-
-        DonationRequest result = donationRequestService.received(donationRequestId, req, userDetails);
-
-        assertEquals(DonationStatus.RECEIVED, result.getStatus());
-    }
-
-    @Test
-    void received_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.received(donationRequestId, new ReceivedReq(), userDetails));
-    }
-
-    @Test
-    void received_ShouldThrowBadRequest_WhenUserNotOrg() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("wrongUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.received(donationRequestId, new ReceivedReq(), userDetails));
-    }
-
-    @Test
-    void received_ShouldThrowBadRequest_WhenNotShippedOrShipping() {
-        donationRequest.setStatus(DonationStatus.PENDING);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("orgUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.received(donationRequestId, new ReceivedReq(), userDetails));
-    }
-
-    // COMPLETED
-    @Test
-    void completed_ShouldComplete_WhenStatusIsReceived() {
-        donationRequest.setStatus(DonationStatus.RECEIVED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-
-        DonationRequest result = donationRequestService.completed(donationRequestId);
-
-        assertNotNull(result);
-        assertEquals(DonationStatus.COMPLETED, result.getStatus());
-        assertEquals(WardrobeStatus.DONATED, item.getStatus());
-        verify(donationEventRepository, times(1)).save(donationEvent);
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(wardrobeItemRepository, times(1)).save(item);
-    }
-
-    @Test
-    void completed_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.completed(donationRequestId));
-    }
-
-    @Test
-    void completed_ShouldThrowBadRequest_WhenShippedButNot10Days() {
-        donationRequest.setStatus(DonationStatus.SHIPPED);
-        donationRequest.setShippedAt(LocalDateTime.now().minusDays(5));
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-
-        assertThrows(BadRequestException.class, () -> donationRequestService.completed(donationRequestId));
-        
-        donationRequest.setShippedAt(null);
-        assertThrows(BadRequestException.class, () -> donationRequestService.completed(donationRequestId));
-    }
-
-    @Test
-    void completed_ShouldComplete_WhenShippedAnd10DaysPassed() {
-        donationRequest.setStatus(DonationStatus.SHIPPED);
-        donationRequest.setShippedAt(LocalDateTime.now().minusDays(11));
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-
-        DonationRequest result = donationRequestService.completed(donationRequestId);
-
-        assertEquals(DonationStatus.COMPLETED, result.getStatus());
-    }
-
-    @Test
-    void completed_ShouldThrowBadRequest_WhenOtherStatus() {
-        donationRequest.setStatus(DonationStatus.PENDING);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        assertThrows(BadRequestException.class, () -> donationRequestService.completed(donationRequestId));
-    }
-
-    // CANCEL
-    @Test
-    void cancel_ShouldCancel_WhenValid() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-
-        DonationRequest result = donationRequestService.cancel(donationRequestId, "Cancel reason", userDetails);
-
-        assertEquals(DonationStatus.CANCELLED, result.getStatus());
-        assertEquals("Cancel reason", result.getCancelReason());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-    }
-
-    @Test
-    void cancel_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.cancel(donationRequestId, "Reason", userDetails));
-    }
-
-    @Test
-    void cancel_ShouldThrowBadRequest_WhenUserNotOwner() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("otherUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.cancel(donationRequestId, "Reason", userDetails));
-    }
-
-    @Test
-    void cancel_ShouldThrowBadRequest_WhenNotPendingOrAccepted() {
-        donationRequest.setStatus(DonationStatus.SHIPPED);
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        assertThrows(BadRequestException.class, () -> donationRequestService.cancel(donationRequestId, "Reason", userDetails));
-    }
-
-    // SCHEDULE / ASSIGN
-    @Test
-    void checkPendingDonations_ShouldNotify() {
+    void checkPendingDonations_callsRepositoryAndNotifies() {
+        List<DonationRequest> overdue = List.of(new DonationRequest());
         when(donationRequestRepository.findPendingDonationsOverdue(eq(DonationStatus.PENDING), any()))
-                .thenReturn(Collections.singletonList(donationRequest));
+                .thenReturn(overdue);
 
-        donationRequestService.checkPendingDonations();
+        service.checkPendingDonations();
 
-        verify(notificationAdminService, times(1)).notifyAdminPendingOverdue(anyList());
+        verify(notificationAdminService).notifyAdminPendingOverdue(overdue);
     }
 
-    @Test
-    void assignOrganization_ShouldAssign_WhenValid() {
-        donationRequest.setCreatedAt(LocalDateTime.now().minusDays(6));
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        
-        OrganizationDetail newOrg = new OrganizationDetail();
-        newOrg.setId(UUID.randomUUID());
-        when(organizationDetailRepository.findById(newOrg.getId())).thenReturn(Optional.of(newOrg));
+    // ==================== getPendingDonations ====================
 
-        DonationRequest result = donationRequestService.assignOrganization(donationRequestId, newOrg.getId());
+    @Nested
+    class GetPendingDonations {
 
-        assertEquals(newOrg, result.getOrganizationDetail());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
+        @Test
+        void success() {
+            DonationRequest dr = new DonationRequest();
+            when(donationRequestRepository.findPendingDonationsOverdue(eq(DonationStatus.PENDING), any()))
+                    .thenReturn(List.of(dr));
+            when(donationRequestMapper.toPendingResponse(dr)).thenReturn(new DonationPendingResponse());
+
+            List<DonationPendingResponse> result = service.getPendingDonations(userDetails);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        void empty_throwsNotFound() {
+            when(donationRequestRepository.findPendingDonationsOverdue(eq(DonationStatus.PENDING), any()))
+                    .thenReturn(List.of());
+
+            assertThrows(NotFoundException.class, () -> service.getPendingDonations(userDetails));
+        }
     }
 
-    @Test
-    void assignOrganization_ShouldThrowNotFound_WhenNotFound() {
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.assignOrganization(donationRequestId, UUID.randomUUID()));
+    // ==================== getAllDonationRequestsFromOrganizationId ====================
+
+    @Nested
+    class GetAllFromOrganization {
+
+        @Test
+        void success() {
+            UUID orgId = UUID.randomUUID();
+            DonationRequest dr = new DonationRequest();
+            when(donationRequestRepository.findByOrganizationDetail_Id(orgId)).thenReturn(List.of(dr));
+            when(donationRequestMapper.toResponse(dr)).thenReturn(new DonationRequestResponse());
+
+            List<DonationRequestResponse> result = service.getAllDonationRequestsFromOrganizationId(orgId);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        void empty_throwsNotFound() {
+            UUID orgId = UUID.randomUUID();
+            when(donationRequestRepository.findByOrganizationDetail_Id(orgId)).thenReturn(List.of());
+
+            assertThrows(NotFoundException.class,
+                    () -> service.getAllDonationRequestsFromOrganizationId(orgId));
+        }
     }
 
-    @Test
-    void assignOrganization_ShouldThrowBadRequest_WhenNotOldEnough() {
-        donationRequest.setCreatedAt(LocalDateTime.now().minusDays(2));
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        assertThrows(BadRequestException.class, () -> donationRequestService.assignOrganization(donationRequestId, UUID.randomUUID()));
+    // ==================== getAllDonationRequestsFromUser ====================
+
+    @Nested
+    class GetAllFromUser {
+
+        @Test
+        void success() {
+            User user = buildUser("alice");
+            DonationRequest dr = new DonationRequest();
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(donationRequestRepository.findByUser_UserId(user.getUserId())).thenReturn(List.of(dr));
+            when(donationRequestMapper.toResponse(dr)).thenReturn(new DonationRequestResponse());
+
+            List<DonationRequestResponse> result = service.getAllDonationRequestsFromUser(userDetails);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        void emptyList_returnsEmpty() {
+            User user = buildUser("alice");
+
+            when(userDetails.getUsername()).thenReturn("alice");
+            when(userRepository.findByUserName("alice")).thenReturn(Optional.of(user));
+            when(donationRequestRepository.findByUser_UserId(user.getUserId())).thenReturn(List.of());
+
+            List<DonationRequestResponse> result = service.getAllDonationRequestsFromUser(userDetails);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        void userNotFound_throwsNotFound() {
+            when(userDetails.getUsername()).thenReturn("ghost");
+            when(userRepository.findByUserName("ghost")).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class, () -> service.getAllDonationRequestsFromUser(userDetails));
+        }
     }
 
-    @Test
-    void assignOrganization_ShouldThrowNotFound_WhenOrgNotFound() {
-        donationRequest.setCreatedAt(LocalDateTime.now().minusDays(6));
-        when(donationRequestRepository.findById(donationRequestId)).thenReturn(Optional.of(donationRequest));
-        UUID newOrgId = UUID.randomUUID();
-        when(organizationDetailRepository.findById(newOrgId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationRequestService.assignOrganization(donationRequestId, newOrgId));
-    }
+    // ==================== autoCheckReceivedDonations ====================
 
-    // GET
-    @Test
-    void getPendingDonations_ShouldReturn_WhenFound() {
-        when(donationRequestRepository.findPendingDonationsOverdue(eq(DonationStatus.PENDING), any()))
-                .thenReturn(Collections.singletonList(donationRequest));
-        when(donationRequestMapper.toPendingResponse(any())).thenReturn(new DonationPendingResponse());
+    @Nested
+    class AutoCheckReceivedDonations {
 
-        List<DonationPendingResponse> res = donationRequestService.getPendingDonations(userDetails);
+        @Test
+        void reminderNull_sendsNotificationAndSetsReminder() {
+            User user = buildUser("alice");
+            DonationRequest dr = new DonationRequest();
+            dr.setId(UUID.randomUUID());
+            dr.setUser(user);
+            dr.setReminderSentAt(null);
 
-        assertEquals(1, res.size());
-    }
+            when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
+                    .thenReturn(List.of(dr));
 
-    @Test
-    void getPendingDonations_ShouldThrowNotFound_WhenEmpty() {
-        when(donationRequestRepository.findPendingDonationsOverdue(eq(DonationStatus.PENDING), any()))
-                .thenReturn(Collections.emptyList());
+            service.autoCheckReceivedDonations();
 
-        assertThrows(NotFoundException.class, () -> donationRequestService.getPendingDonations(userDetails));
-    }
+            assertNotNull(dr.getReminderSentAt());
+            verify(eventPublisher).publishEvent(any(DonationNotificationEvent.class));
+            verify(donationRequestRepository).save(dr);
+        }
 
-    @Test
-    void getAllDonationRequestsFromOrganizationId_ShouldReturn_WhenFound() {
-        when(donationRequestRepository.findByOrganizationDetail_Id(orgDetail.getId()))
-                .thenReturn(Collections.singletonList(donationRequest));
-        when(donationRequestMapper.toResponse(any())).thenReturn(new DonationRequestResponse());
+        @Test
+        void reminderOldEnough_sendsNotificationAgain() {
+            User user = buildUser("alice");
+            DonationRequest dr = new DonationRequest();
+            dr.setId(UUID.randomUUID());
+            dr.setUser(user);
+            dr.setReminderSentAt(LocalDateTime.now().minusDays(4));
 
-        List<DonationRequestResponse> res = donationRequestService.getAllDonationRequestsFromOrganizationId(orgDetail.getId());
+            when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
+                    .thenReturn(List.of(dr));
 
-        assertEquals(1, res.size());
-    }
+            service.autoCheckReceivedDonations();
 
-    @Test
-    void getAllDonationRequestsFromOrganizationId_ShouldThrowNotFound_WhenEmpty() {
-        when(donationRequestRepository.findByOrganizationDetail_Id(orgDetail.getId()))
-                .thenReturn(Collections.emptyList());
+            verify(eventPublisher).publishEvent(any(DonationNotificationEvent.class));
+            verify(donationRequestRepository).save(dr);
+        }
 
-        assertThrows(NotFoundException.class, () -> donationRequestService.getAllDonationRequestsFromOrganizationId(orgDetail.getId()));
-    }
+        @Test
+        void reminderRecent_doesNotSendAgain() {
+            User user = buildUser("alice");
+            DonationRequest dr = new DonationRequest();
+            dr.setId(UUID.randomUUID());
+            dr.setUser(user);
+            dr.setReminderSentAt(LocalDateTime.now().minusDays(1));
 
-    @Test
-    void getAllDonationRequestsFromUser_ShouldReturn_WhenFound() {
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        when(userRepository.findByUserName("donorUser")).thenReturn(Optional.of(user));
-        when(donationRequestRepository.findByUser_UserId(user.getUserId())).thenReturn(Collections.singletonList(donationRequest));
-        when(donationRequestMapper.toResponse(any())).thenReturn(new DonationRequestResponse());
+            when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
+                    .thenReturn(List.of(dr));
 
-        List<DonationRequestResponse> res = donationRequestService.getAllDonationRequestsFromUser(userDetails);
+            service.autoCheckReceivedDonations();
 
-        assertEquals(1, res.size());
-    }
+            verify(eventPublisher, never()).publishEvent(any());
+            verify(donationRequestRepository, never()).save(any());
+        }
 
-    @Test
-    void getAllDonationRequestsFromUser_ShouldThrowNotFound_WhenUserNotFound() {
-        when(userDetails.getUsername()).thenReturn("donorUser");
-        when(userRepository.findByUserName("donorUser")).thenReturn(Optional.empty());
+        @Test
+        void emptyList_doesNothing() {
+            when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
+                    .thenReturn(List.of());
 
-        assertThrows(NotFoundException.class, () -> donationRequestService.getAllDonationRequestsFromUser(userDetails));
-    }
+            service.autoCheckReceivedDonations();
 
-    @Test
-    void autoCheckReceivedDonations_ShouldNotify_WhenNotRemindedRecently() {
-        donationRequest.setReminderSentAt(null);
-        when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
-                .thenReturn(Collections.singletonList(donationRequest));
-
-        donationRequestService.autoCheckReceivedDonations();
-
-        assertNotNull(donationRequest.getReminderSentAt());
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(eventPublisher, times(1)).publishEvent(any());
-    }
-
-    @Test
-    void autoCheckReceivedDonations_ShouldNotify_WhenRemindedLongAgo() {
-        donationRequest.setReminderSentAt(LocalDateTime.now().minusDays(5));
-        when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
-                .thenReturn(Collections.singletonList(donationRequest));
-
-        donationRequestService.autoCheckReceivedDonations();
-
-        verify(donationRequestRepository, times(1)).save(donationRequest);
-        verify(eventPublisher, times(1)).publishEvent(any());
-    }
-
-    @Test
-    void autoCheckReceivedDonations_ShouldNotNotify_WhenRemindedRecently() {
-        donationRequest.setReminderSentAt(LocalDateTime.now().minusDays(1));
-        when(donationRequestRepository.findByStatusAndUpdatedAtBefore(eq(DonationStatus.SHIPPING), any()))
-                .thenReturn(Collections.singletonList(donationRequest));
-
-        donationRequestService.autoCheckReceivedDonations();
-
-        verify(donationRequestRepository, never()).save(donationRequest);
-        verify(eventPublisher, never()).publishEvent(any());
+            verify(eventPublisher, never()).publishEvent(any());
+        }
     }
 }
