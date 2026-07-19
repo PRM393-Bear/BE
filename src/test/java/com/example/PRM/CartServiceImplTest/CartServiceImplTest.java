@@ -1,16 +1,15 @@
-package com.example.PRM.serviceImpl;
+package com.example.PRM.CartServiceImplTest;
 
 import com.example.PRM.dto.response.CartRes;
-import com.example.PRM.entity.Cart;
-import com.example.PRM.entity.CartItem;
-import com.example.PRM.entity.Product;
-import com.example.PRM.entity.User;
+import com.example.PRM.entity.*;
 import com.example.PRM.exception.BadRequestException;
 import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.CartMapper;
+import com.example.PRM.repository.CartItemRepository;
 import com.example.PRM.repository.CartRepository;
 import com.example.PRM.repository.ProductRepository;
 import com.example.PRM.repository.UserRepository;
+import com.example.PRM.serviceImpl.CartServiceImpl;
 import com.example.PRM.status_enum.ProductStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,36 +24,43 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceImplTest {
 
-    @InjectMocks
-    private CartServiceImpl cartService;
-
     @Mock
     private CartRepository cartRepository;
+
+    @Mock
+    private CartItemRepository cartItemRepository;
+
     @Mock
     private ProductRepository productRepository;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private CartMapper cartMapper;
+
     @Mock
     private UserDetails userDetails;
+
+    @InjectMocks
+    private CartServiceImpl cartService;
 
     private User user;
     private Cart cart;
     private Product product;
-    private UUID cartItemId;
+    private CartRes cartRes;
 
     @BeforeEach
     void setUp() {
+
         user = new User();
         user.setUserId(UUID.randomUUID());
-        user.setUserName("testuser");
+        user.setUserName("john");
 
         cart = new Cart();
         cart.setId(UUID.randomUUID());
@@ -65,153 +71,299 @@ class CartServiceImplTest {
         product.setId(UUID.randomUUID());
         product.setStatus(ProductStatus.AVAILABLE);
 
-        cartItemId = UUID.randomUUID();
+        cartRes = new CartRes();
 
-        lenient().when(userDetails.getUsername()).thenReturn("testuser");
+        when(userDetails.getUsername()).thenReturn("john");
+    }
+
+    // =====================================================
+    // getCartByUserId
+    // =====================================================
+
+    @Test
+    void getCartByUserId_UserNotFound() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.getCartByUserId(userDetails)
+        );
     }
 
     @Test
-    void getCartByUserId_ShouldReturnCartRes_WhenUserExists() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
-        when(cartMapper.mapToResponseDTO(cart)).thenReturn(CartRes.builder().build());
+    void getCartByUserId_CartExists() {
 
-        CartRes response = cartService.getCartByUserId(userDetails);
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
 
-        assertNotNull(response);
-        verify(cartRepository, times(1)).findByUser_UserId(user.getUserId());
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        when(cartMapper.mapToResponseDTO(cart))
+                .thenReturn(cartRes);
+
+        CartRes result = cartService.getCartByUserId(userDetails);
+
+        assertEquals(cartRes, result);
     }
 
     @Test
-    void getCartByUserId_ShouldCreateCart_WhenCartDoesNotExist() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
-        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-        when(cartMapper.mapToResponseDTO(cart)).thenReturn(CartRes.builder().build());
+    void getCartByUserId_CreateCartWhenMissing() {
 
-        CartRes response = cartService.getCartByUserId(userDetails);
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
 
-        assertNotNull(response);
-        verify(cartRepository, times(1)).save(any(Cart.class));
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.empty());
+
+        when(cartRepository.save(any(Cart.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        when(cartMapper.mapToResponseDTO(any(Cart.class)))
+                .thenReturn(cartRes);
+
+        CartRes result = cartService.getCartByUserId(userDetails);
+
+        assertNotNull(result);
+    }
+
+    // =====================================================
+    // addProductToCart
+    // =====================================================
+
+    @Test
+    void addProductToCart_UserNotFound() {
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.addProductToCart(userDetails, UUID.randomUUID())
+        );
     }
 
     @Test
-    void getCartByUserId_ShouldThrowNotFound_WhenUserDoesNotExist() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.empty());
+    void addProductToCart_ProductNotFound() {
 
-        assertThrows(NotFoundException.class, () -> cartService.getCartByUserId(userDetails));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        when(productRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.addProductToCart(userDetails, UUID.randomUUID())
+        );
     }
 
     @Test
-    void addProductToCart_ShouldAddProduct_WhenValidRequest() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
-        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
-        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-        when(cartMapper.mapToResponseDTO(cart)).thenReturn(CartRes.builder().build());
+    void addProductToCart_ProductUnavailable() {
 
-        CartRes response = cartService.addProductToCart(userDetails, product.getId());
-
-        assertNotNull(response);
-        assertEquals(1, cart.getCartItems().size());
-        verify(cartRepository, times(1)).save(cart);
-    }
-
-    @Test
-    void addProductToCart_ShouldThrowBadRequest_WhenProductNotAvailable() {
         product.setStatus(ProductStatus.SOLD);
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
-        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 
-        assertThrows(BadRequestException.class, () -> cartService.addProductToCart(userDetails, product.getId()));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        when(productRepository.findById(product.getId()))
+                .thenReturn(Optional.of(product));
+
+        assertThrows(
+                BadRequestException.class,
+                () -> cartService.addProductToCart(userDetails, product.getId())
+        );
     }
 
     @Test
-    void addProductToCart_ShouldThrowBadRequest_WhenProductAlreadyInCart() {
+    void addProductToCart_ProductAlreadyInCart() {
+
         CartItem item = new CartItem();
         item.setProduct(product);
+
         cart.getCartItems().add(item);
 
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
-        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
 
-        assertThrows(BadRequestException.class, () -> cartService.addProductToCart(userDetails, product.getId()));
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        when(productRepository.findById(product.getId()))
+                .thenReturn(Optional.of(product));
+
+        assertThrows(
+                BadRequestException.class,
+                () -> cartService.addProductToCart(userDetails, product.getId())
+        );
     }
 
     @Test
-    void removeCartItem_ShouldRemoveItem_WhenItemExists() {
+    void addProductToCart_Success() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        when(productRepository.findById(product.getId()))
+                .thenReturn(Optional.of(product));
+
+        when(cartRepository.save(any()))
+                .thenReturn(cart);
+
+        when(cartMapper.mapToResponseDTO(cart))
+                .thenReturn(cartRes);
+
+        CartRes result =
+                cartService.addProductToCart(userDetails, product.getId());
+
+        assertNotNull(result);
+        assertEquals(1, cart.getCartItems().size());
+    }
+
+    @Test
+    void addProductToCart_CreateCartAndSuccess() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.empty());
+
+        when(cartRepository.save(any(Cart.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        when(productRepository.findById(product.getId()))
+                .thenReturn(Optional.of(product));
+
+        when(cartMapper.mapToResponseDTO(any()))
+                .thenReturn(cartRes);
+
+        CartRes result =
+                cartService.addProductToCart(userDetails, product.getId());
+
+        assertNotNull(result);
+    }
+
+    // =====================================================
+    // removeCartItem
+    // =====================================================
+
+    @Test
+    void removeCartItem_UserNotFound() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.removeCartItem(userDetails, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void removeCartItem_CartNotFound() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.removeCartItem(userDetails, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void removeCartItem_ItemNotFound() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.removeCartItem(userDetails, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void removeCartItem_Success() {
+
         CartItem item = new CartItem();
-        item.setId(cartItemId);
+        item.setId(UUID.randomUUID());
+
         cart.getCartItems().add(item);
 
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
 
-        cartService.removeCartItem(userDetails, cartItemId);
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
 
-        assertTrue(cart.getCartItems().isEmpty());
-        verify(cartRepository, times(1)).save(cart);
+        cartService.removeCartItem(userDetails, item.getId());
+
+        verify(cartRepository).save(cart);
+    }
+
+    // =====================================================
+    // clearCart
+    // =====================================================
+
+    @Test
+    void clearCart_UserNotFound() {
+
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.clearCart(userDetails)
+        );
     }
 
     @Test
-    void removeCartItem_ShouldThrowNotFound_WhenItemNotInCart() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
+    void clearCart_CartNotFound() {
 
-        assertThrows(NotFoundException.class, () -> cartService.removeCartItem(userDetails, cartItemId));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NotFoundException.class,
+                () -> cartService.clearCart(userDetails)
+        );
     }
 
     @Test
-    void clearCart_ShouldClearAllItems() {
+    void clearCart_Success() {
+
         CartItem item = new CartItem();
         cart.getCartItems().add(item);
 
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
+        when(userRepository.findByUserName("john"))
+                .thenReturn(Optional.of(user));
+
+        when(cartRepository.findByUser_UserId(user.getUserId()))
+                .thenReturn(Optional.of(cart));
 
         cartService.clearCart(userDetails);
 
         assertTrue(cart.getCartItems().isEmpty());
-        verify(cartRepository, times(1)).save(cart);
-    }
 
-    @Test
-    void addProductToCart_ShouldThrowNotFound_WhenProductNotFound() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
-        when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> cartService.addProductToCart(userDetails, product.getId()));
-    }
-
-    @Test
-    void addProductToCart_ShouldCreateCart_WhenCartDoesNotExist() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
-        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
-        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
-        when(cartMapper.mapToResponseDTO(cart)).thenReturn(CartRes.builder().build());
-
-        CartRes response = cartService.addProductToCart(userDetails, product.getId());
-
-        assertNotNull(response);
-    }
-
-    @Test
-    void removeCartItem_ShouldThrowNotFound_WhenCartNotFound() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> cartService.removeCartItem(userDetails, cartItemId));
-    }
-
-    @Test
-    void clearCart_ShouldThrowNotFound_WhenCartNotFound() {
-        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> cartService.clearCart(userDetails));
+        verify(cartRepository).save(cart);
     }
 }

@@ -40,29 +40,22 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom("nguyenminhnguyen08112004@gmail.com");
             helper.setTo(email);
 
-            String subject;
-            String htmlTitle;
-            String htmlDescription;
+            String subject = switch (otpPurpose) {
+                case FORGOT_PASSWORD -> "ECO - Mã OTP đặt lại mật khẩu";
+                case REGISTER -> "ECO - Mã OTP đăng ký tài khoản";
+            };
 
-            switch (otpPurpose) {
-                case FORGOT_PASSWORD -> {
-                    subject      = "ECO - Mã OTP đặt lại mật khẩu";
-                    htmlTitle    = "Password Reset Verification";
-                    htmlDescription = "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. "
-                            + "Vui lòng sử dụng mã OTP bên dưới để tiếp tục:";
-                }
-                case REGISTER -> {
-                    subject      = "ECO - Mã OTP đăng ký tài khoản";
-                    htmlTitle    = "Account Registration Verification";
-                    htmlDescription = "Chúng tôi nhận được yêu cầu đăng ký tài khoản của bạn. "
-                            + "Vui lòng sử dụng mã OTP bên dưới để hoàn tất đăng ký:";
-                }
-                default -> {
-                    subject      = "ECO - Mã OTP xác thực";
-                    htmlTitle    = "Verification";
-                    htmlDescription = "Vui lòng sử dụng mã OTP bên dưới để tiếp tục:";
-                }
-            }
+            String htmlTitle = switch (otpPurpose) {
+                case FORGOT_PASSWORD -> "Password Reset Verification";
+                case REGISTER -> "Account Registration Verification";
+            };
+
+            String htmlDescription = switch (otpPurpose) {
+                case FORGOT_PASSWORD -> "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. "
+                        + "Vui lòng sử dụng mã OTP bên dưới để tiếp tục:";
+                case REGISTER -> "Chúng tôi nhận được yêu cầu đăng ký tài khoản của bạn. "
+                        + "Vui lòng sử dụng mã OTP bên dưới để hoàn tất đăng ký:";
+            };
 
             helper.setSubject(subject);
 

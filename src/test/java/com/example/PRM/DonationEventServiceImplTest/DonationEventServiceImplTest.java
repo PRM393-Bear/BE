@@ -1,4 +1,4 @@
-package com.example.PRM.serviceImpl;
+package com.example.PRM.DonationEventServiceImplTest;
 
 import com.example.PRM.dto.request.donationEvent.DonationEventFilterReq;
 import com.example.PRM.dto.request.donationEvent.DonationEventReq;
@@ -11,8 +11,11 @@ import com.example.PRM.exception.NotFoundException;
 import com.example.PRM.mapper.DonationEventMapper;
 import com.example.PRM.repository.DonationEventRepository;
 import com.example.PRM.repository.OrganizationDetailRepository;
+import com.example.PRM.serviceImpl.DonationEventServiceImpl;
 import com.example.PRM.status_enum.EventStatus;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,423 +24,758 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for DonationEventServiceImpl.
+ * Covers the full flow: create, update, delete, get all, filter search,
+ * get by org, cancel/complete/ongoing status transitions.
+ *
+ * NOTE: Field/method names on entities & DTOs are inferred from usage in
+ * DonationEventServiceImpl. Adjust getters/setters/builders to match your
+ * actual classes if they differ (e.g. if entities use Lombok @Builder
+ * instead of plain setters).
+ */
 @ExtendWith(MockitoExtension.class)
 class DonationEventServiceImplTest {
+
+    @Mock
+    private DonationEventRepository donationEventRepository;
+
+    @Mock
+    private DonationEventMapper donationEventMapper;
+
+    @Mock
+    private OrganizationDetailRepository organizationDetailRepository;
+
+    @Mock
+    private UserDetails userDetails;
 
     @InjectMocks
     private DonationEventServiceImpl donationEventService;
 
-    @Mock
-    private DonationEventRepository donationEventRepository;
-    @Mock
-    private DonationEventMapper donationEventMapper;
-    @Mock
-    private OrganizationDetailRepository organizationDetailRepository;
-    @Mock
-    private UserDetails userDetails;
-
-    private DonationEvent donationEvent;
-    private DonationEventReq donationEventReq;
-    private OrganizationDetail organizationDetail;
-    private UUID eventId;
+    private UUID donationEventId;
     private UUID orgId;
+    private DonationEvent donationEvent;
+    private OrganizationDetail organizationDetail;
+    private DonationEventReq req;
+    private DonationEventLogRes logRes;
+    private DonationEventRes res;
 
     @BeforeEach
     void setUp() {
-        eventId = UUID.randomUUID();
+        donationEventId = UUID.randomUUID();
         orgId = UUID.randomUUID();
 
         organizationDetail = new OrganizationDetail();
-        organizationDetail.setId(orgId);
 
         donationEvent = new DonationEvent();
-        donationEvent.setId(eventId);
         donationEvent.setOrganizationDetail(organizationDetail);
         donationEvent.setStatus(EventStatus.UPCOMING);
-        donationEvent.setTitle("Old Title");
-        donationEvent.setAcceptedTypes(Arrays.asList("CLOTHES"));
 
-        donationEventReq = new DonationEventReq();
-        donationEventReq.setTitle("New Title");
+        req = new DonationEventReq();
+
+        logRes = new DonationEventLogRes();
+        res = new DonationEventRes();
     }
 
-    // CREATE DONATION EVENT
-    @Test
-    void createDonationEvent_ShouldReturnLogRes_WhenOrgExists() {
-        DonationEventLogRes logRes = new DonationEventLogRes();
-        
-        when(donationEventMapper.toEntity(donationEventReq)).thenReturn(donationEvent);
-        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+    // ------------------------------------------------------------------
+    // createDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("createDonationEvent")
+    class CreateDonationEvent {
 
-        DonationEventLogRes result = donationEventService.createDonationEvent(donationEventReq, orgId, userDetails);
+        @Test
+        @DisplayName("Tạo sự kiện thành công khi org tồn tại")
+        void createSuccess() {
+            when(donationEventMapper.toEntity(req)).thenReturn(donationEvent);
+            when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
 
-        assertNotNull(result);
-        verify(donationEventRepository, times(1)).save(donationEvent);
+            DonationEventLogRes result = donationEventService.createDonationEvent(req, orgId, userDetails);
+
+            assertNotNull(result);
+            assertEquals(organizationDetail, donationEvent.getOrganizationDetail());
+            verify(donationEventRepository).save(donationEvent);
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy organization")
+        void createThrowsWhenOrgNotFound() {
+            when(donationEventMapper.toEntity(req)).thenReturn(donationEvent);
+            when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.createDonationEvent(req, orgId, userDetails));
+            verify(donationEventRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void createDonationEvent_ShouldThrowNotFound_WhenOrgDoesNotExist() {
-        when(donationEventMapper.toEntity(donationEventReq)).thenReturn(donationEvent);
-        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+    // ------------------------------------------------------------------
+    // updateDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("updateDonationEvent")
+    class UpdateDonationEvent {
 
-        assertThrows(NotFoundException.class, () -> 
-            donationEventService.createDonationEvent(donationEventReq, orgId, userDetails));
+        @Test
+        @DisplayName("Cập nhật thành công tất cả field khi có giá trị")
+        void updateSuccessAllFields() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            DonationEventReq updateReq = new DonationEventReq();
+            updateReq.setTitle("New Title");
+            updateReq.setDescription("New Description");
+            updateReq.setStartDate(OffsetDateTime.now());
+            updateReq.setEndDate(OffsetDateTime.now().plusDays(1));
+            updateReq.setLatitude(BigDecimal.valueOf(10.0));
+            updateReq.setLongitude(BigDecimal.valueOf(20.0));
+            updateReq.setAcceptedTypes(List.of("clothes", "books"));
+            updateReq.setTargetQuantity(100);
+            updateReq.setStatus(EventStatus.ONGOING);
+            updateReq.setBannerUrl("https://example.com/banner.png");
+
+            DonationEventLogRes result = donationEventService.updateDonationEvent(donationEventId, updateReq, userDetails);
+
+            assertNotNull(result);
+            assertEquals("New Title", donationEvent.getTitle());
+            assertEquals("New Description", donationEvent.getDescription());
+            assertEquals(BigDecimal.valueOf(10.0), donationEvent.getLatitude());
+            assertEquals(BigDecimal.valueOf(20.0), donationEvent.getLongitude());
+            assertEquals(List.of("clothes", "books"), donationEvent.getAcceptedTypes());
+            assertEquals(100, donationEvent.getTargetQuantity());
+            assertEquals(EventStatus.ONGOING, donationEvent.getStatus());
+            assertEquals("https://example.com/banner.png", donationEvent.getBannerUrl());
+            // acceptedTypes không rỗng -> đồng bộ sang organizationDetail
+            assertEquals(List.of("clothes", "books"), organizationDetail.getAcceptedTypes());
+            verify(donationEventRepository).save(donationEvent);
+        }
+
+        @Test
+        @DisplayName("Không cập nhật field nào khi request rỗng (tất cả null)")
+        void updateSkipsAllWhenFieldsNull() {
+            String originalTitle = "Original";
+            donationEvent.setTitle(originalTitle);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            DonationEventReq emptyReq = new DonationEventReq();
+
+            donationEventService.updateDonationEvent(donationEventId, emptyReq, userDetails);
+
+            assertEquals(originalTitle, donationEvent.getTitle());
+            // acceptedTypes của organizationDetail không bị thay đổi (giữ nguyên giá trị khởi tạo mặc định)
+            assertTrue(organizationDetail.getAcceptedTypes() == null
+                    || organizationDetail.getAcceptedTypes().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Không đồng bộ acceptedTypes sang organizationDetail khi list rỗng")
+        void updateDoesNotSyncOrgAcceptedTypesWhenEmpty() {
+            organizationDetail.setAcceptedTypes(List.of("old-type"));
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            DonationEventReq updateReq = new DonationEventReq();
+            updateReq.setAcceptedTypes(List.of());
+
+            donationEventService.updateDonationEvent(donationEventId, updateReq, userDetails);
+
+            // acceptedTypes trên donationEvent vẫn được set (vì != null)
+            assertEquals(List.of(), donationEvent.getAcceptedTypes());
+            // nhưng organizationDetail giữ nguyên vì list rỗng
+            assertEquals(List.of("old-type"), organizationDetail.getAcceptedTypes());
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy donation event")
+        void updateThrowsWhenNotFound() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.updateDonationEvent(donationEventId, req, userDetails));
+            verify(donationEventRepository, never()).save(any());
+        }
     }
 
-    // UPDATE DONATION EVENT
-    @Test
-    void updateDonationEvent_ShouldUpdateAllFields_WhenEventExists() {
-        donationEventReq.setTitle("Updated Title");
-        donationEventReq.setDescription("Updated Desc");
-        donationEventReq.setStartDate(OffsetDateTime.now());
-        donationEventReq.setEndDate(OffsetDateTime.now().plusDays(1));
-        donationEventReq.setLatitude(BigDecimal.valueOf(10.0));
-        donationEventReq.setLongitude(BigDecimal.valueOf(106.0));
-        donationEventReq.setAcceptedTypes(Arrays.asList("BOOKS", "CLOTHES"));
-        donationEventReq.setTargetQuantity(100);
-        donationEventReq.setStatus(EventStatus.ONGOING);
-        donationEventReq.setBannerUrl("banner.jpg");
+    // ------------------------------------------------------------------
+    // deleteDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("deleteDonationEvent")
+    class DeleteDonationEvent {
 
-        DonationEventLogRes logRes = new DonationEventLogRes();
+        @Test
+        @DisplayName("Xóa thành công khi tìm thấy")
+        void deleteSuccess() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
 
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+            DonationEventLogRes result = donationEventService.deleteDonationEvent(donationEventId, userDetails);
 
-        DonationEventLogRes result = donationEventService.updateDonationEvent(eventId, donationEventReq, userDetails);
+            assertNotNull(result);
+            verify(donationEventRepository).delete(donationEvent);
+        }
 
-        assertNotNull(result);
-        assertEquals("Updated Title", donationEvent.getTitle());
-        assertEquals("Updated Desc", donationEvent.getDescription());
-        assertEquals(BigDecimal.valueOf(10.0), donationEvent.getLatitude());
-        assertEquals(EventStatus.ONGOING, donationEvent.getStatus());
-        assertEquals("banner.jpg", donationEvent.getBannerUrl());
-        verify(donationEventRepository, times(1)).save(donationEvent);
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy donation event")
+        void deleteThrowsWhenNotFound() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.deleteDonationEvent(donationEventId, userDetails));
+            verify(donationEventRepository, never()).delete(any());
+        }
     }
 
-    @Test
-    void updateDonationEvent_ShouldIgnoreNullFields_WhenEventExists() {
-        DonationEventReq req = new DonationEventReq();
-        req.setAcceptedTypes(Collections.emptyList());
-        
-        DonationEventLogRes logRes = new DonationEventLogRes();
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+    // ------------------------------------------------------------------
+    // getAllDonationEvents
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("getAllDonationEvents")
+    class GetAllDonationEvents {
 
-        DonationEventLogRes result = donationEventService.updateDonationEvent(eventId, req, userDetails);
-        assertNotNull(result);
+        @Test
+        @DisplayName("Trả về danh sách tất cả sự kiện")
+        void getAllSuccess() {
+            when(donationEventRepository.findAll()).thenReturn(List.of(donationEvent));
+            when(donationEventMapper.toResponse(donationEvent)).thenReturn(res);
+
+            List<DonationEventRes> result = donationEventService.getAllDonationEvents();
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Trả về danh sách rỗng khi không có sự kiện nào")
+        void getAllEmpty() {
+            when(donationEventRepository.findAll()).thenReturn(List.of());
+
+            List<DonationEventRes> result = donationEventService.getAllDonationEvents();
+
+            assertTrue(result.isEmpty());
+        }
     }
 
-    @Test
-    void updateDonationEvent_ShouldThrowNotFound_WhenEventDoesNotExist() {
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationEventService.updateDonationEvent(eventId, donationEventReq, userDetails));
+    // ------------------------------------------------------------------
+    // getAllByOrgId
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("getAllByOrgId")
+    class GetAllByOrgId {
+
+        @Test
+        @DisplayName("Trả về danh sách sự kiện theo orgId")
+        void getAllByOrgIdSuccess() {
+            when(donationEventRepository.findByOrganizationDetail_Id(orgId)).thenReturn(List.of(donationEvent));
+            when(donationEventMapper.toResponse(donationEvent)).thenReturn(res);
+
+            List<DonationEventRes> result = donationEventService.getAllByOrgId(orgId);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Trả về danh sách rỗng khi org không có sự kiện nào")
+        void getAllByOrgIdEmpty() {
+            when(donationEventRepository.findByOrganizationDetail_Id(orgId)).thenReturn(List.of());
+
+            List<DonationEventRes> result = donationEventService.getAllByOrgId(orgId);
+
+            assertTrue(result.isEmpty());
+        }
     }
 
-    // DELETE DONATION EVENT
-    @Test
-    void deleteDonationEvent_ShouldDelete_WhenEventExists() {
-        DonationEventLogRes logRes = new DonationEventLogRes();
+    // ------------------------------------------------------------------
+    // getAllByFilter
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("getAllByFilter")
+    class GetAllByFilter {
 
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+        private DonationEvent makeEvent(String location, List<String> acceptedTypes,
+                                        BigDecimal lat, BigDecimal lng) {
+            DonationEvent e = new DonationEvent();
+            e.setLocation(location);
+            e.setAcceptedTypes(acceptedTypes);
+            e.setLatitude(lat);
+            e.setLongitude(lng);
+            return e;
+        }
 
-        DonationEventLogRes result = donationEventService.deleteDonationEvent(eventId, userDetails);
+        // ---- validateDistanceFilter branches ----
 
-        assertNotNull(result);
-        verify(donationEventRepository, times(1)).delete(donationEvent);
+        @Test
+        @DisplayName("Không ném lỗi khi không truyền field khoảng cách nào")
+        void filterNoDistanceFieldsNoError() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            when(donationEventRepository.findAll()).thenReturn(List.of());
+
+            assertDoesNotThrow(() -> donationEventService.getAllByFilter(filterReq));
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi chỉ truyền latitude mà thiếu longitude/maxDistanceKm")
+        void filterThrowsWhenOnlyLatitudeProvided() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.0));
+
+            assertThrows(BadRequestException.class,
+                    () -> donationEventService.getAllByFilter(filterReq));
+            verifyNoInteractions(donationEventRepository);
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi chỉ truyền longitude mà thiếu latitude/maxDistanceKm")
+        void filterThrowsWhenOnlyLongitudeProvided() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLongitude(BigDecimal.valueOf(20.0));
+
+            assertThrows(BadRequestException.class,
+                    () -> donationEventService.getAllByFilter(filterReq));
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi chỉ truyền maxDistanceKm mà thiếu lat/lng")
+        void filterThrowsWhenOnlyMaxDistanceProvided() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setMaxDistanceKm(5.0);
+
+            assertThrows(BadRequestException.class,
+                    () -> donationEventService.getAllByFilter(filterReq));
+        }
+
+        @Test
+        @DisplayName("Không ném lỗi khi truyền đủ cả 3 field khoảng cách")
+        void filterNoErrorWhenAllDistanceFieldsProvided() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.0));
+            filterReq.setLongitude(BigDecimal.valueOf(20.0));
+            filterReq.setMaxDistanceKm(100.0);
+            when(donationEventRepository.findAll()).thenReturn(List.of());
+
+            assertDoesNotThrow(() -> donationEventService.getAllByFilter(filterReq));
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi có latitude và longitude nhưng thiếu maxDistanceKm")
+        void filterThrowsWhenLatAndLngProvidedButMaxMissing() {
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.0));
+            filterReq.setLongitude(BigDecimal.valueOf(20.0));
+
+            assertThrows(BadRequestException.class,
+                    () -> donationEventService.getAllByFilter(filterReq));
+            verifyNoInteractions(donationEventRepository);
+        }
+
+        // ---- itemType filter branches ----
+
+        @Test
+        @DisplayName("Không lọc theo itemType khi null")
+        void filterItemTypeNullReturnsAll() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Không lọc theo itemType khi rỗng (blank)")
+        void filterItemTypeBlankReturnsAll() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setItemType("   ");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Lọc đúng event khi acceptedTypes chứa itemType")
+        void filterItemTypeMatches() {
+            DonationEvent event = makeEvent(null, List.of("clothes", "books"), null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setItemType("books");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi acceptedTypes null")
+        void filterItemTypeExcludesWhenAcceptedTypesNull() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setItemType("books");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+            verify(donationEventMapper, never()).toResponse(any());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi acceptedTypes không chứa itemType")
+        void filterItemTypeExcludesWhenNoMatch() {
+            DonationEvent event = makeEvent(null, List.of("books"), null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setItemType("clothes");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
+
+        // ---- city filter branches ----
+
+        @Test
+        @DisplayName("Không lọc theo city khi null")
+        void filterCityNullReturnsAll() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Không lọc theo city khi rỗng (blank)")
+        void filterCityBlankReturnsAll() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setCity("  ");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Lọc đúng event khi location chứa city (không phân biệt hoa thường)")
+        void filterCityMatchesCaseInsensitive() {
+            DonationEvent event = makeEvent("123 Nguyen Van Cu, Ho Chi Minh City", null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setCity("ho chi minh");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi location null")
+        void filterCityExcludesWhenLocationNull() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setCity("Hanoi");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi location không chứa city")
+        void filterCityExcludesWhenNoMatch() {
+            DonationEvent event = makeEvent("Da Nang", null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setCity("Hanoi");
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
+
+        // ---- distance filter branches ----
+
+        @Test
+        @DisplayName("Bỏ qua lọc khoảng cách khi không truyền field khoảng cách nào")
+        void filterDistanceSkippedWhenNoDistanceFields() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi event thiếu latitude/longitude")
+        void filterDistanceExcludesWhenEventLatLngNull() {
+            DonationEvent event = makeEvent(null, null, null, null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.0));
+            filterReq.setLongitude(BigDecimal.valueOf(20.0));
+            filterReq.setMaxDistanceKm(50.0);
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi event có latitude nhưng thiếu longitude")
+        void filterDistanceExcludesWhenEventLongitudeNull() {
+            DonationEvent event = makeEvent(null, null, BigDecimal.valueOf(10.0), null);
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.0));
+            filterReq.setLongitude(BigDecimal.valueOf(20.0));
+            filterReq.setMaxDistanceKm(50.0);
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Giữ lại event khi khoảng cách nằm trong bán kính cho phép")
+        void filterDistanceIncludesWhenWithinRadius() {
+            // Cùng tọa độ -> khoảng cách = 0
+            DonationEvent event = makeEvent(null, null, BigDecimal.valueOf(10.7769), BigDecimal.valueOf(106.7009));
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+            when(donationEventMapper.toResponse(event)).thenReturn(res);
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.7769));
+            filterReq.setLongitude(BigDecimal.valueOf(106.7009));
+            filterReq.setMaxDistanceKm(10.0);
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertEquals(1, result.size());
+        }
+
+        @Test
+        @DisplayName("Loại bỏ event khi khoảng cách vượt quá bán kính cho phép")
+        void filterDistanceExcludesWhenBeyondRadius() {
+            // HCMC vs Hanoi, cách nhau ~1100km, maxDistanceKm rất nhỏ
+            DonationEvent event = makeEvent(null, null, BigDecimal.valueOf(21.0285), BigDecimal.valueOf(105.8542));
+            when(donationEventRepository.findAll()).thenReturn(List.of(event));
+
+            DonationEventFilterReq filterReq = new DonationEventFilterReq();
+            filterReq.setLatitude(BigDecimal.valueOf(10.7769));
+            filterReq.setLongitude(BigDecimal.valueOf(106.7009));
+            filterReq.setMaxDistanceKm(10.0);
+
+            List<DonationEventRes> result = donationEventService.getAllByFilter(filterReq);
+
+            assertTrue(result.isEmpty());
+        }
     }
 
-    @Test
-    void deleteDonationEvent_ShouldThrowNotFound_WhenEventDoesNotExist() {
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationEventService.deleteDonationEvent(eventId, userDetails));
+    // ------------------------------------------------------------------
+    // cancelDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("cancelDonationEvent")
+    class CancelDonationEvent {
+
+        @Test
+        @DisplayName("Hủy thành công khi trạng thái là UPCOMING")
+        void cancelSuccessFromUpcoming() {
+            donationEvent.setStatus(EventStatus.UPCOMING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            DonationEventLogRes result = donationEventService.cancelDonationEvent(donationEventId, userDetails);
+
+            assertNotNull(result);
+            assertEquals(EventStatus.CANCELLED, donationEvent.getStatus());
+            verify(donationEventRepository).save(donationEvent);
+        }
+
+        @Test
+        @DisplayName("Hủy thành công khi trạng thái là ONGOING")
+        void cancelSuccessFromOngoing() {
+            donationEvent.setStatus(EventStatus.ONGOING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            donationEventService.cancelDonationEvent(donationEventId, userDetails);
+
+            assertEquals(EventStatus.CANCELLED, donationEvent.getStatus());
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi sự kiện đã COMPLETED")
+        void cancelThrowsWhenCompleted() {
+            donationEvent.setStatus(EventStatus.COMPLETED);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.cancelDonationEvent(donationEventId, userDetails));
+            verify(donationEventRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi sự kiện đã CANCELLED")
+        void cancelThrowsWhenAlreadyCancelled() {
+            donationEvent.setStatus(EventStatus.CANCELLED);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.cancelDonationEvent(donationEventId, userDetails));
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy sự kiện")
+        void cancelThrowsWhenNotFound() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.cancelDonationEvent(donationEventId, userDetails));
+        }
     }
 
-    // GET ALL DONATION EVENTS
-    @Test
-    void getAllDonationEvents_ShouldReturnList() {
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any())).thenReturn(new DonationEventRes());
+    // ------------------------------------------------------------------
+    // completeDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("completeDonationEvent")
+    class CompleteDonationEvent {
 
-        List<DonationEventRes> res = donationEventService.getAllDonationEvents();
-        assertEquals(1, res.size());
+        @Test
+        @DisplayName("Hoàn thành thành công khi trạng thái là ONGOING")
+        void completeSuccess() {
+            donationEvent.setStatus(EventStatus.ONGOING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
+
+            DonationEventLogRes result = donationEventService.completeDonationEvent(donationEventId, userDetails);
+
+            assertNotNull(result);
+            assertEquals(EventStatus.COMPLETED, donationEvent.getStatus());
+            verify(donationEventRepository).save(donationEvent);
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi trạng thái không phải ONGOING (UPCOMING)")
+        void completeThrowsWhenUpcoming() {
+            donationEvent.setStatus(EventStatus.UPCOMING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.completeDonationEvent(donationEventId, userDetails));
+            verify(donationEventRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi trạng thái không phải ONGOING (CANCELLED)")
+        void completeThrowsWhenCancelled() {
+            donationEvent.setStatus(EventStatus.CANCELLED);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.completeDonationEvent(donationEventId, userDetails));
+        }
+
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy sự kiện")
+        void completeThrowsWhenNotFound() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
+
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.completeDonationEvent(donationEventId, userDetails));
+        }
     }
 
-    // GET ALL BY ORG ID
-    @Test
-    void getAllByOrgId_ShouldReturnList() {
-        when(donationEventRepository.findByOrganizationDetail_Id(orgId)).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any())).thenReturn(new DonationEventRes());
+    // ------------------------------------------------------------------
+    // ongoingDonationEvent
+    // ------------------------------------------------------------------
+    @Nested
+    @DisplayName("ongoingDonationEvent")
+    class OngoingDonationEvent {
 
-        List<DonationEventRes> res = donationEventService.getAllByOrgId(orgId);
-        assertEquals(1, res.size());
-    }
+        @Test
+        @DisplayName("Chuyển sang ONGOING thành công khi trạng thái là UPCOMING")
+        void ongoingSuccess() {
+            donationEvent.setStatus(EventStatus.UPCOMING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
+            when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
 
-    // GET ALL BY FILTER
-    @Test
-    void getAllByFilter_ShouldReturnFilteredList_ByItemType() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setItemType("CLOTHES");
+            DonationEventLogRes result = donationEventService.ongoingDonationEvent(donationEventId, userDetails);
 
-        donationEvent.setAcceptedTypes(Arrays.asList("CLOTHES", "BOOKS"));
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any(DonationEvent.class))).thenReturn(new DonationEventRes());
+            assertNotNull(result);
+            assertEquals(EventStatus.ONGOING, donationEvent.getStatus());
+            verify(donationEventRepository).save(donationEvent);
+        }
 
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
+        @Test
+        @DisplayName("Ném lỗi khi trạng thái không phải UPCOMING (ONGOING)")
+        void ongoingThrowsWhenAlreadyOngoing() {
+            donationEvent.setStatus(EventStatus.ONGOING);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
 
-        assertEquals(1, results.size());
-    }
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.ongoingDonationEvent(donationEventId, userDetails));
+            verify(donationEventRepository, never()).save(any());
+        }
 
-    @Test
-    void getAllByFilter_ShouldExclude_ByItemType() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setItemType("TOYS");
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
+        @Test
+        @DisplayName("Ném lỗi khi trạng thái không phải UPCOMING (COMPLETED)")
+        void ongoingThrowsWhenCompleted() {
+            donationEvent.setStatus(EventStatus.COMPLETED);
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.of(donationEvent));
 
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
+            assertThrows(IllegalStateException.class,
+                    () -> donationEventService.ongoingDonationEvent(donationEventId, userDetails));
+        }
 
-        assertEquals(0, results.size());
-    }
+        @Test
+        @DisplayName("Ném lỗi khi không tìm thấy sự kiện")
+        void ongoingThrowsWhenNotFound() {
+            when(donationEventRepository.findById(donationEventId)).thenReturn(Optional.empty());
 
-    @Test
-    void getAllByFilter_ShouldReturnFilteredList_ByCity() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setCity("Hanoi");
-
-        donationEvent.setLocation("Hanoi City");
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any(DonationEvent.class))).thenReturn(new DonationEventRes());
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-
-        assertEquals(1, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldExclude_ByCity() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setCity("HCMC");
-
-        donationEvent.setLocation("Hanoi City");
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-
-        assertEquals(0, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldExclude_ByCity_WhenLocationNull() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setCity("Hanoi");
-        donationEvent.setLocation(null);
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-        assertEquals(0, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldReturnFilteredList_ByDistance() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setLatitude(BigDecimal.valueOf(10.0));
-        filter.setLongitude(BigDecimal.valueOf(106.0));
-        filter.setMaxDistanceKm(5.0); // 5km
-
-        donationEvent.setLatitude(BigDecimal.valueOf(10.001)); // very close
-        donationEvent.setLongitude(BigDecimal.valueOf(106.001));
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any(DonationEvent.class))).thenReturn(new DonationEventRes());
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-
-        assertEquals(1, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldExclude_ByDistance_TooFar() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setLatitude(BigDecimal.valueOf(10.0));
-        filter.setLongitude(BigDecimal.valueOf(106.0));
-        filter.setMaxDistanceKm(5.0); // 5km
-
-        donationEvent.setLatitude(BigDecimal.valueOf(11.0)); // Far away
-        donationEvent.setLongitude(BigDecimal.valueOf(107.0));
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-
-        assertEquals(0, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldExclude_ByDistance_WhenEventLatLngNull() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setLatitude(BigDecimal.valueOf(10.0));
-        filter.setLongitude(BigDecimal.valueOf(106.0));
-        filter.setMaxDistanceKm(5.0); 
-
-        donationEvent.setLatitude(null); 
-        donationEvent.setLongitude(null);
-        
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-        assertEquals(0, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldThrowBadRequest_WhenDistanceFilterIsIncomplete() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setLatitude(BigDecimal.valueOf(10.0));
-        // Missing longitude and maxDistanceKm
-
-        assertThrows(BadRequestException.class, () -> donationEventService.getAllByFilter(filter));
-    }
-
-    @Test
-    void getAllByFilter_ShouldThrowBadRequest_WhenOnlyLongitudeIsSet() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setLongitude(BigDecimal.valueOf(10.0));
-
-        assertThrows(BadRequestException.class, () -> donationEventService.getAllByFilter(filter));
-    }
-
-    @Test
-    void getAllByFilter_ShouldThrowBadRequest_WhenOnlyMaxDistanceIsSet() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setMaxDistanceKm(10.0);
-
-        assertThrows(BadRequestException.class, () -> donationEventService.getAllByFilter(filter));
-    }
-
-    @Test
-    void getAllByFilter_ShouldInclude_WhenItemTypeIsBlank() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setItemType("");
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any(DonationEvent.class))).thenReturn(new DonationEventRes());
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-        assertEquals(1, results.size());
-    }
-
-    @Test
-    void getAllByFilter_ShouldInclude_WhenCityIsBlank() {
-        DonationEventFilterReq filter = new DonationEventFilterReq();
-        filter.setCity("   ");
-        when(donationEventRepository.findAll()).thenReturn(Collections.singletonList(donationEvent));
-        when(donationEventMapper.toResponse(any(DonationEvent.class))).thenReturn(new DonationEventRes());
-
-        List<DonationEventRes> results = donationEventService.getAllByFilter(filter);
-        assertEquals(1, results.size());
-    }
-
-    // CANCEL DONATION EVENT
-    @Test
-    void cancelDonationEvent_ShouldChangeStatusToCancelled_WhenEventExists() {
-        DonationEventLogRes logRes = new DonationEventLogRes();
-
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
-
-        DonationEventLogRes result = donationEventService.cancelDonationEvent(eventId, userDetails);
-
-        assertNotNull(result);
-        assertEquals(EventStatus.CANCELLED, donationEvent.getStatus());
-        verify(donationEventRepository, times(1)).save(donationEvent);
-    }
-
-    @Test
-    void cancelDonationEvent_ShouldThrowNotFound_WhenNotExists() {
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationEventService.cancelDonationEvent(eventId, userDetails));
-    }
-
-    @Test
-    void cancelDonationEvent_ShouldThrowIllegalState_WhenEventAlreadyCompleted() {
-        donationEvent.setStatus(EventStatus.COMPLETED);
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        assertThrows(IllegalStateException.class, () -> donationEventService.cancelDonationEvent(eventId, userDetails));
-    }
-    
-    // COMPLETE DONATION EVENT
-    @Test
-    void completeDonationEvent_ShouldChangeStatusToCompleted_WhenOngoing() {
-        donationEvent.setStatus(EventStatus.ONGOING);
-        DonationEventLogRes logRes = new DonationEventLogRes();
-
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
-
-        DonationEventLogRes result = donationEventService.completeDonationEvent(eventId, userDetails);
-
-        assertNotNull(result);
-        assertEquals(EventStatus.COMPLETED, donationEvent.getStatus());
-        verify(donationEventRepository, times(1)).save(donationEvent);
-    }
-
-    @Test
-    void completeDonationEvent_ShouldThrowNotFound_WhenNotExists() {
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationEventService.completeDonationEvent(eventId, userDetails));
-    }
-
-    @Test
-    void completeDonationEvent_ShouldThrowIllegalState_WhenNotOngoing() {
-        donationEvent.setStatus(EventStatus.UPCOMING);
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        assertThrows(IllegalStateException.class, () -> donationEventService.completeDonationEvent(eventId, userDetails));
-    }
-
-    // ONGOING DONATION EVENT
-    @Test
-    void ongoingDonationEvent_ShouldChangeStatusToOngoing_WhenUpcoming() {
-        donationEvent.setStatus(EventStatus.UPCOMING);
-        DonationEventLogRes logRes = new DonationEventLogRes();
-
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        when(donationEventRepository.save(any(DonationEvent.class))).thenReturn(donationEvent);
-        when(donationEventMapper.toResponseLog(donationEvent)).thenReturn(logRes);
-
-        DonationEventLogRes result = donationEventService.ongoingDonationEvent(eventId, userDetails);
-
-        assertNotNull(result);
-        assertEquals(EventStatus.ONGOING, donationEvent.getStatus());
-        verify(donationEventRepository, times(1)).save(donationEvent);
-    }
-
-    @Test
-    void ongoingDonationEvent_ShouldThrowNotFound_WhenNotExists() {
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> donationEventService.ongoingDonationEvent(eventId, userDetails));
-    }
-
-    @Test
-    void ongoingDonationEvent_ShouldThrowIllegalState_WhenNotUpcoming() {
-        donationEvent.setStatus(EventStatus.ONGOING);
-        when(donationEventRepository.findById(eventId)).thenReturn(Optional.of(donationEvent));
-        assertThrows(IllegalStateException.class, () -> donationEventService.ongoingDonationEvent(eventId, userDetails));
+            assertThrows(NotFoundException.class,
+                    () -> donationEventService.ongoingDonationEvent(donationEventId, userDetails));
+        }
     }
 }

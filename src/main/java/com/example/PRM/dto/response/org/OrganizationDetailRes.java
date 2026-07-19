@@ -2,6 +2,7 @@ package com.example.PRM.dto.response.org;
 
 import com.example.PRM.status_enum.VerificationOrganizationStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class OrganizationDetailRes {
     private UUID id;
 
