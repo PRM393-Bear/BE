@@ -221,4 +221,50 @@ class AuthServiceImplTest {
 
         assertThrows(NotFoundException.class, () -> authService.login(loginReq));
     }
+
+    @Test
+    void login_ShouldThrowNotFound_WhenAuthenticationFails() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenThrow(new NotFoundException("Sai tài khoản hoặc mật khẩu"));
+        assertThrows(NotFoundException.class, () -> authService.login(loginReq));
+    }
+
+    @Test
+    void login_ShouldCreateRefreshToken_WhenNotExists() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(userDetails);
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken(userDetails)).thenReturn("sample-access-token");
+        when(refreshTokenRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(refreshTokenService.createRefreshToken(user)).thenReturn(refreshToken);
+
+        Role orgRole = new Role();
+        orgRole.setRoleName("ORGANIZATION");
+        when(roleRepository.findByRoleName("ORGANIZATION")).thenReturn(Optional.of(orgRole)); 
+
+        LoginLogRes response = authService.login(loginReq);
+
+        assertNotNull(response);
+        assertEquals("sample-refresh-token", response.getRefreshToken());
+    }
+
+    @Test
+    void login_ShouldReturnLoginLogRes_WhenOrganizationAndDetailNull() {
+        Role orgRole = new Role();
+        orgRole.setRoleName("ORGANIZATION");
+        user.setRole(orgRole);
+        
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(userDetails);
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken(userDetails)).thenReturn("sample-access-token");
+        when(refreshTokenRepository.findByUser(user)).thenReturn(Optional.of(refreshToken));
+        when(roleRepository.findByRoleName("ORGANIZATION")).thenReturn(Optional.of(orgRole));
+        when(organizationDetailRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
+
+        LoginLogRes response = authService.login(loginReq);
+
+        assertNotNull(response);
+        assertNull(response.getOrganizationStatus());
+    }
 }

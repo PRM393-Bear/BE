@@ -176,4 +176,42 @@ class CartServiceImplTest {
         assertTrue(cart.getCartItems().isEmpty());
         verify(cartRepository, times(1)).save(cart);
     }
+
+    @Test
+    void addProductToCart_ShouldThrowNotFound_WhenProductNotFound() {
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(cart));
+        when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> cartService.addProductToCart(userDetails, product.getId()));
+    }
+
+    @Test
+    void addProductToCart_ShouldCreateCart_WhenCartDoesNotExist() {
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
+        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+        when(cartMapper.mapToResponseDTO(cart)).thenReturn(CartRes.builder().build());
+
+        CartRes response = cartService.addProductToCart(userDetails, product.getId());
+
+        assertNotNull(response);
+    }
+
+    @Test
+    void removeCartItem_ShouldThrowNotFound_WhenCartNotFound() {
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> cartService.removeCartItem(userDetails, cartItemId));
+    }
+
+    @Test
+    void clearCart_ShouldThrowNotFound_WhenCartNotFound() {
+        when(userRepository.findByUserName("testuser")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> cartService.clearCart(userDetails));
+    }
 }

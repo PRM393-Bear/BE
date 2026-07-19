@@ -144,4 +144,15 @@ class NotificationServiceImplTest {
         assertThrows(RuntimeException.class, () -> notificationService.markAsRead(1L));
         verify(notificationRepository, never()).save(any(Notification.class));
     }
+
+    @Test
+    void sendNotification_ShouldCallOverloadedMethod() {
+        when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
+        when(notificationRepository.save(any(Notification.class))).thenReturn(notification);
+
+        notificationService.sendNotification(userId, "Test Title", "Test Message", "INFO");
+
+        verify(notificationRepository, times(1)).save(any(Notification.class));
+        verify(messagingTemplate, times(1)).convertAndSendToUser(eq("testuser"), eq("/queue/notifications"), any(Notification.class));
+    }
 }
