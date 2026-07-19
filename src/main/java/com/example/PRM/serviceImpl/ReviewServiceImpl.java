@@ -64,6 +64,11 @@ public class ReviewServiceImpl implements ReviewService {
         return reviews.stream().map(review -> ReviewRes.builder()
                 .id(review.getId())
                 .orderId(review.getOrder().getId())
+                .productTitle(
+                        review.getOrder().getOrderItems() != null && !review.getOrder().getOrderItems().isEmpty()
+                                ? review.getOrder().getOrderItems().get(0).getProduct().getTitle()
+                                : null
+                )
                 .reviewerId(review.getReviewer() != null ? review.getReviewer().getUserId() : null)
                 .reviewerName(review.getReviewer() != null ? review.getReviewer().getUserName() : null)
                 .rating(review.getRating())
