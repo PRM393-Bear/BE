@@ -98,4 +98,51 @@ class EmailServiceImplTest {
         verify(mailSender, times(1)).createMimeMessage();
         verify(mailSender, times(1)).send(mimeMessage);
     }
+
+    @Test
+    void sendOtp_ShouldSendEmail_WhenPurposeIsForgotPassword() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        emailService.sendOtp("test@example.com", OtpPurpose.FORGOT_PASSWORD);
+
+        verify(valueOperations, times(1)).set(
+                startsWith("otp:" + OtpPurpose.FORGOT_PASSWORD + ":test@example.com"),
+                anyString(),
+                eq(5L),
+                eq(TimeUnit.MINUTES)
+        );
+        verify(mailSender, times(1)).send(mimeMessage);
+    }
+
+    @Test
+    void sendOtp_ShouldThrowRuntimeException_WhenMessagingException() throws MessagingException {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        doThrow(new MessagingException("mock error")).when(mimeMessage).setFrom(any(jakarta.mail.Address.class));
+
+        assertThrows(RuntimeException.class, () -> emailService.sendOtp("test@example.com", OtpPurpose.REGISTER));
+    }
+
+    @Test
+    void sendBannedEmail_ShouldThrowRuntimeException_WhenMessagingException() throws MessagingException {
+        doThrow(new MessagingException("mock error")).when(mimeMessage).setFrom(any(jakarta.mail.Address.class));
+        assertThrows(RuntimeException.class, () -> emailService.sendBannedEmail("test@example.com", "Violation"));
+    }
+
+    @Test
+    void sendUnbannedEmail_ShouldThrowRuntimeException_WhenMessagingException() throws MessagingException {
+        doThrow(new MessagingException("mock error")).when(mimeMessage).setFrom(any(jakarta.mail.Address.class));
+        assertThrows(RuntimeException.class, () -> emailService.sendUnbannedEmail("test@example.com"));
+    }
+
+    @Test
+    void sendApprovalEmail_ShouldThrowRuntimeException_WhenMessagingException() throws MessagingException {
+        doThrow(new MessagingException("mock error")).when(mimeMessage).setFrom(any(jakarta.mail.Address.class));
+        assertThrows(RuntimeException.class, () -> emailService.sendApprovalEmail("test@example.com"));
+    }
+
+    @Test
+    void sendRejectEmail_ShouldThrowRuntimeException_WhenMessagingException() throws MessagingException {
+        doThrow(new MessagingException("mock error")).when(mimeMessage).setFrom(any(jakarta.mail.Address.class));
+        assertThrows(RuntimeException.class, () -> emailService.sendRejectEmail("test@example.com", "Missing"));
+    }
 }

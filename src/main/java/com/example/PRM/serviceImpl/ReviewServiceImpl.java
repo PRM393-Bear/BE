@@ -13,8 +13,11 @@ import com.example.PRM.repository.UserRepository;
 import com.example.PRM.service.ReviewService;
 import com.example.PRM.status_enum.OrderStatus; // Hãy chắc chắn bạn import đúng enum của bạn
 import lombok.RequiredArgsConstructor;
+import com.example.PRM.dto.response.review.ReviewRes;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,15 +47,29 @@ public class ReviewServiceImpl implements ReviewService {
             throw new BadRequestException("Bạn đã đánh giá đơn hàng này rồi");
         }
 
-        User reviewer = userRepository.findByUserName(userDetails.getUsername())
-                .orElseThrow(() -> new NotFoundException("User không tồn tại"));
-
         ProductReview review = new ProductReview();
         review.setOrder(order);
-        review.setReviewer(reviewer);
+        review.setReviewer(order.getBuyer());
         review.setRating(req.getRating());
         review.setComment(req.getComment());
 
         reviewRepository.save(review);
+    }
+
+    @Override
+    public List<ReviewRes> getReviewsForSeller(UserDetails userDetails) {
+        String sellerUsername = userDetails.getUsername();
+        List<ProductReview> reviews = reviewRepository.findBySellerUsername(sellerUsername);
+        
+        return reviews.stream().map(review -> ReviewRes.builder()
+                .id(review.getId())
+                .orderId(review.getOrder().getId())
+                .reviewerId(review.getReviewer() != null ? review.getReviewer().getUserId() : null)
+                .reviewerName(review.getReviewer() != null ? review.getReviewer().getUserName() : null)
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt())
+                .build()
+        ).collect(Collectors.toList());
     }
 }

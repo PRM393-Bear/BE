@@ -126,26 +126,13 @@ class ReviewServiceImplTest {
         verify(reviewRepository, never()).save(any());
     }
 
-    @Test
-    void createReview_reviewerNotFound_throwsNotFoundException() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userDetails.getUsername()).thenReturn("john.doe");
-        when(reviewRepository.existsByOrderId(orderId)).thenReturn(false);
-        when(userRepository.findByUserName("john.doe")).thenReturn(Optional.empty());
-
-        NotFoundException ex = assertThrows(NotFoundException.class,
-                () -> reviewService.createReview(userDetails, req));
-        assertTrue(ex.getMessage().contains("User không tồn tại"));
-
-        verify(reviewRepository, never()).save(any());
-    }
+    // Removed createReview_reviewerNotFound_throwsNotFoundException as we no longer query userRepository for the reviewer.
 
     @Test
     void createReview_success_savesReviewWithCorrectFields() {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(userDetails.getUsername()).thenReturn("john.doe");
         when(reviewRepository.existsByOrderId(orderId)).thenReturn(false);
-        when(userRepository.findByUserName("john.doe")).thenReturn(Optional.of(buyer));
 
         reviewService.createReview(userDetails, req);
 

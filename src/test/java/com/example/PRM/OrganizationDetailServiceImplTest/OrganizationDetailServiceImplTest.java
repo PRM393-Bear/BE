@@ -22,6 +22,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.example.PRM.exception.IllegalArgumentException;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,6 +47,7 @@ class OrganizationDetailServiceImplTest {
     private User user;
     private User staffUser;
     private Role staffRole;
+    private Role userRole;
     private OrganizationDetail organizationDetail;
     private UUID orgId;
     private OrganizationDetailReq req;
@@ -54,6 +58,9 @@ class OrganizationDetailServiceImplTest {
 
         staffRole = new Role();
         staffRole.setRoleName("STAFF");
+
+        userRole = new Role();
+        userRole.setRoleName("USER");
 
         user = new User();
         user.setUserId(UUID.randomUUID());
@@ -78,6 +85,7 @@ class OrganizationDetailServiceImplTest {
         req.setLongitude(BigDecimal.valueOf(20.0));
     }
 
+    // CREATE
     @Test
     void createOrganizationDetail_ShouldCreate_WhenValidRequest() {
         when(userDetails.getUsername()).thenReturn("orgUser");
@@ -92,16 +100,105 @@ class OrganizationDetailServiceImplTest {
     }
 
     @Test
-    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenMissingFields() {
-        req.setOrgName(null);
+    void createOrganizationDetail_ShouldSetPending_WhenHasDocs() {
+        req.setVerificationDocs(Arrays.asList("doc1.pdf"));
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(userRepository.findByUserName("orgUser")).thenReturn(Optional.of(user));
         
-        assertThrows(IllegalArgumentException.class, () -> 
-            organizationDetailService.createOrganizationDetail(req, userDetails));
-        verify(organizationDetailRepository, never()).save(any(OrganizationDetail.class));
+        OrganizationDetail mappedEntity = new OrganizationDetail();
+        when(organizationDetailMapper.toEntity(req)).thenReturn(mappedEntity);
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        organizationDetailService.createOrganizationDetail(req, userDetails);
+
+        assertEquals(VerificationOrganizationStatus.PENDING, mappedEntity.getStatus());
+        verify(organizationDetailRepository, times(1)).save(mappedEntity);
     }
 
     @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenOrgNameNull() {
+        req.setOrgName(null);
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenAddressNull() {
+        req.setAddress(null);
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenDescriptionNull() {
+        req.setDescription(null);
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenLatitudeNull() {
+        req.setLatitude(null);
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenOrgNameBlank() {
+        req.setOrgName("   ");
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenAddressBlank() {
+        req.setAddress("   ");
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenDescriptionBlank() {
+        req.setDescription("   ");
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void updateOrganizationDetail_ShouldIgnoreNullFields_WhenUserIsOwner() {
+        OrganizationDetailReq nullReq = new OrganizationDetailReq();
+        nullReq.setAcceptedTypes(Collections.emptyList());
+        nullReq.setVerificationDocs(Collections.emptyList());
+
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        OrganizationDetailRes result = organizationDetailService.updateOrganizationDetail(orgId, nullReq, userDetails);
+
+        assertNotNull(result);
+        verify(organizationDetailRepository, times(1)).save(organizationDetail);
+    }
+
+    @Test
+    void getNearbyOrganizations_ShouldThrowBadRequest_WhenNullLng() {
+        assertThrows(BadRequestException.class, () -> organizationDetailService.getNearbyOrganizations(BigDecimal.valueOf(10.0), null, 10.0));
+    }
+    @Test
+    void createOrganizationDetail_ShouldThrowIllegalArgument_WhenLongitudeNull() {
+        req.setLongitude(null);
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    @Test
+    void createOrganizationDetail_ShouldThrowNotFound_WhenUserNotFound() {
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(userRepository.findByUserName("orgUser")).thenReturn(Optional.empty());
+        when(organizationDetailMapper.toEntity(req)).thenReturn(new OrganizationDetail());
+
+        assertThrows(NotFoundException.class, () -> organizationDetailService.createOrganizationDetail(req, userDetails));
+    }
+
+    // UPDATE
+    @Test
     void updateOrganizationDetail_ShouldUpdate_WhenUserIsOwner() {
+        req.setWebsiteUrl("http://test.com");
+        req.setAvtOrg("avt.jpg");
+        req.setAcceptedTypes(Arrays.asList("BOOKS"));
+        req.setVerificationDocs(Arrays.asList("doc2.pdf"));
+
         when(userDetails.getUsername()).thenReturn("orgUser");
         when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
         when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
@@ -109,7 +206,15 @@ class OrganizationDetailServiceImplTest {
         OrganizationDetailRes result = organizationDetailService.updateOrganizationDetail(orgId, req, userDetails);
 
         assertNotNull(result);
+        assertEquals("http://test.com", organizationDetail.getWebsiteUrl());
+        assertEquals("avt.jpg", organizationDetail.getAvtOrg());
         verify(organizationDetailRepository, times(1)).save(organizationDetail);
+    }
+
+    @Test
+    void updateOrganizationDetail_ShouldThrowNotFound_WhenOrgDetailNotFound() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> organizationDetailService.updateOrganizationDetail(orgId, req, userDetails));
     }
 
     @Test
@@ -117,10 +222,70 @@ class OrganizationDetailServiceImplTest {
         when(userDetails.getUsername()).thenReturn("otherUser");
         when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
 
-        assertThrows(ForbiddenException.class, () -> 
-            organizationDetailService.updateOrganizationDetail(orgId, req, userDetails));
+        assertThrows(ForbiddenException.class, () -> organizationDetailService.updateOrganizationDetail(orgId, req, userDetails));
     }
 
+    // DELETE
+    @Test
+    void deleteOrganizationDetail_ShouldDelete_WhenUserIsOwner() {
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        OrganizationDetailRes result = organizationDetailService.deleteOrganizationDetail(orgId, userDetails);
+
+        assertNotNull(result);
+        verify(organizationDetailRepository, times(1)).delete(organizationDetail);
+    }
+
+    @Test
+    void deleteOrganizationDetail_ShouldThrowNotFound_WhenOrgDetailNotFound() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> organizationDetailService.deleteOrganizationDetail(orgId, userDetails));
+    }
+
+    @Test
+    void deleteOrganizationDetail_ShouldThrowForbidden_WhenUserIsNotOwner() {
+        when(userDetails.getUsername()).thenReturn("otherUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        assertThrows(ForbiddenException.class, () -> organizationDetailService.deleteOrganizationDetail(orgId, userDetails));
+    }
+
+    // GET
+    @Test
+    void getOrganizationDetail_ShouldReturn() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        OrganizationDetailRes res = organizationDetailService.getOrganizationDetail(orgId);
+        assertNotNull(res);
+    }
+
+    @Test
+    void getOrganizationDetail_ShouldThrowNotFound_WhenNotExists() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> organizationDetailService.getOrganizationDetail(orgId));
+    }
+
+    @Test
+    void getAllOrganizations_ShouldReturnList() {
+        when(organizationDetailRepository.findAll()).thenReturn(Collections.singletonList(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        List<OrganizationDetailRes> res = organizationDetailService.getAllOrganizations();
+        assertEquals(1, res.size());
+    }
+
+    @Test
+    void getPendingOrganizations_ShouldReturnList() {
+        when(organizationDetailRepository.findByStatus(VerificationOrganizationStatus.PENDING)).thenReturn(Collections.singletonList(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        List<OrganizationDetailRes> res = organizationDetailService.getPendingOrganizations();
+        assertEquals(1, res.size());
+    }
+
+    // APPROVE
     @Test
     void approveOrganization_ShouldApprove_WhenUserIsStaff() {
         when(userDetails.getUsername()).thenReturn("staffUser");
@@ -137,14 +302,39 @@ class OrganizationDetailServiceImplTest {
     }
 
     @Test
+    void approveOrganization_ShouldThrowNotFound_WhenOrgDetailNotFound() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> organizationDetailService.approveOrganization(orgId, userDetails));
+    }
+
+    @Test
     void approveOrganization_ShouldThrowIllegalArgument_WhenStatusIsNotPending() {
         organizationDetail.setStatus(VerificationOrganizationStatus.APPROVED);
         when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
 
-        assertThrows(IllegalArgumentException.class, () -> 
-            organizationDetailService.approveOrganization(orgId, userDetails));
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.approveOrganization(orgId, userDetails));
     }
 
+    @Test
+    void approveOrganization_ShouldThrowNotFound_WhenUserNotFound() {
+        when(userDetails.getUsername()).thenReturn("staffUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(userRepository.findByUserName("staffUser")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> organizationDetailService.approveOrganization(orgId, userDetails));
+    }
+
+    @Test
+    void approveOrganization_ShouldThrowIllegalArgument_WhenUserNotStaff() {
+        staffUser.setRole(userRole); // Not STAFF
+        when(userDetails.getUsername()).thenReturn("staffUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(userRepository.findByUserName("staffUser")).thenReturn(Optional.of(staffUser));
+
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.approveOrganization(orgId, userDetails));
+    }
+
+    // REJECT
     @Test
     void rejectOrganization_ShouldReject_WhenUserIsStaff() {
         when(userDetails.getUsername()).thenReturn("staffUser");
@@ -162,14 +352,90 @@ class OrganizationDetailServiceImplTest {
     }
 
     @Test
-    void deleteOrganizationDetail_ShouldDelete_WhenUserIsOwner() {
-        when(userDetails.getUsername()).thenReturn("orgUser");
+    void rejectOrganization_ShouldThrowNotFound_WhenOrgDetailNotFound() {
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class, () -> organizationDetailService.rejectOrganization(orgId, userDetails, "reason"));
+    }
+
+    @Test
+    void rejectOrganization_ShouldThrowBadRequest_WhenStatusIsNotPending() {
+        organizationDetail.setStatus(VerificationOrganizationStatus.APPROVED);
         when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+
+        assertThrows(BadRequestException.class, () -> organizationDetailService.rejectOrganization(orgId, userDetails, "reason"));
+    }
+
+    @Test
+    void rejectOrganization_ShouldThrowNotFound_WhenUserNotFound() {
+        when(userDetails.getUsername()).thenReturn("staffUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(userRepository.findByUserName("staffUser")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> organizationDetailService.rejectOrganization(orgId, userDetails, "reason"));
+    }
+
+    @Test
+    void rejectOrganization_ShouldThrowIllegalArgument_WhenUserNotStaff() {
+        staffUser.setRole(userRole); // Not STAFF
+        when(userDetails.getUsername()).thenReturn("staffUser");
+        when(organizationDetailRepository.findById(orgId)).thenReturn(Optional.of(organizationDetail));
+        when(userRepository.findByUserName("staffUser")).thenReturn(Optional.of(staffUser));
+
+        assertThrows(IllegalArgumentException.class, () -> organizationDetailService.rejectOrganization(orgId, userDetails, "reason"));
+    }
+
+    // GET NEARBY
+    @Test
+    void getNearbyOrganizations_ShouldReturnList() {
+        when(organizationDetailRepository.findNearbyOrganizations(any(), any(), anyDouble()))
+                .thenReturn(Collections.singletonList(organizationDetail));
         when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
 
-        OrganizationDetailRes result = organizationDetailService.deleteOrganizationDetail(orgId, userDetails);
+        List<OrganizationDetailRes> res = organizationDetailService.getNearbyOrganizations(BigDecimal.valueOf(10.0), BigDecimal.valueOf(106.0), 10.0);
+        assertEquals(1, res.size());
+    }
 
-        assertNotNull(result);
-        verify(organizationDetailRepository, times(1)).delete(organizationDetail);
+    @Test
+    void getNearbyOrganizations_ShouldUseDefaultRadius() {
+        when(organizationDetailRepository.findNearbyOrganizations(any(), any(), eq(50.0)))
+                .thenReturn(Collections.singletonList(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        List<OrganizationDetailRes> res = organizationDetailService.getNearbyOrganizations(BigDecimal.valueOf(10.0), BigDecimal.valueOf(106.0), 0);
+        assertEquals(1, res.size());
+    }
+
+    @Test
+    void getNearbyOrganizations_ShouldThrowBadRequest_WhenNullLat() {
+        assertThrows(BadRequestException.class, () -> organizationDetailService.getNearbyOrganizations(null, BigDecimal.valueOf(106.0), 10.0));
+    }
+
+    // GET BY USER ID
+    @Test
+    void getOrganizationDetailByUserId_ShouldReturn() {
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(userRepository.findByUserName("orgUser")).thenReturn(Optional.of(user));
+        when(organizationDetailRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.of(organizationDetail));
+        when(organizationDetailMapper.toResponse(any())).thenReturn(new OrganizationDetailRes());
+
+        OrganizationDetailRes res = organizationDetailService.getOrganizationDetailByUserId(userDetails);
+        assertNotNull(res);
+    }
+
+    @Test
+    void getOrganizationDetailByUserId_ShouldThrowNotFound_WhenUserNotFound() {
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(userRepository.findByUserName("orgUser")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> organizationDetailService.getOrganizationDetailByUserId(userDetails));
+    }
+
+    @Test
+    void getOrganizationDetailByUserId_ShouldThrowNotFound_WhenOrgDetailNotFound() {
+        when(userDetails.getUsername()).thenReturn("orgUser");
+        when(userRepository.findByUserName("orgUser")).thenReturn(Optional.of(user));
+        when(organizationDetailRepository.findByUser_UserId(user.getUserId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> organizationDetailService.getOrganizationDetailByUserId(userDetails));
     }
 }
