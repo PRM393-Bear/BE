@@ -31,6 +31,8 @@ public class UserMapper {
         uAR.setRole(user.getRole());
         uAR.setUserId(user.getUserId());
         uAR.setAddress(user.getAddress());
+        uAR.setIsVerified(user.getIsVerified());
+        uAR.setIsBlocked(user.getIsBlocked());
 
         return uAR;
     }

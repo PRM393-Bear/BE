@@ -19,4 +19,6 @@ public class UserAdminRes {
     private String phone;
     private Role role;
     private String address;
+    private Boolean isVerified;
+    private Boolean isBlocked;
 }
