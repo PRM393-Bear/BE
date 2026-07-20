@@ -94,7 +94,7 @@ public class InitializerOrganization implements CommandLineRunner {
         org.setStatus(VerificationOrganizationStatus.APPROVED);
         org.setSubmitAt(LocalDateTime.now().minusDays(10));
         org.setApprovedAt(LocalDateTime.now().minusDays(9));
-        org.setAcceptedTypes(List.of("Quần áo", "Tiền mặt", "Sách vở"));
+        org.setAcceptedTypes(List.of("Quần áo", "Tiền mặt"));
         
         organizationDetailRepository.save(org);
     }

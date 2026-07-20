@@ -133,9 +133,9 @@ public class DonationEventServiceImpl implements DonationEventService {
                 // ===== FILTER DISTANCE (DonationEvent LAT/LNG) =====
                 .filter(event -> {
 
-                    if (req.getLatitude() == null
-                            || req.getLongitude() == null
-                            || req.getMaxDistanceKm() == null) {
+                    boolean hasDistanceFilter = req.getLatitude() != null; // đã validate: có 1 thì có đủ cả 3
+
+                    if (!hasDistanceFilter) {
                         return true;
                     }
 
